@@ -15,10 +15,12 @@ the same either way. Changes from the page are always logged as `me`.
     POST /api/items/<ID>/set         {"fields": {"priority": "high", …}}         corkboard set
     POST /api/items/<ID>/sub         {"action": "add|done|undo", "value"}        corkboard sub
     POST /api/items/<ID>/log         {"text"}                                    corkboard log
+    POST /api/items/<ID>/describe    {"description", "base"}    (no command: edits the text)
     POST /api/releases/<name>        {"fields": {"status", "date"}, "goal"}      corkboard release
 
 Field values are text as typed after field= in the CLI; a list such as labels can also be a JSON
-list. The answer is {"line", "warnings"}, plus "id" for a new item.
+list. The answer is {"line", "warnings"}, plus "id" for a new item. A description edit whose
+"base" no longer matches the file answers 409, with the description on disk as "current".
 """
 
 from __future__ import annotations
@@ -35,9 +37,10 @@ WHO = "me"
 class ApiError(Exception):
     """A request the API can't carry out, with the HTTP status to answer with."""
 
-    def __init__(self, status: int, message: str) -> None:
+    def __init__(self, status: int, message: str, extra: dict | None = None) -> None:
         super().__init__(message)
         self.status = status
+        self.extra = extra or {}
 
 
 def project_view(project: Project) -> dict:
@@ -126,6 +129,12 @@ def write(project: Project, path: str, data: Mapping, now: datetime) -> dict:
             result = edits.set_(project, item, _fields(data), WHO, now)
         elif action == "sub":
             result = edits.sub(project, item, _text(data, "action"), _text(data, "value"), WHO, now)
+        elif action == "describe":
+            description, base = _text(data, "description"), _text(data, "base")
+            try:
+                result = edits.describe(project, item, description, base, WHO, now)
+            except edits.ConflictError as conflict:
+                raise ApiError(409, str(conflict), {"current": conflict.current}) from None
         elif action == "log":
             text = " ".join(_text(data, "text").split())
             if not text:

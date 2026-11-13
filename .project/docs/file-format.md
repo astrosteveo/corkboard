@@ -155,7 +155,7 @@ A subtask is only done or not done. It has no owner, labels or log of its own. I
 
 - `who` is `me` or `claude`. Time is local, 24-hour.
 - Lines are only ever added, never edited or removed.
-- `corkboard` adds a line for every change it makes: `created`, `moved to <status>`, `set <field>=<value>`, and subtask changes. A status change with a message is logged as `moved to <status>: <message>`. Moving to `waiting` always needs one.
+- `corkboard` adds a line for every change it makes: `created`, `moved to <status>`, `set <field>=<value>`, and subtask changes. The web app also logs `edited the description` when you save a description there. A status change with a message is logged as `moved to <status>: <message>`. Moving to `waiting` always needs one.
 - Status changes go through `corkboard` so they're always logged. Anyone can add other lines, such as notes on what was tried.
 
 ## IDs and file names

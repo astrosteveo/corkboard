@@ -225,7 +225,7 @@ class Handler(BaseHTTPRequestHandler):
             try:
                 answer = api.write(load(self.server.root), path, data, self.server.clock())
             except api.ApiError as error:
-                self._json(error.status, {"error": str(error)})
+                self._json(error.status, {"error": str(error), **error.extra})
             except EditError as error:
                 self._json(400, {"error": str(error)})
             else:

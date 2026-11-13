@@ -636,3 +636,36 @@ input.item-title:focus { border-color: var(--border-strong); background: var(--s
 .ask-dialog label { color: var(--muted); }
 .dialog-buttons { display: flex; justify-content: flex-end; gap: 8px; }
 .card-meta { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; }
+
+/* ---------- Description editing ---------- */
+
+.description { position: relative; }
+.section-head { display: flex; justify-content: flex-end; margin-bottom: -6px; }
+.edit-btn { color: var(--muted); }
+.edit-buttons { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); }
+.tabs button {
+  height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--muted);
+  font-weight: 600;
+  cursor: pointer;
+}
+.tabs button[aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); }
+.preview { min-height: 160px; padding: 10px 12px; border: 1px dashed var(--border-strong); border-radius: 8px; }
+.versions { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.version {
+  margin: 4px 0 0;
+  padding: 10px 12px;
+  max-height: 320px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  font-size: 12.5px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

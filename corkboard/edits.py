@@ -23,6 +23,7 @@ from .project import (
     RELEASE_FIELDS,
     RELEASE_STATUSES,
     STATUSES,
+    SUBTASKS_HEADING,
     Item,
     Project,
     find_section,
@@ -51,6 +52,14 @@ _DATE = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}")
 
 class EditError(Exception):
     """A change that can't be made. The message says why, as the CLI prints it after error:."""
+
+
+class ConflictError(EditError):
+    """The description changed on disk since the edit started. `current` is the one on disk now."""
+
+    def __init__(self, message: str, current: str) -> None:
+        super().__init__(message)
+        self.current = current
 
 
 @dataclass
@@ -177,6 +186,38 @@ def log(project: Project, item: Item, text: str, who: str, now: datetime) -> Res
     """Add a note to an item's log."""
     _save(item, item.fields, text, who, now)
     return Result(f"logged {item.id} {project.relative(item.path)}")
+
+
+def describe(
+    project: Project, item: Item, description: str, base: str, who: str, now: datetime
+) -> Result:
+    """Replace an item's description: the text before its ## Subtasks or ## Log section.
+
+    `base` is the description the edit started from. If the file's description isn't that any
+    more, nothing is written and ConflictError carries the one on disk. Changes elsewhere in the
+    file, such as new log lines, don't count, and are kept.
+    """
+    if item.description != base.strip():
+        raise ConflictError(
+            f"the description of {item.id} changed while you were editing it", item.description
+        )
+    text = description.strip()
+    if text == item.description:
+        return Result(f"{item.id} already has that description")
+    if find_section(text.split("\n"), LOG_HEADING) or find_section(
+        text.split("\n"), SUBTASKS_HEADING
+    ):
+        raise EditError("a description can't have a ## Subtasks or ## Log section of its own")
+    lines = item.body.split("\n")
+    starts = [
+        section[0]
+        for heading in (SUBTASKS_HEADING, LOG_HEADING)
+        if (section := find_section(lines, heading)) is not None
+    ]
+    rest = "\n".join(lines[min(starts) :]) if starts else ""
+    body = f"{text}\n\n{rest}" if text else rest
+    _save(item, item.fields, "edited the description", who, now, body)
+    return Result(f"updated the description of {item.id} {project.relative(item.path)}")
 
 
 def set_(

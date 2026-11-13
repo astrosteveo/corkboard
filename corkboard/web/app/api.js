@@ -34,6 +34,11 @@ export async function write(path, data) {
   } catch {
     answer = null;
   }
-  if (!response.ok) throw new Error(answer?.error ?? `The server answered ${response.status}.`);
+  if (!response.ok) {
+    const error = new Error(answer?.error ?? `The server answered ${response.status}.`);
+    error.status = response.status;
+    error.answer = answer;
+    throw error;
+  }
   return answer;
 }
