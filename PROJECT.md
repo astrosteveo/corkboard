@@ -98,10 +98,10 @@ One developer working with Claude Code on their own repos. Not for teams.
 - 2026-11-12: Examples in specs and docs use the prefix `EX`, such as `EX-12`, never this repo's own `CB`. Why: any item ID in a doc counts as a mention of that item, so an example with a real ID would link to the wrong item.
 - 2026-11-12: Claude squash-merges each PR itself once CI passes, and moves on to the next item. Why: the user chose not to review every PR first; they can review any of them afterwards on GitHub.
 - 2026-11-12: Work on Corkboard's own repo doesn't load the plugin from this folder (`--plugin-dir .`); it uses `bin/corkboard` directly. Plugin behavior is tried in a separate test repo with the plugin loaded from a copy. Why: Claude Code won't let a session edit the files of a plugin it has loaded, so loading this folder as the plugin blocks every edit to it.
+- 2026-11-12: Corkboard is public on GitHub under the MIT license, and installs from the astro-plugins marketplace. Turned down a private marketplace in this repo. Why: the user chose to publish; MIT and astro-plugins match their other plugins.
 
 ## Open questions
 
-- Will it be published, and under what license?
 - Leave out sprints and time tracking for v1? (Releases replace milestones.)
 
 ## Glossary

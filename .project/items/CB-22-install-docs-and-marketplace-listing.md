@@ -2,7 +2,7 @@
 id: CB-22
 type: task
 title: Install docs and marketplace listing
-status: todo
+status: in-progress
 priority: medium
 owner: claude
 created: 2026-11-12
@@ -14,10 +14,12 @@ A README that says what Corkboard is and how to install it, with the one-line pe
 Done when the plugin installs from the marketplace into a fresh session, and `corkboard init` and `/corkboard:next` work in a new repo.
 
 ## Subtasks
-- [ ] README
+- [x] README
 - [ ] astro-plugins marketplace entry
 - [ ] Install it and try it in a new repo
 
 ## Log
 - 2026-11-12 21:21 claude: created
 - 2026-11-12 21:27 claude: The repo is private, so installing from the marketplace only works on a machine where git is logged in to GitHub as the user. Confirm that works, or settle the open question about publishing first.
+- 2026-11-12 22:18 claude: moved to in-progress
+- 2026-11-12 22:19 claude: done subtask: README
