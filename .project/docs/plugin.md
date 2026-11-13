@@ -75,7 +75,7 @@ What it tells Claude to do:
 ### Finishing
 
 - An item is done when its subtasks are all ticked and the project's formatter, linter and tests pass.
-- Work that goes through a PR moves to `done` once the PR merges. Work committed without a PR moves to `done` right away.
+- Work that goes through a PR moves to `done` once the PR merges. Work committed without a PR moves to `done` before its last commit, so the item's file goes into that commit with the work.
 - When an epic's last open task or bug is done, move the epic to `done` too.
 
 ### Saying where things stand
@@ -89,7 +89,7 @@ Answer from `corkboard now`, `corkboard tree` and `corkboard list`, never by rea
 
 ### Rules
 
-- Header fields change only through `corkboard`. Open an item's file only to edit its description.
+- Header fields change only through `corkboard`. Open an item's file only to edit its description, or to reword or remove a subtask.
 - Never delete an item. Cancel it with a message saying why.
 - Don't change items the user owns unless they ask.
 - Prefer `corkboard` output to reading files: it costs fewer tokens and is always current.

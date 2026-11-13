@@ -9,7 +9,7 @@ allowed-tools: Bash(corkboard *)
 
 This repo keeps its work in `.project/` as Markdown files: releases, epics, tasks and bugs (together called items), and docs. The user follows the project through these files, the web app and the summary at the start of each session, so keep them true as you work. An item still marked in progress a day after its PR merged misleads the user, and so does work that has no item at all.
 
-`corkboard` is on your PATH, and it does the bookkeeping: IDs, file names, and log lines with who and when. Change an item's header fields, status, subtasks and log only through it. Open an item's file only to edit its description.
+`corkboard` is on your PATH, and it does the bookkeeping: IDs, file names, and log lines with who and when. Change an item's header fields, status, subtasks and log only through it. Open an item's file only to edit its description, or to reword or remove a subtask.
 
 ## Commands
 
@@ -58,7 +58,7 @@ Do these three steps before you edit any file, so the board shows the work while
 ## Finishing
 
 - An item is done when its subtasks are all ticked and the project's formatter, linter and tests pass.
-- Work that goes through a PR moves to `done` once the PR merges. Work committed without a PR moves to `done` right away.
+- Work that goes through a PR moves to `done` once the PR merges. Work committed without a PR moves to `done` before its last commit, so the item's file goes into that commit with the work.
 - When an epic's last open task or bug is done, move the epic to `done` too.
 
 ## Saying where things stand
