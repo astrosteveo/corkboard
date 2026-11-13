@@ -2,7 +2,7 @@
 id: CB-13
 type: task
 title: Load the project
-status: todo
+status: in-progress
 priority: high
 owner: claude
 created: 2026-11-12
@@ -21,3 +21,4 @@ Done when tests load this repo's own `.project/` and get each of those right.
 
 ## Log
 - 2026-11-12 21:21 claude: created
+- 2026-11-12 21:38 claude: moved to in-progress
