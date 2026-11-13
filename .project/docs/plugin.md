@@ -10,7 +10,7 @@ This repo is the plugin. The astro-plugins marketplace lists it by its GitHub re
 .claude-plugin/plugin.json
 bin/corkboard            the CLI, on Claude's PATH while the plugin is enabled
 corkboard/               the Python code: core library, CLI commands and web server
-web/                     the web app: HTML, CSS, JavaScript, and Preact, htm and marked as single files
+corkboard/web/           the web app: HTML, CSS, JavaScript, and Preact, htm and marked as single files
 tests/                   unittest tests
 hooks/hooks.json         the session-start hook
 skills/track/SKILL.md    the workflow, loaded by Claude
@@ -25,7 +25,7 @@ skills/ui/SKILL.md       /corkboard:ui
 - Tests run with `python3 -m unittest discover -s tests`. Formatting and linting use `uvx ruff format` and `uvx ruff check`.
 - Each skill holds everything it needs in its own text. Claude Code asks before reading files outside the project, and an installed plugin always is outside it.
 - Plugins can't ship permission rules. Each skill pre-approves `corkboard` with `allowed-tools: Bash(corkboard *)` while it's active. For other turns, the README tells the user to add `Bash(corkboard *)` to their settings once.
-- To run `corkboard` in their own terminal, outside Claude Code, the user installs it as a Python tool: `uv tool install git+https://github.com/astrosteveo/corkboard`, built from `pyproject.toml`. The plugin itself never uses that package.
+- To run `corkboard` in their own terminal, outside Claude Code, the user installs it as a Python tool: `uv tool install git+https://github.com/astrosteveo/corkboard`, built from `pyproject.toml`. The plugin itself never uses that package. The web app is inside the `corkboard/` package so that installed copy has it too.
 
 ## Session-start hook
 

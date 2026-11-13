@@ -20,3 +20,6 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 packages = ["corkboard"]
+
+[tool.setuptools.package-data]
+corkboard = ["web/**/*"]

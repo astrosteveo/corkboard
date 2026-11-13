@@ -27,3 +27,5 @@ jobs:
       - run: uvx ruff check
       # The terminal install: build the package from this checkout and run the command.
       - run: uvx --from . corkboard help
+      # The web app must be in the package too, or corkboard ui from that install has no page.
+      - run: uv build --wheel --out-dir dist && python3 -m zipfile -l dist/*.whl | grep corkboard/web/index.html
