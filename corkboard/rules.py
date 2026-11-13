@@ -7,7 +7,8 @@ names, log format and so on) belong to `corkboard check`.
 from __future__ import annotations
 
 import re
-from collections.abc import Mapping
+from collections import deque
+from collections.abc import Iterable, Mapping
 
 from . import header
 from .project import OWNERS, PRIORITIES, STATUSES, TYPES, Project
@@ -64,6 +65,26 @@ def field_problems(
             elif project.item(linked) is None:
                 problems.append(f"{key} names {linked}, and there's no such item")
     return problems
+
+
+def blocking_chain(project: Project, item_id: str, blockers: Iterable[str]) -> list[str] | None:
+    """A chain of blocked_by from one of these blockers back to the item, such as
+    [EX-2, EX-3, EX-2] for EX-2 blocked by EX-3 while EX-3 is blocked by EX-2. The shortest one,
+    or None when there's none."""
+    queue = deque([item_id, blocker] for blocker in blockers if blocker != item_id)
+    seen: set[str] = set()
+    while queue:
+        chain = queue.popleft()
+        last = chain[-1]
+        if last == item_id:
+            return chain
+        if last in seen:
+            continue
+        seen.add(last)
+        other = project.item(last)
+        if other is not None:
+            queue.extend([*chain, next_id] for next_id in other.blocked_by)
+    return None
 
 
 def _show(value: header.Value) -> str:

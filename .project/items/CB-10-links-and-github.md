@@ -2,7 +2,7 @@
 id: CB-10
 type: epic
 title: Links and GitHub
-status: in-progress
+status: done
 priority: medium
 owner: claude
 created: 2026-11-12
@@ -13,3 +13,4 @@ Links in the item panel, commits and PRs in `corkboard show` and the web app, PR
 ## Log
 - 2026-11-12 21:21 claude: created
 - 2026-11-13 16:35 claude: moved to in-progress
+- 2026-11-13 17:28 claude: moved to done

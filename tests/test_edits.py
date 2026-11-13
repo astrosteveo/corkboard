@@ -253,6 +253,10 @@ class SetTest(EditTest):
             ({"title": " "}, "title can't be empty"),
             ({"type": "epic"}, "an epic stays an epic"),
             ({"related": "EX-9"}, "related can't name the item itself"),
+            (
+                {"blocked_by": "EX-12"},
+                "EX-9 would be blocked by itself through EX-9 → EX-12 → EX-9",
+            ),
         ]
         for values, message in cases:
             with self.subTest(message=message):
@@ -260,6 +264,57 @@ class SetTest(EditTest):
                 with self.assertRaises(EditError) as raised:
                     edits.set_(project, item, values, "me", NOW)
                 self.assertIn(message, str(raised.exception))
+
+
+class BlockingCycleTest(EditTest):
+    """EX-12 is blocked by EX-9. A blocked_by that leads back to the item is refused."""
+
+    def setUp(self):
+        super().setUp()
+        self.fixture.item("EX-13", blocked_by=["EX-12"])
+        self.fixture.item("EX-14")
+
+    def refused(self, item_id, values):
+        project, item = self.item(item_id)
+        before = item.path.read_text(encoding="utf-8")
+        with self.assertRaises(EditError) as raised:
+            edits.set_(project, item, values, "me", NOW)
+        self.assertEqual(item.path.read_text(encoding="utf-8"), before)
+        return str(raised.exception)
+
+    def test_the_cli_prints_the_chain_and_writes_nothing(self):
+        path = self.fixture.load().item("EX-9").path
+        before = path.read_text(encoding="utf-8")
+        code, out, err = self.fixture.run("set", "EX-9", "blocked_by=EX-12")
+        self.assertEqual(
+            (code, out, err),
+            (1, "", "error: EX-9 would be blocked by itself through EX-9 → EX-12 → EX-9\n"),
+        )
+        self.assertEqual(path.read_text(encoding="utf-8"), before)
+
+    def test_a_chain_back_to_the_item_is_refused(self):
+        self.assertEqual(
+            self.refused("EX-9", {"blocked_by": "EX-14,EX-13"}),
+            "EX-9 would be blocked by itself through EX-9 → EX-13 → EX-12 → EX-9",
+        )
+
+    def test_the_shortest_chain_is_shown(self):
+        self.assertEqual(
+            self.refused("EX-9", {"blocked_by": "EX-13,EX-12"}),
+            "EX-9 would be blocked by itself through EX-9 → EX-12 → EX-9",
+        )
+
+    def test_blockers_that_dont_lead_back_are_fine(self):
+        project, item = self.item("EX-13")
+        edits.set_(project, item, {"blocked_by": "EX-12,EX-9,EX-14"}, "me", NOW)
+        self.assertEqual(self.fixture.load().item("EX-13").blocked_by, ["EX-12", "EX-9", "EX-14"])
+
+    def test_only_blockers_the_change_adds_are_checked(self):
+        # A cycle written by hand is corkboard check's to report; other changes still go through.
+        self.fixture.item("EX-9", title="Card component", parent="EX-3", blocked_by=["EX-12"])
+        project, item = self.item("EX-9")
+        edits.set_(project, item, {"blocked_by": "EX-12,EX-14", "priority": "high"}, "me", NOW)
+        self.assertEqual(self.fixture.load().item("EX-9").priority, "high")
 
 
 class ReleaseTest(EditTest):

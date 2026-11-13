@@ -252,6 +252,10 @@ def set_(
     # Report only the problems this change makes, not ones the item already had.
     before = rules.field_problems(project, item.fields, item.id)
     problems = [p for p in rules.field_problems(project, fields, item.id) if p not in before]
+    added = [b for b in fields.get("blocked_by") or [] if b not in item.blocked_by]
+    chain = rules.blocking_chain(project, item.id, added)
+    if chain:
+        problems.append(f"{item.id} would be blocked by itself through {' → '.join(chain)}")
     if problems:
         raise EditError("; ".join(problems))
 
