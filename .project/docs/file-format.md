@@ -172,7 +172,7 @@ A subtask is only done or not done. It has no owner, labels or log of its own. I
 
 Nothing about commits or pull requests is stored in item files. They're found by the item's ID appearing in them:
 
-- A commit belongs to an item when its message contains the ID, such as `fix(board): keep card order on drop (EX-12)`. Commits are read from `git log`, so this works offline.
+- A commit belongs to an item when its message contains the ID, such as `fix(board): keep card order on drop (EX-12)`. Commits are read from `git log`, so this works offline. Only the current branch and the other local branches are read: a squash-merged pull request leaves its branch on the remote, and its commits would show up twice.
 - A pull request belongs to an item when the ID is in its title, its body or its branch name. Branch names use the lowercase ID and short title, such as `ex-12-drag-cards`.
 - IDs match exactly, so `EX-12` doesn't match `EX-120`. Branch names match regardless of case.
 - Pull requests are read from GitHub with `gh`, only when something shows them, and never written anywhere. Without `gh`, a GitHub remote or a connection, they just aren't shown.
