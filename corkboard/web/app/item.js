@@ -451,6 +451,28 @@ const LINK_TYPES = [
   ["duplicate_of", "Duplicate of"],
 ];
 
+// The changes that remove one link, as [item ID, fields] for each item that stores it. A related
+// link can be stored on both items.
+function removals(project, item, key, id) {
+  const without = (list, gone) => list.filter((other) => other !== gone);
+  const other = project.byId.get(id);
+  switch (key) {
+    case "blocked_by":
+      return [[item.id, { blocked_by: without(item.blocked_by, id) }]];
+    case "blocks":
+      return [[id, { blocked_by: without(other.blocked_by, item.id) }]];
+    case "duplicate_of":
+      return [[item.id, { duplicate_of: "" }]];
+    case "duplicated_by":
+      return [[id, { duplicate_of: "" }]];
+    default: // related_to
+      return [
+        ...(item.related.includes(id) ? [[item.id, { related: without(item.related, id) }]] : []),
+        ...(other?.related.includes(item.id) ? [[id, { related: without(other.related, item.id) }]] : []),
+      ];
+  }
+}
+
 function Links({ project, item, refresh }) {
   const [type, setType] = useState("blocked_by");
   const [text, setText] = useState("");
@@ -475,6 +497,22 @@ function Links({ project, item, refresh }) {
     if (chosen === "blocked_by" && item.blocked_by.includes(id)) return `${item.id} is already blocked by ${id}.`;
     if (chosen === "related" && item.related_to.includes(id)) return `${item.id} is already related to ${id}.`;
     return "";
+  }
+
+  async function remove(key, id) {
+    setSaving(true);
+    setError("");
+    try {
+      for (const [owner, fields] of removals(project, item, key, id)) {
+        await write(`/api/items/${encodeURIComponent(owner)}/set`, { fields });
+      }
+      await refresh();
+    } catch (failure) {
+      setError(failure.message);
+      await refresh();
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function add(event) {
@@ -519,6 +557,9 @@ function Links({ project, item, refresh }) {
                     <span class="id">${id}</span>
                     <span class="title muted">No such item</span>
                   </span>`}
+              <button class="icon-btn link-remove" type="button" disabled=${saving}
+                aria-label=${`Remove link: ${label} ${id}`} title="Remove this link"
+                onClick=${() => remove(key, id)}><${Icon} name="close" size=${14} /></button>
             </div>`;
           })}
         </div>`
