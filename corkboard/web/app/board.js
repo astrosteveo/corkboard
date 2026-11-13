@@ -4,9 +4,10 @@
 // at once and goes back if the save fails. Dropping on Waiting asks for the message first.
 import { write } from "./api.js";
 import { html, useEffect, useRef, useState } from "./lib.js";
+import { openNewItem } from "./newitem.js";
 import { navigate } from "./router.js";
 import { changedSince, useSeen } from "./seen.js";
-import { Avatar, High, STATUS_LABEL, pageTitle, panelHref, subtaskCount } from "./ui.js";
+import { Avatar, High, Icon, STATUS_LABEL, pageTitle, panelHref, subtaskCount } from "./ui.js";
 
 const SHOWN = ["todo", "in-progress", "waiting", "done"];
 const ALL = ["backlog", "todo", "in-progress", "waiting", "done", "cancelled"];
@@ -84,6 +85,10 @@ export function BoardPage({ project, route, refresh }) {
         <h1>Board</h1>
         <span class="muted">${releaseSummary(project, release, inRelease)}</span>
       </div>
+      <button class="btn primary" type="button"
+        onClick=${() => openNewItem({ release: release || "none", parent: filters.epic !== "none" ? filters.epic : undefined })}>
+        <${Icon} name="plus" size=${16} /> New item
+      </button>
     </header>
     <${Filters} project=${project} release=${release} inRelease=${inRelease} filters=${filters} set=${set} />
     ${error ? html`<p class="notice error" role="alert">${error}</p>` : null}

@@ -163,7 +163,7 @@ function Fields({ project, item, changes }) {
 
   return html`<div class="fields">
     <${Field} label="Status">
-      <select class=${`field-select status-${changes.shown("status", item.status)}`}
+      <select id="field-status" class=${`field-select status-${changes.shown("status", item.status)}`}
         value=${changes.shown("status", item.status)} disabled=${changes.busy}
         onChange=${(event) => {
           const status = event.currentTarget.value;
@@ -178,26 +178,26 @@ function Fields({ project, item, changes }) {
       </select>
     <//>
     <${Field} label="Priority">
-      <select class="field-select" value=${changes.shown("priority", item.priority)} disabled=${changes.busy}
+      <select id="field-priority" class="field-select" value=${changes.shown("priority", item.priority)} disabled=${changes.busy}
         onChange=${(event) => set("priority", event.currentTarget.value)}>
         <option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option>
       </select>
     <//>
     <${Field} label="Owner">
-      <select class="field-select" value=${changes.shown("owner", item.owner)} disabled=${changes.busy}
+      <select id="field-owner" class="field-select" value=${changes.shown("owner", item.owner)} disabled=${changes.busy}
         onChange=${(event) => set("owner", event.currentTarget.value)}>
         <option value="claude">Claude</option><option value="me">You</option>
       </select>
     <//>
     ${isWork
       ? html`<${Field} label="Type">
-          <select class="field-select" value=${changes.shown("type", item.type)} disabled=${changes.busy}
+          <select id="field-type" class="field-select" value=${changes.shown("type", item.type)} disabled=${changes.busy}
             onChange=${(event) => set("type", event.currentTarget.value)}>
             <option value="task">Task</option><option value="bug">Bug</option>
           </select>
         <//>
         <${Field} label="Epic">
-          <select class="field-select" value=${changes.shown("parent", item.parent ?? "")} disabled=${changes.busy}
+          <select id="field-epic" class="field-select" value=${changes.shown("parent", item.parent ?? "")} disabled=${changes.busy}
             onChange=${(event) => set("parent", event.currentTarget.value)}>
             <option value="">No epic</option>
             ${epics.map((epic) => html`<option value=${epic.id}>${epic.id} ${epic.title}</option>`)}
@@ -207,7 +207,7 @@ function Fields({ project, item, changes }) {
     <${Field} label="Release">
       ${inheritsRelease
         ? html`<a class="field-static" href=${releaseUrl(item.release)}>${item.release ?? "No release"} (from epic)</a>`
-        : html`<select class="field-select" value=${changes.shown("release", item.release ?? "")} disabled=${changes.busy}
+        : html`<select id="field-release" class="field-select" value=${changes.shown("release", item.release ?? "")} disabled=${changes.busy}
             onChange=${(event) => set("release", event.currentTarget.value)}>
             <option value="">No release</option>
             ${project.releases.map((release) => html`<option value=${release.name}>${release.name}</option>`)}
@@ -324,8 +324,11 @@ function Description({ item, refresh }) {
   </section>`;
 }
 
+// A labelled field: the control inside has id="field-<label>", so its name is the label alone.
 function Field({ label, children }) {
-  return html`<label class="field"><span class="field-label">${label}</span>${children}</label>`;
+  return html`<div class="field">
+    <label class="field-label" for=${`field-${label.toLowerCase()}`}>${label}</label>${children}
+  </div>`;
 }
 
 function Labels({ item, changes }) {
