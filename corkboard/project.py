@@ -262,6 +262,30 @@ class Project:
         active = [release for release in self.releases.values() if release.status == "active"]
         return active[0] if active else None
 
+    def mentions(self, item_id: str) -> list[str]:
+        """Docs (as paths under .project/) and other items whose text mentions this ID.
+
+        A mention is the ID on its own, so EX-12 doesn't count inside EX-120 or XEX-12. Only an
+        item's body is searched; its header links are shown separately.
+        """
+        pattern = re.compile(rf"(?<![A-Za-z0-9]){re.escape(item_id)}(?![0-9])")
+        found: list[str] = []
+        docs = self.root / "docs"
+        if docs.is_dir():
+            for path in sorted(docs.rglob("*.md"), key=lambda p: natural_key(p.as_posix())):
+                try:
+                    text = path.read_text(encoding="utf-8")
+                except (OSError, UnicodeDecodeError):
+                    continue
+                if pattern.search(text):
+                    found.append(path.relative_to(self.root).as_posix())
+        found += [
+            other.id
+            for other in self.sorted_items()
+            if other.id != item_id and pattern.search(other.body)
+        ]
+        return found
+
 
 def find_root(start: Path) -> Path | None:
     """The .project/ folder for `start`: the first one up from it that has a config.yml."""
