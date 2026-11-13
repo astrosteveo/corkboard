@@ -9,6 +9,7 @@ import sys
 import tempfile
 import threading
 import unittest
+from datetime import datetime
 from pathlib import Path
 
 from helpers import LOG, REPO, Fixture, run_cli
@@ -40,8 +41,10 @@ def get(port: int, path: str, host: str | None = None) -> tuple[int, str, bytes]
 class ServerTest(unittest.TestCase):
     """A real server on a free port, serving a Fixture repo."""
 
-    def serve(self, fixture: Fixture, ports=(0,), web: Path = server.WEB) -> server.Server:
-        running = server.start(fixture.root, ports, web)
+    def serve(
+        self, fixture: Fixture, ports=(0,), web=server.WEB, clock=datetime.now
+    ) -> server.Server:
+        running = server.start(fixture.root, ports, web, clock)
         # A short poll interval, so shutdown doesn't wait the default half second.
         thread = threading.Thread(target=running.serve_forever, args=(0.01,), daemon=True)
         thread.start()

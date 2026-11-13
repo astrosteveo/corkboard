@@ -6,7 +6,9 @@ that isn't a file in web/ or under /api/ gets index.html, since the page routes 
 /releases/v0.1 and /items/EX-12 itself.
 
 A request whose Host isn't this server's own address is refused. Without that, a site could point
-its own domain name at 127.0.0.1 (DNS rebinding) and read the project from the browser.
+its own domain name at 127.0.0.1 (DNS rebinding) and read the project from the browser. A change
+(POST) must also come from the app's own page, by its Origin header, and be JSON, which a form on
+another site can't send. Changes go through api.write one at a time, logged as `me`.
 
 Before starting, it asks each port in PORTS whether a corkboard server for this repo is already
 there, and if one is, it prints that server's URL instead of starting another.
@@ -18,19 +20,23 @@ import errno
 import http.client
 import json
 import socketserver
-from collections.abc import Iterable
+import threading
+from collections.abc import Callable, Iterable
+from datetime import datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
 from . import api
 from .cli import CommandError, Context, usage_error
+from .edits import EditError
 from .project import load
 
 HOST = "127.0.0.1"
 PORTS = range(4747, 4767)
 WEB = Path(__file__).resolve().parent / "web"
 PROBE_TIMEOUT = 0.5
+MAX_BODY = 1_000_000
 
 # Scripts and styles only from the app's own files, nothing inline, and no framing by other pages.
 # Markdown already renders with raw HTML off; this stops a script even if something slips through.
@@ -78,11 +84,20 @@ class Server(ThreadingHTTPServer):
     # SO_REUSEPORT would let a second server bind a port that's taken, instead of moving on.
     allow_reuse_port = False
 
-    def __init__(self, root: Path, port: int, web: Path = WEB) -> None:
+    def __init__(
+        self,
+        root: Path,
+        port: int,
+        web: Path = WEB,
+        clock: Callable[[], datetime] = datetime.now,
+    ) -> None:
         self.root = root
         self.web = web.resolve()
+        self.clock = clock
+        self.write_lock = threading.Lock()
         super().__init__((HOST, port), Handler)
         self.hosts = {f"localhost:{self.port}", f"{HOST}:{self.port}"}
+        self.origins = {f"http://{host}" for host in self.hosts}
 
     def server_bind(self) -> None:
         # HTTPServer's own version looks up the machine's full domain name, which can stall.
@@ -98,12 +113,17 @@ class Server(ThreadingHTTPServer):
         return f"http://localhost:{self.port}"
 
 
-def start(root: Path, ports: Iterable[int], web: Path = WEB) -> Server:
+def start(
+    root: Path,
+    ports: Iterable[int],
+    web: Path = WEB,
+    clock: Callable[[], datetime] = datetime.now,
+) -> Server:
     """A server for the repo on the first free port. It answers once serve_forever runs."""
     ports = list(ports)
     for port in ports:
         try:
-            return Server(root, port, web)
+            return Server(root, port, web, clock)
         except OSError as error:
             if error.errno != errno.EADDRINUSE:
                 raise
@@ -154,6 +174,42 @@ class Handler(BaseHTTPRequestHandler):
             self._json(404, {"error": f"there's no {path}"})
         else:
             self._static(path)
+
+    def do_POST(self) -> None:
+        if self.headers.get("Host") not in self.server.hosts:
+            self._json(403, {"error": "this server only answers to localhost"})
+            return
+        if self.headers.get("Origin") not in self.server.origins:
+            self._json(403, {"error": "changes are only accepted from Corkboard's own page"})
+            return
+        if self.headers.get_content_type() != "application/json":
+            self._json(415, {"error": "send changes as application/json"})
+            return
+        try:
+            length = int(self.headers.get("Content-Length") or 0)
+        except ValueError:
+            length = -1
+        if not 0 <= length <= MAX_BODY:
+            self._json(413, {"error": f"a change can be at most {MAX_BODY} bytes"})
+            return
+        try:
+            data = json.loads(self.rfile.read(length) or b"{}")
+        except ValueError:
+            self._json(400, {"error": "the body isn't valid JSON"})
+            return
+        if not isinstance(data, dict):
+            self._json(400, {"error": "the body must be a JSON object"})
+            return
+        path = urlsplit(self.path).path
+        with self.server.write_lock:
+            try:
+                answer = api.write(load(self.server.root), path, data, self.server.clock())
+            except api.ApiError as error:
+                self._json(error.status, {"error": str(error)})
+            except EditError as error:
+                self._json(400, {"error": str(error)})
+            else:
+                self._json(200, answer)
 
     def log_message(self, format: str, *args: object) -> None:
         pass  # a line per request would bury the URL in the terminal

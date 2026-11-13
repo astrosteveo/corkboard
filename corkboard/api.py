@@ -1,14 +1,40 @@
-"""The web app's read API: the whole project as one JSON-ready view.
+"""The web app's API, apart from HTTP: the project as one view, and the changes the page makes.
 
-Everything here comes from the core library the CLI uses, so the pages show what `corkboard now`,
-`next`, `show` and `tree` would: the effective release, open blockers, waiting messages, answered
-items and the order of work. The page only arranges it.
+Reading: everything comes from the core library the CLI uses, so the pages show what `corkboard
+now`, `next`, `show` and `tree` would: the effective release, open blockers, waiting messages,
+answered items and the order of work. The page only arranges it.
+
+Writing: each change calls the same function in edits.py as its CLI command, so the file ends up
+the same either way. Changes from the page are always logged as `me`.
+
+    POST /api/items                  {"type", "title", "fields": {…}, "body"}     corkboard new
+    POST /api/items/<ID>/move        {"status", "message"}                       corkboard move
+    POST /api/items/<ID>/set         {"fields": {"priority": "high", …}}         corkboard set
+    POST /api/items/<ID>/sub         {"action": "add|done|undo", "value"}        corkboard sub
+    POST /api/items/<ID>/log         {"text"}                                    corkboard log
+    POST /api/releases/<name>        {"fields": {"status", "date"}, "goal"}      corkboard release
+
+Field values are text as typed after field= in the CLI; a list such as labels can also be a JSON
+list. The answer is {"line", "warnings"}, plus "id" for a new item.
 """
 
 from __future__ import annotations
 
-from . import work
-from .project import Item, Project, Release
+from collections.abc import Mapping
+from datetime import datetime
+
+from . import edits, work
+from .project import TYPES, Item, Project, Release
+
+WHO = "me"
+
+
+class ApiError(Exception):
+    """A request the API can't carry out, with the HTTP status to answer with."""
+
+    def __init__(self, status: int, message: str) -> None:
+        super().__init__(message)
+        self.status = status
 
 
 def project_view(project: Project) -> dict:
@@ -66,3 +92,72 @@ def _item(project: Project, item: Item) -> dict:
         done, total = project.epic_progress(item)
         view["progress"] = {"done": done, "total": total}
     return view
+
+
+def write(project: Project, path: str, data: Mapping, now: datetime) -> dict:
+    """Carry out one change from the page. Raises ApiError, or EditError for a refused change."""
+    parts = [part for part in path.split("/") if part][1:]  # after "api"
+    if parts == ["items"]:
+        item_type = _text(data, "type")
+        if item_type not in TYPES:
+            allowed = ", ".join(TYPES)
+            raise ApiError(400, f'"{item_type}" isn\'t an item type. Use one of: {allowed}')
+        title, fields, body = _text(data, "title"), _fields(data), _text(data, "body")
+        result = edits.new(project, item_type, title, fields, body, WHO, now)
+    elif len(parts) == 3 and parts[0] == "items":
+        item = _find_item(project, parts[1])
+        action = parts[2]
+        if action == "move":
+            message = _text(data, "message")
+            result = edits.move(project, item, _text(data, "status"), message, WHO, now)
+        elif action == "set":
+            result = edits.set_(project, item, _fields(data), WHO, now)
+        elif action == "sub":
+            result = edits.sub(project, item, _text(data, "action"), _text(data, "value"), WHO, now)
+        elif action == "log":
+            text = " ".join(_text(data, "text").split())
+            if not text:
+                raise ApiError(400, "a note needs some text")
+            result = edits.log(project, item, text, WHO, now)
+        else:
+            raise ApiError(404, f"there's no {path}")
+    elif len(parts) == 2 and parts[0] == "releases":
+        goal = data.get("goal")
+        if goal is not None and not isinstance(goal, str):
+            raise ApiError(400, "goal must be text")
+        result = edits.release(project, parts[1], _fields(data), goal)
+    else:
+        raise ApiError(404, f"there's no {path}")
+    answer: dict = {"line": result.line, "warnings": result.warnings}
+    if result.item_id:
+        answer["id"] = result.item_id
+    return answer
+
+
+def _find_item(project: Project, item_id: str) -> Item:
+    item = project.item(item_id)
+    if item is None:
+        raise ApiError(404, f"there's no item {item_id.upper()}")
+    return item
+
+
+def _text(data: Mapping, key: str) -> str:
+    value = data.get(key, "")
+    if not isinstance(value, str):
+        raise ApiError(400, f"{key} must be text")
+    return value
+
+
+def _fields(data: Mapping) -> dict[str, str]:
+    """The request's fields as the CLI would get them after field=: lists joined with commas."""
+    fields = data.get("fields", {})
+    if not isinstance(fields, dict):
+        raise ApiError(400, 'fields must be an object, such as {"priority": "high"}')
+    typed: dict[str, str] = {}
+    for key, value in fields.items():
+        if isinstance(value, list) and all(isinstance(part, str) for part in value):
+            value = ",".join(value)
+        if not isinstance(value, str):
+            raise ApiError(400, f"{key} must be text or a list of text")
+        typed[key] = value
+    return typed
