@@ -223,8 +223,11 @@ class ReadApiTest(ServerTest):
                 "labels": ["ui", "board"],
                 "blocked_by": [],
                 "open_blockers": [],
+                "blocks": ["EX-5"],
                 "related": [],
+                "related_to": [],
                 "duplicate_of": None,
+                "duplicated_by": [],
                 "path": ".project/items/EX-2-item-ex-2.md",
                 "description": "Drag cards.",
                 "subtasks": [

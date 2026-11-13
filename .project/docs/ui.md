@@ -174,7 +174,7 @@ Mentioned in: Architecture (doc) · EX-14
 - Every header field can be changed in place. Release shows "(from epic)" when it's inherited, and can't be changed there.
 - **Edit** turns the description into a Markdown text box with a preview.
 - **Subtasks** are ticked, unticked and added in place.
-- **Links** shows both sides of every link. **+ Add link** takes a link type and an item ID.
+- **Links** shows both sides of every link, with each item's status. **+ Add link** takes a link type (blocked by, related to or duplicate of) and an item ID, or just its number, and stores the link on this item. It refuses an unknown ID, a link to the item itself and a link that's already there. An item is a duplicate of one item at most, so that type is offered only while it has none.
 - **Development** shows the branch, pull requests and commits that mention the item's ID. It's hidden when there are none.
 - **Activity** is the log. Notes you add go in as `me` lines.
 - For an epic, the subtasks section is replaced by its tasks and bugs with their statuses and progress.

@@ -124,6 +124,7 @@ export function ItemView({ project, item, refresh }) {
     ${item.type === "epic"
       ? html`<${EpicTasks} project=${project} epic=${item} />`
       : html`<${Subtasks} item=${item} changes=${changes} />`}
+    <${Links} project=${project} item=${item} refresh=${refresh} />
     <${Activity} item=${item} changes=${changes} />
     <${Mentions} project=${project} item=${item} />
   </div>`;
@@ -409,6 +410,127 @@ function EpicTasks({ project, epic }) {
           )}
         </div>`
       : html`<p class="empty">No tasks yet.</p>`}
+  </section>`;
+}
+
+// Both sides of every link, in the order of the file format's table. Each link is stored on one
+// item: the ones this item stores, and the ones other items store that name it.
+const LINK_ROWS = [
+  ["blocked_by", "Blocked by"],
+  ["blocks", "Blocks"],
+  ["related_to", "Related to"],
+  ["duplicate_of", "Duplicate of"],
+  ["duplicated_by", "Duplicated by"],
+];
+
+// What + Add link can add: the links an item stores itself, so adding one changes only its file.
+const LINK_TYPES = [
+  ["blocked_by", "Blocked by"],
+  ["related", "Related to"],
+  ["duplicate_of", "Duplicate of"],
+];
+
+function Links({ project, item, refresh }) {
+  const [type, setType] = useState("blocked_by");
+  const [text, setText] = useState("");
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+  useEffect(() => {
+    setText("");
+    setError("");
+  }, [item.id]);
+  // An item is a duplicate of one item at most, so that type is offered only while it has none.
+  const types = LINK_TYPES.filter(([field]) => field !== "duplicate_of" || !item.duplicate_of);
+  const chosen = types.some(([field]) => field === type) ? type : "blocked_by";
+  const rows = LINK_ROWS.flatMap(([key, label]) => {
+    const ids = key === "duplicate_of" ? (item.duplicate_of ? [item.duplicate_of] : []) : item[key];
+    return ids.map((id) => ({ key, label, id }));
+  });
+
+  // What's wrong with linking to this ID, or "" if nothing is.
+  function problem(id) {
+    if (id === item.id) return "An item can't link to itself.";
+    if (!project.byId.has(id)) return `There's no item ${id}.`;
+    if (chosen === "blocked_by" && item.blocked_by.includes(id)) return `${item.id} is already blocked by ${id}.`;
+    if (chosen === "related" && item.related_to.includes(id)) return `${item.id} is already related to ${id}.`;
+    return "";
+  }
+
+  async function add(event) {
+    event.preventDefault();
+    const typed = text.trim().toUpperCase();
+    if (!typed) return;
+    const id = /^\d+$/.test(typed) ? `${project.prefix}-${typed}` : typed;
+    const wrong = problem(id);
+    if (wrong) return setError(wrong);
+    const value = chosen === "duplicate_of" ? id : [...item[chosen], id];
+    setSaving(true);
+    setError("");
+    try {
+      await write(`/api/items/${encodeURIComponent(item.id)}/set`, { fields: { [chosen]: value } });
+      await refresh();
+      setText("");
+      setType("blocked_by");
+    } catch (failure) {
+      setError(failure.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return html`<section class="item-section">
+    <h2 class="section-label">Links</h2>
+    ${rows.length
+      ? html`<div class="links">
+          ${rows.map(({ key, label, id }) => {
+            const other = project.byId.get(id);
+            return html`<div class="link-row" key=${`${key}-${id}`}>
+              <span class="link-kind small muted">${label}</span>
+              ${other
+                ? html`<a class="row-link" href=${panelHref(id)}>
+                    <span class="status-icon" aria-hidden="true">${STATUS_ICON[other.status]}</span>
+                    <span class="id">${id}</span>
+                    <span class="title">${other.title}</span>
+                    <span class="small muted">${STATUS_LABEL[other.status]}</span>
+                  </a>`
+                : html`<span class="row-link">
+                    <span class="status-icon" aria-hidden="true"></span>
+                    <span class="id">${id}</span>
+                    <span class="title muted">No such item</span>
+                  </span>`}
+            </div>`;
+          })}
+        </div>`
+      : null}
+    <form class="inline-add link-add" onSubmit=${add}>
+      <label class="visually-hidden" for="link-type">Link type</label>
+      <select id="link-type" class="select" value=${chosen} disabled=${saving}
+        onChange=${(event) => setType(event.currentTarget.value)}>
+        ${types.map(([field, label]) => html`<option value=${field}>${label}</option>`)}
+      </select>
+      <label class="visually-hidden" for="link-add">Item ID to link to</label>
+      <input id="link-add" class="input" list="link-ids"
+        placeholder=${`+ Add link: item ID, such as ${project.prefix}-12`}
+        value=${text} disabled=${saving} autocomplete="off"
+        onInput=${(event) => {
+          setText(event.currentTarget.value);
+          setError("");
+        }}
+        onKeyDown=${(event) => {
+          if (event.key === "Escape" && text) {
+            event.preventDefault(); // clear the box first; a second Esc closes the panel
+            setText("");
+            setError("");
+          }
+        }} />
+      <datalist id="link-ids">
+        ${project.items
+          .filter((other) => other.id !== item.id)
+          .map((other) => html`<option value=${other.id}>${other.title}</option>`)}
+      </datalist>
+      ${text.trim() ? html`<button class="btn" type="submit" disabled=${saving}>Add link</button>` : null}
+    </form>
+    ${error ? html`<p class="notice error" role="alert">${error}</p>` : null}
   </section>`;
 }
 

@@ -21,7 +21,7 @@ def build(fixture: Fixture) -> Fixture:
         "Drag cards.\n\n## Subtasks\n- [ ] Find the column\n- [x] Save it\n" + LOG,
         parent="EX-1",
     )
-    fixture.item("EX-3", WAITING, status="waiting", type="bug", parent="EX-1")
+    fixture.item("EX-3", WAITING, status="waiting", type="bug", parent="EX-1", related=["EX-2"])
     return fixture
 
 
@@ -143,6 +143,43 @@ class WriteApiTest(ServerTest):
             stdin=goal,
         )
 
+    def test_links(self):
+        # The page sends the item's whole list: the links it has plus the new one.
+        for item_id, arg, fields in (
+            ("EX-2", "blocked_by=EX-3", {"blocked_by": ["EX-3"]}),
+            ("EX-3", "related=EX-2,EX-1", {"related": ["EX-2", "EX-1"]}),
+            ("EX-3", "duplicate_of=EX-2", {"duplicate_of": "EX-2"}),
+        ):
+            with self.subTest(arg=arg):
+                self.assert_same_as_cli(
+                    ["set", item_id, arg], f"/api/items/{item_id}/set", {"fields": fields}
+                )
+
+    def test_a_link_shows_on_both_items(self):
+        fixture, running = self.serve_fixture()
+        status, answer = post(
+            running.port, "/api/items/EX-2/set", {"fields": {"blocked_by": ["EX-3"]}}
+        )
+        self.assertEqual(status, 200, answer)
+        status, answer = post(
+            running.port, "/api/items/EX-3/set", {"fields": {"duplicate_of": "EX-2"}}
+        )
+        self.assertEqual(status, 200, answer)
+        items = {item["id"]: item for item in self.api(running)["items"]}
+        two, three = items["EX-2"], items["EX-3"]
+        self.assertEqual((two["blocked_by"], three["blocks"]), (["EX-3"], ["EX-2"]))
+        # EX-3 stores the related link; both items show it.
+        self.assertEqual((three["related"], two["related"]), (["EX-2"], []))
+        self.assertEqual((three["related_to"], two["related_to"]), (["EX-2"], ["EX-3"]))
+        self.assertEqual((three["duplicate_of"], two["duplicated_by"]), ("EX-2", ["EX-3"]))
+
+        code, out, err = run_cli(fixture.repo, "show", "EX-3")
+        self.assertEqual(code, 0, err)
+        self.assertIn("blocks: EX-2 Item EX-2 (todo)\n", out)
+        code, out, err = run_cli(fixture.repo, "show", "EX-2")
+        self.assertIn("blocked by: EX-3 Item EX-3 (waiting)\n", out)
+        self.assertIn("duplicated by: EX-3 Item EX-3 (waiting)\n", out)
+
     def test_describe_conflict_answers_409_with_the_version_on_disk(self):
         fixture, running = self.serve_fixture()
         status, answer = post(
@@ -229,6 +266,18 @@ class WriteApiTest(ServerTest):
             ),
             ("/api/items/EX-2/move", {"status": 3}, 400, "status must be text"),
             ("/api/items/EX-2/log", {"text": "  "}, 400, "a note needs some text"),
+            (
+                "/api/items/EX-2/set",
+                {"fields": {"blocked_by": ["EX-99"]}},
+                400,
+                "blocked_by names EX-99, and there's no such item",
+            ),
+            (
+                "/api/items/EX-2/set",
+                {"fields": {"related": ["EX-3", "EX-2"]}},
+                400,
+                "related can't name the item itself",
+            ),
             (
                 "/api/items/EX-2/set",
                 {"fields": "priority=high"},
