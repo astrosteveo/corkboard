@@ -15,7 +15,8 @@ The user ran `/corkboard:done` to finish an item. The arguments are: `$ARGUMENTS
 3. Run the project's formatter, linter and tests, as its CLAUDE.md, README or config says, and fix what fails. If the project has none, say so.
 4. Tick any subtask you've just finished with `corkboard sub <ID> done <N>`. If a choice made along the way is worth keeping, log it with `corkboard log <ID> "…"`.
 5. Close the item, so its file goes into the same commit as the work:
-   - **With a GitHub remote** (`git remote -v`): run `corkboard move <ID> waiting "PR ready for review"`. Commit what's left with the ID in the message, push the branch, and open a pull request with the ID in its title (`gh pr create`). If the user has said you merge your own PRs, merge it once its checks pass, then run `corkboard move <ID> done` on the default branch and commit that.
+   - **With a GitHub remote** (`git remote -v`), where the user reviews PRs: run `corkboard move <ID> waiting "PR ready for review"`, commit what's left with the ID in the message, push the branch, and open a pull request with the ID in its title (`gh pr create`). The item moves to `done` once the PR merges.
+   - **With a GitHub remote, where the user has said you merge your own PRs:** run `corkboard move <ID> done`, commit what's left with the ID in the message, push, open the pull request, and merge it once its checks pass.
    - **Without one:** run `corkboard move <ID> done`, then commit what's left with the ID in the message.
 
    In both cases, commit the way the user's own rules say.
