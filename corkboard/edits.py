@@ -55,10 +55,12 @@ class EditError(Exception):
 
 @dataclass
 class Result:
-    """What an edit did: the line the CLI prints, and warnings that didn't stop it."""
+    """What an edit did: the line the CLI prints, warnings that didn't stop it, and for `new`, the
+    ID it gave the item."""
 
     line: str
     warnings: list[str] = field(default_factory=list)
+    item_id: str | None = None
 
 
 def new(
@@ -103,7 +105,7 @@ def new(
     if path.exists():
         raise EditError(f"{project.relative(path)} already exists")
     write.write_file(path, _text(write.ordered_fields(fields), body))
-    return Result(f"created {item_id} {project.relative(path)}")
+    return Result(f"created {item_id} {project.relative(path)}", item_id=item_id)
 
 
 def move(

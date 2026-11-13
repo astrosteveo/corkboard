@@ -31,7 +31,9 @@ class NewTest(EditTest):
         result = edits.new(
             self.fixture.load(), "bug", "Cards  overlap", {"labels": "ui, board"}, "", "me", NOW
         )
-        self.assertEqual(result, Result("created EX-13 .project/items/EX-13-cards-overlap.md"))
+        self.assertEqual(
+            result, Result("created EX-13 .project/items/EX-13-cards-overlap.md", item_id="EX-13")
+        )
         item = self.fixture.load().item("EX-13")
         self.assertEqual(
             (item.type, item.title, item.labels), ("bug", "Cards overlap", ["ui", "board"])
