@@ -121,4 +121,4 @@ One developer working with Claude Code on their own repos. Not for teams.
 
 ## Status
 
-Building v0.1 (`bin/corkboard tree` will show it once CB-19 lands). The core library reads and writes `.project/`, and the CLI has `show`, `new`, `move`, `sub` and `log`. Since CB-15, this repo's items change only through `corkboard`. The web app's design is in `.project/docs/ui.md`, with a clickable mockup the user likes (https://claude.ai/artifact/7WHHdLRhsnAn4oUeEuBw1k). Next: CB-16, `now` and `next`, then the plugin's session-start hook.
+v0.1 is released and installed: the core library, the `corkboard` command and the Claude Code plugin (session-start summary, the track skill, `/corkboard:plan`, `/corkboard:next` and `/corkboard:done`). The repo is public under MIT and installs from astro-plugins, and Corkboard tracks its own work. The web app's design is in `.project/docs/ui.md`, with a clickable mockup the user likes (https://claude.ai/artifact/7WHHdLRhsnAn4oUeEuBw1k). Next: plan v0.2, the web app, with `/corkboard:plan`; its epics are CB-4 to CB-7.

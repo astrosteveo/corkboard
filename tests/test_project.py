@@ -21,7 +21,7 @@ class ThisRepoTest(unittest.TestCase):
 
     def test_releases(self):
         self.assertEqual(list(self.project.releases)[:3], ["v0.1", "v0.2", "v0.3"])
-        self.assertEqual(self.project.active_release().name, "v0.1")
+        self.assertEqual(self.project.releases["v0.1"].status, "released")
 
     def test_structure(self):
         project = self.project
