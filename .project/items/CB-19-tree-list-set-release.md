@@ -2,7 +2,7 @@
 id: CB-19
 type: task
 title: tree, list, set, release
-status: todo
+status: in-progress
 priority: medium
 owner: claude
 created: 2026-11-12
@@ -21,3 +21,4 @@ Done when output tests for each command match `cli.md`, and `corkboard tree` on 
 
 ## Log
 - 2026-11-12 21:21 claude: created
+- 2026-11-12 22:04 claude: moved to in-progress
