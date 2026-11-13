@@ -2,7 +2,7 @@
 id: CB-12
 type: task
 title: "Header format: read and write"
-status: todo
+status: in-progress
 priority: high
 owner: claude
 created: 2026-11-12
@@ -21,3 +21,4 @@ Done when every header in this repo's `.project/` and every header example in th
 
 ## Log
 - 2026-11-12 21:21 claude: created
+- 2026-11-12 21:31 claude: moved to in-progress
