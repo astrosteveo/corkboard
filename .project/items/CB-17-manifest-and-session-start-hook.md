@@ -2,7 +2,7 @@
 id: CB-17
 type: task
 title: Manifest and session-start hook
-status: todo
+status: in-progress
 priority: medium
 owner: claude
 created: 2026-11-12
@@ -20,3 +20,4 @@ Done when a session started with `claude --plugin-dir .` has the `corkboard now`
 
 ## Log
 - 2026-11-12 21:21 claude: created
+- 2026-11-12 21:56 claude: moved to in-progress

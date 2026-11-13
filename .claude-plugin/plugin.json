@@ -1,0 +1,8 @@
+{
+  "name": "corkboard",
+  "version": "0.1.0",
+  "description": "A local issue tracker and wiki for one person working with Claude Code, kept as Markdown files in the repo's .project/ folder. Claude tracks its work with the corkboard command, and every session starts knowing what's in progress, what's next and what's waiting on you.",
+  "author": {
+    "name": "astrosteveo"
+  }
+}
