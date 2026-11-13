@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import TextIO
 
 from . import project as project_module
+from .edits import EditError
 from .project import Item, Project
 
 TITLE_WIDTH = 50
@@ -92,11 +93,7 @@ class Context:
 
     def relative(self, path: Path) -> str:
         """A path relative to the repo, the folder that holds .project/."""
-        repo = self.project().root.parent
-        try:
-            return path.resolve().relative_to(repo.resolve()).as_posix()
-        except ValueError:
-            return str(path)
+        return self.project().relative(path)
 
 
 def main(
@@ -129,7 +126,7 @@ def main(
             _command_help(ctx, command)
             return 0
         return command.run(ctx, args[1:]) or 0
-    except CommandError as error:
+    except (CommandError, EditError) as error:
         err.write(f"error: {error}\n")
         return 1
     except OSError as error:
@@ -213,7 +210,7 @@ def _utf8(stream: TextIO) -> TextIO:
 
 
 def _commands() -> dict[str, Command]:
-    from . import changes, check, show, summary, views
+    from . import changes, check, edits, show, summary, views
 
     commands = [
         Command(
@@ -267,7 +264,7 @@ def _commands() -> dict[str, Command]:
             'new <epic|task|bug> "Title" [field=value…]',
             "Create an item",
             "Creates an item with status=todo, priority=medium and owner=claude unless you set\n"
-            "them. Fields: " + ", ".join(changes.NEW_FIELDS) + ".\n"
+            "them. Fields: " + ", ".join(edits.NEW_FIELDS) + ".\n"
             "Lists are comma-separated, such as labels=ui,board.\n\n"
             "Text piped in becomes the body, so a description and a ## Subtasks checklist can go\n"
             "in with one command. corkboard writes the ## Log section itself.",
@@ -302,7 +299,7 @@ def _commands() -> dict[str, Command]:
             "set <ID> field=value…",
             "Change an item's other fields",
             "Changes header fields other than id, created and status, and logs the change.\n"
-            "Fields: " + ", ".join(changes.SET_FIELDS) + ". An empty value clears a field,\n"
+            "Fields: " + ", ".join(edits.SET_FIELDS) + ". An empty value clears a field,\n"
             "such as parent=. type only switches between task and bug. A new title renames\n"
             "the file.",
             changes.set_,
