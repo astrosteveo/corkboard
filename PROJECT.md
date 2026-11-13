@@ -91,6 +91,10 @@ One developer working with Claude Code on their own repos. Not for teams.
 - 2026-11-12: Item and release headers use a strict subset of YAML, specified in `.project/docs/file-format.md`. Why: the standard library has no YAML parser, and headers must stay valid YAML so GitHub still renders them.
 - 2026-11-12: Markdown renders with raw HTML turned off, and the web server only accepts changes from its own page. Why: the app can write files, so a doc in a cloned repo must never be able to run a script in it.
 - 2026-11-12: The name is Corkboard. The CLI, the plugin and its slash commands are all `corkboard` (`corkboard now`, `/corkboard:next`), and this repo's ID prefix is `CB`. Turned down Docket and Cairn, which several trackers for AI agents already use. Why: a board you pin cards and notes to covers both the board and the docs, and no tracker in this niche uses the name.
+- 2026-11-12: v0.1 is the Claude side (core library, CLI, plugin), v0.2 the web app, and v0.3 docs, the List view, links and GitHub. Why: being cheap and reliable for Claude ranks above the UI, the web app builds on a core that real use has proven, and Corkboard tracks its own build from v0.1.
+- 2026-11-12: Until CB-15 adds `new`, `move`, `sub` and `log`, this repo's item files are edited by hand in the strict format; after that, only through `corkboard`. Why: the project tracks itself from the start, and the hand-editing stretch stays short.
+- 2026-11-12: The repo is private on GitHub (astrosteveo/corkboard). Each item is built on its own branch and merged through a PR, with CI running the tests and ruff. Why: the user's CI runs on GitHub, and the plugin's own workflow expects PRs.
+- 2026-11-12: A release's `date` is optional, and v0.1 to v0.3 have none. Why: it's a hobby project without deadlines.
 
 ## Open questions
 
@@ -114,4 +118,4 @@ One developer working with Claude Code on their own repos. Not for teams.
 
 ## Status
 
-Design stage, no code yet. The file format, the CLI, the web app's screens and the Claude Code plugin are specified in `.project/docs/`, and the user likes the clickable mockup of the web app so far (https://claude.ai/artifact/7WHHdLRhsnAn4oUeEuBw1k). The stack and the name are chosen. Next: plan v0.1 as items in `.project/` and start building.
+No code yet. The design is specified in `.project/docs/`, and the user likes the clickable mockup of the web app so far (https://claude.ai/artifact/7WHHdLRhsnAn4oUeEuBw1k). v0.1 is planned as items in `.project/`: tasks CB-11 to CB-22 under epics CB-1 to CB-3. v0.2 and v0.3 have epics only, to be planned with `/corkboard:plan` when v0.1 ships. Next: CB-11, set up the repo.

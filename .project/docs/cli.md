@@ -62,7 +62,7 @@ Next up
 Details: corkboard show <ID>
 ```
 
-- **First line:** the project name, the active release, and done tasks and bugs out of the release's total, leaving out cancelled ones. With no active release it says `no active release`.
+- **First line:** the project name, the active release, and done tasks and bugs out of the release's total, leaving out cancelled ones. With no active release it says `no active release`. The due date is left out when the release has none.
 - **Waiting on you:** every `waiting` item, with the question from its last log line, cut to 70 characters. At most 5 lines, then `…and 3 more: corkboard list status=waiting`.
 - **In progress:** every `in-progress` item. Items the user owns are marked `(you)`. Priority is shown only when high, and subtask progress only when there are subtasks. At most 5 lines.
 - **Next up:** the first 3 items in the order of work.
@@ -151,6 +151,7 @@ v0.1 · active · due 2026-12-01 · 7/15 done
 
 - Epics are in number order. Under each, items are sorted by status (done, in-progress, waiting, todo, backlog, cancelled) and then by number.
 - Cancelled items are shown so dropped work stays visible.
+- The due date is left out when the release has none.
 - With no active release and no argument, it fails and lists the releases: `error: no active release. Name one: corkboard tree v0.2 (v0.1 released, v0.2 planned)`.
 
 ### `corkboard new <epic|task|bug> "Title" [field=value…]`

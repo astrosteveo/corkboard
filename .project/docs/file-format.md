@@ -183,7 +183,7 @@ What this release is for, in a few lines.
 ```
 
 - `status`: `planned`, `active` or `released`.
-- `date`: the target date while planned or active, and the ship date once released.
+- `date`: optional. The target date while planned or active, and the ship date once released.
 - The name can be anything that works as a file name, such as `v0.1` or `2026-12`.
 
 ## Docs
