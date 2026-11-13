@@ -37,6 +37,8 @@ corkboard check                         # files in .project/ that break the form
 
 ## Before starting work
 
+Do these three steps before you edit any file, so the board shows the work while it's happening:
+
 1. Find the item the work belongs to with `corkboard list` or `corkboard show`, or create one with `corkboard new`, piping in a few lines of what and why and a `## Subtasks` checklist. Every change you commit gets an item, except a trivial fix such as a typo or a one-line change.
 2. `corkboard move <ID> in-progress`. Keep one item in progress at a time: finish it, or park it back in `todo`, before starting another. If its epic is still `todo`, move the epic to `in-progress` too.
 3. On the default branch, switch to a branch named after the item's file name, which `corkboard show` prints as `path:`. For example, `EX-12-drag-cards.md` becomes `ex-12-drag-cards`.
