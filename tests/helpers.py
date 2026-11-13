@@ -1,10 +1,12 @@
 """Shared test helpers: temporary .project/ folders and running the CLI in one."""
 
 import io
+import os
 import tempfile
 import unittest
 from datetime import datetime
 from pathlib import Path
+from unittest import mock
 
 from corkboard import header, write
 from corkboard.cli import main
@@ -27,12 +29,22 @@ def item_file(item_id: str, body: str = LOG, **fields: str | list[str]) -> str:
 
 
 class Fixture:
-    """A temporary repo with a .project/ folder built from file texts."""
+    """A temporary repo with a .project/ folder built from file texts.
+
+    A fake `gh` comes first on PATH for the whole test. It fails unless a test gives it a script,
+    so no test reaches GitHub.
+    """
 
     def __init__(self, test: unittest.TestCase) -> None:
         folder = tempfile.TemporaryDirectory()
         test.addCleanup(folder.cleanup)
         self.repo = Path(folder.name)
+        tools = tempfile.TemporaryDirectory()
+        test.addCleanup(tools.cleanup)
+        self.tools = Path(tools.name)
+        path = f"{self.tools}{os.pathsep}{os.environ.get('PATH', '')}"
+        test.enterContext(mock.patch.dict(os.environ, {"PATH": path}))
+        self.gh("exit 1")
         self.root = self.repo / ".project"
         (self.root / "items").mkdir(parents=True)
         (self.root / "releases").mkdir()
@@ -55,6 +67,12 @@ class Fixture:
 
     def raw(self, folder: str, name: str, text: str) -> None:
         (self.root / folder / name).write_text(text, encoding="utf-8")
+
+    def gh(self, script: str) -> None:
+        """Makes the fake `gh` run this shell script."""
+        path = self.tools / "gh"
+        path.write_text(f"#!/bin/sh\n{script}\n", encoding="utf-8")
+        path.chmod(0o755)
 
     def load(self):
         return load(self.root)
