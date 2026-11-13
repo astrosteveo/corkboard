@@ -2,7 +2,7 @@
 id: CB-3
 type: epic
 title: Claude Code plugin
-status: todo
+status: in-progress
 priority: medium
 owner: claude
 created: 2026-11-12
@@ -12,3 +12,4 @@ The session-start hook, the track skill and the slash commands from `.project/do
 
 ## Log
 - 2026-11-12 21:21 claude: created
+- 2026-11-12 21:56 claude: moved to in-progress
