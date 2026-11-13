@@ -58,7 +58,7 @@ Do these three steps before you edit any file, so the board shows the work while
 ## Finishing
 
 - An item is done when its subtasks are all ticked and the project's formatter, linter and tests pass.
-- Work that goes through a PR moves to `done` once the PR merges. Work committed without a PR moves to `done` before its last commit, so the item's file goes into that commit with the work.
+- Work that goes through a PR moves to `done` once the PR merges. Work committed without a PR moves to `done` before its last commit: run `corkboard move <ID> done` first, then commit, so the item's file goes into that commit with the work. Never make a separate commit just to close an item.
 - When an epic's last open task or bug is done, move the epic to `done` too.
 
 ## Saying where things stand
