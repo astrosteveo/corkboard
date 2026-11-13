@@ -52,10 +52,10 @@ SUBTASKS_HEADING = "## Subtasks"
 LOG_HEADING = "## Log"
 
 _ID = re.compile(r"([A-Z][A-Z0-9]*)-([0-9]+)")
-_CODE_FENCE = re.compile(r"\s*(```|~~~)")
-_HEADING = re.compile(r"#{1,2} \S.*")
-_SUBTASK = re.compile(r"- \[([ xX])\] (.+)")
-_LOG_LINE = re.compile(r"- ([0-9]{4}-[0-9]{2}-[0-9]{2}) ([0-9]{2}:[0-9]{2}) (me|claude): (.+)")
+CODE_FENCE = re.compile(r"\s*(```|~~~)")
+HEADING = re.compile(r"#{1,2} \S.*")
+SUBTASK_LINE = re.compile(r"- \[([ xX])\] (.+)")
+LOG_LINE = re.compile(r"- ([0-9]{4}-[0-9]{2}-[0-9]{2}) ([0-9]{2}:[0-9]{2}) (me|claude): (.+)")
 
 
 @dataclass(frozen=True)
@@ -325,7 +325,7 @@ def load(root: Path) -> Project:
         parsed = _read(path, problems)
         if parsed is None:
             continue
-        item = _make_item(path, *parsed)
+        item = parse_item(path, *parsed)
         if not item.id:
             problems.append(Problem(path, "the header has no id"))
             continue
@@ -362,15 +362,16 @@ def _read(path: Path, problems: list[Problem]) -> tuple[dict[str, header.Value],
         return None
 
 
-def _make_item(path: Path, fields: dict[str, header.Value], body: str) -> Item:
+def parse_item(path: Path, fields: dict[str, header.Value], body: str) -> Item:
+    """An item from its header fields and body, with its description, subtasks and log read."""
     item = Item(path, fields, body)
     description: list[str] = []
     section = "description"
     in_code = False
     for number, line in enumerate(body.split("\n"), start=1):
-        if _CODE_FENCE.match(line):
+        if CODE_FENCE.match(line):
             in_code = not in_code
-        if not in_code and _HEADING.fullmatch(line):
+        if not in_code and HEADING.fullmatch(line):
             if line.strip() == SUBTASKS_HEADING:
                 section = "subtasks"
                 item.has_subtasks_section = True
@@ -383,19 +384,40 @@ def _make_item(path: Path, fields: dict[str, header.Value], body: str) -> Item:
         if section == "description":
             description.append(line)
         elif section == "subtasks" and line.strip():
-            match = _SUBTASK.fullmatch(line.rstrip())
+            match = SUBTASK_LINE.fullmatch(line.rstrip())
             if match:
                 item.subtasks.append(Subtask(match.group(2), match.group(1) != " "))
             else:
                 item.unreadable_lines.append((number, line))
         elif section == "log" and line.strip():
-            match = _LOG_LINE.fullmatch(line.rstrip())
+            match = LOG_LINE.fullmatch(line.rstrip())
             if match:
                 item.log.append(LogEntry(*match.groups()))
             else:
                 item.unreadable_lines.append((number, line))
     item.description = "\n".join(description).strip()
     return item
+
+
+def find_section(lines: list[str], heading: str) -> tuple[int, int] | None:
+    """Where a top-level section is in a body's lines: (heading index, index after its end).
+
+    Headings inside code blocks don't count. The section ends at the next # or ## heading, or at
+    the end of the body.
+    """
+    start = None
+    in_code = False
+    for index, line in enumerate(lines):
+        if CODE_FENCE.match(line):
+            in_code = not in_code
+            continue
+        if in_code or not HEADING.fullmatch(line):
+            continue
+        if start is not None:
+            return start, index
+        if line.strip() == heading:
+            start = index
+    return None if start is None else (start, len(lines))
 
 
 def _progress(items: list[Item]) -> tuple[int, int]:
