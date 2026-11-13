@@ -613,3 +613,26 @@ input.item-title:focus { border-color: var(--border-strong); background: var(--s
 .warn-note { background: var(--warn-bg); border-color: var(--warn-border); color: var(--warn-text); margin: 0; }
 .blocked-note { margin: 0; color: var(--high); }
 .mentions { margin: 0; }
+
+/* ---------- Dragging ---------- */
+
+.card-item[draggable="true"] { cursor: grab; }
+.card-item.dragging { opacity: 0.45; }
+.card-item.saving { opacity: 0.7; }
+.column.over { background: var(--you-bg); box-shadow: inset 0 0 0 2px var(--accent); }
+
+.ask-dialog {
+  width: min(460px, calc(100vw - 32px));
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 16px 48px rgb(0 0 0 / 0.25);
+}
+.ask-dialog::backdrop { background: rgb(0 0 0 / 0.3); }
+.ask-dialog form { display: flex; flex-direction: column; gap: 12px; }
+.ask-dialog h2 { font-size: 17px; }
+.ask-dialog label { color: var(--muted); }
+.dialog-buttons { display: flex; justify-content: flex-end; gap: 8px; }
+.card-meta { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; }
