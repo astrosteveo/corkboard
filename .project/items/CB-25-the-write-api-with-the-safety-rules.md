@@ -21,3 +21,4 @@ Done when tests show each write makes the same file change as its CLI command, a
 
 ## Log
 - 2026-11-12 22:45 claude: created
+- 2026-11-12 23:25 claude: CB-24 already refuses any request, read or write, whose Host isn't localhost:<port> or 127.0.0.1:<port>. What's left here is the Origin check on writes.

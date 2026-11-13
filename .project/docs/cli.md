@@ -254,7 +254,10 @@ check these references to EX-12, which may have meant EX-31: EX-14 blocked_by, d
 
 ### `corkboard ui`
 
-Starts the web app on localhost, prints its URL, and runs until stopped with Ctrl-C. If the port is taken, it uses the next free one.
+Starts the web app on localhost, prints its URL, and runs until stopped with Ctrl-C.
+
+- It listens on 127.0.0.1, on port 4747, or the next free one up to 4766.
+- If a server for this repo is already running on one of those ports, it prints that server's URL the same way and exits 0, so it's safe to run again.
 
 ```
 Corkboard: http://localhost:4747

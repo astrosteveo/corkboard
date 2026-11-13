@@ -19,3 +19,4 @@ Done when `/corkboard:ui`, in a test repo with the plugin loaded from a copy, pr
 
 ## Log
 - 2026-11-12 22:45 claude: created
+- 2026-11-12 23:25 claude: Run in the background from a non-interactive shell, corkboard ui starts with SIGINT ignored, so stop it with kill <pid>, not kill -INT. Ctrl-C in a terminal works.
