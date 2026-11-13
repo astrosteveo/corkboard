@@ -52,6 +52,13 @@ export function PrState({ pr }) {
   </span>`;
 }
 
+// A card's badge for its newest pull request, such as "#14 merged".
+export function PrBadge({ pr }) {
+  return html`<span class=${`chip ${PR_CHIP[pr.state] ?? ""}`} title=${`PR #${pr.number} ${pr.title}`}>
+    #${pr.number} ${pr.state}
+  </span>`;
+}
+
 export function subtaskCount(item) {
   if (!item.subtasks.length) return null;
   const done = item.subtasks.filter((subtask) => subtask.done).length;

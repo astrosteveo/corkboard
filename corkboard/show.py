@@ -100,7 +100,8 @@ def _tasks(project: Project, epic: Item) -> list[str]:
 
 def _development(project: Project, item: Item) -> list[str]:
     """The item's branch, pull requests and last commits. Left out when there are none."""
-    built = development.for_item(project.root, item.id)
+    prs = development.pull_requests(project.root)
+    built = development.for_item(project.root, item.id, prs)
     lines = [f"  branch: {name}" for name in built.branches]
     for pr in built.pull_requests:
         state = pr.state

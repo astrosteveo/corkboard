@@ -6,6 +6,7 @@ import unittest
 from unittest import mock
 
 from helpers import LOG, Fixture
+from test_server import ServerTest, get
 
 from corkboard import api, development
 
@@ -214,7 +215,9 @@ class ApiDevelopmentTest(unittest.TestCase):
             out,
         )
         self.assertEqual(
-            api.item_extras(fixture.load(), "ex-12")["development"],
+            api.item_extras(fixture.load(), "ex-12", development.pull_requests(fixture.root))[
+                "development"
+            ],
             {
                 "branches": ["ex-12-drag-cards"],
                 "pull_requests": [
@@ -246,9 +249,108 @@ class ApiDevelopmentTest(unittest.TestCase):
         fixture.item("EX-1")
         fixture.commit("chore: nothing about EX-10")
         self.assertEqual(
-            api.item_extras(fixture.load(), "EX-1")["development"],
+            api.item_extras(fixture.load(), "EX-1", [])["development"],
             {"branches": [], "pull_requests": [], "commits": []},
         )
+
+
+class PullsTest(unittest.TestCase):
+    def test_latest_own_pull_request_and_merged_not_done(self):
+        fixture = Fixture(self)
+        fixture.item("EX-1", type="epic", status="in-progress")
+        fixture.item("EX-2", status="in-progress", parent="EX-1")
+        fixture.item("EX-3", status="done", parent="EX-1")
+        fixture.item("EX-4", parent="EX-1")
+        fixture.item("EX-5", status="cancelled")
+        fixture.item("EX-6")
+        fixture.item("EX-7", status="waiting")
+        answer(
+            fixture,
+            pr(20, "Part two (EX-4)", "OPEN", checks="PENDING"),
+            pr(19, "Drag cards (EX-2)", body="Part of EX-1. Follow-up: EX-6."),
+            pr(18, "Thing", branch="ex-3-thing"),
+            pr(17, "Part one (EX-4)"),
+            pr(16, "Dropped (EX-5)"),
+            pr(15, "Only EX-70", branch="EX-7-other-case"),
+        )
+        view = api.pulls_view(fixture.load(), development.pull_requests(fixture.root))
+        self.assertEqual(
+            {item_id: (p["number"], p["state"]) for item_id, p in view["latest"].items()},
+            {
+                "EX-2": (19, "merged"),
+                "EX-3": (18, "merged"),
+                "EX-4": (20, "open"),  # the newest one, though an older one merged
+                "EX-5": (16, "merged"),
+                "EX-7": (15, "merged"),
+            },
+        )
+        self.assertEqual(
+            view["latest"]["EX-4"],
+            {
+                "number": 20,
+                "title": "Part two (EX-4)",
+                "state": "open",
+                "checks": "pending",
+                "url": "https://github.com/example/repo/pull/20",
+            },
+        )
+        # Not EX-1 or EX-6, which #19 only names in its body, nor done EX-3 or cancelled EX-5.
+        self.assertEqual(view["merged_not_done"], ["EX-2", "EX-7"])
+
+    def test_without_pull_requests(self):
+        fixture = Fixture(self)
+        fixture.item("EX-1")
+        self.assertEqual(api.pulls_view(fixture.load(), []), {"latest": {}, "merged_not_done": []})
+
+
+class PullsServerTest(ServerTest):
+    """The server reads pull requests with gh at most once a minute and shares them."""
+
+    def setUp(self):
+        self.fixture = Fixture(self)
+        self.fixture.item("EX-2", status="in-progress")
+        answer(self.fixture, pr(14, "Drag cards (EX-2)"))
+        reply = self.fixture.tools / "reply.json"
+        self.calls = self.fixture.tools / "calls"
+        self.fixture.gh(f"echo call >> '{self.calls}'; exec cat '{reply}'")
+        self.running = self.serve(self.fixture)
+
+    def pulls(self):
+        status, _, body = get(self.running.port, "/api/pulls")
+        self.assertEqual(status, 200)
+        return json.loads(body)
+
+    def gh_calls(self):
+        return len(self.calls.read_text().splitlines()) if self.calls.exists() else 0
+
+    def test_one_gh_call_for_a_minute(self):
+        self.assertEqual(self.pulls()["merged_not_done"], ["EX-2"])
+        self.pulls()
+        status, _, body = get(self.running.port, "/api/items/EX-2")
+        self.assertEqual(status, 200)
+        self.assertEqual(json.loads(body)["development"]["pull_requests"][0]["number"], 14)
+        self.assertEqual(self.gh_calls(), 1)
+
+        self.running.pulls_seconds = 0
+        self.pulls()
+        self.assertEqual(self.gh_calls(), 2)
+
+    def test_gh_failing_or_hanging_gives_none(self):
+        nothing = {"latest": {}, "merged_not_done": []}
+        self.running.pulls_seconds = 0
+        for name, script in {"fails": "exit 1", "hangs": "exec sleep 30"}.items():
+            with self.subTest(gh=name):
+                self.fixture.gh(script)
+                started = time.monotonic()
+                with mock.patch("corkboard.development.TIMEOUT", 0.5):
+                    self.assertEqual(self.pulls(), nothing)
+                self.assertLess(time.monotonic() - started, 5)
+
+    def test_a_failed_read_is_kept_too(self):
+        self.fixture.gh(f"echo call >> '{self.calls}'; exit 1")
+        self.pulls()
+        self.pulls()
+        self.assertEqual(self.gh_calls(), 1)
 
 
 class DevelopmentTest(unittest.TestCase):
@@ -331,6 +433,17 @@ class DevelopmentTest(unittest.TestCase):
         self.assertTrue(mentions(branch="feature/EX-12"))
         self.assertFalse(mentions(title="Only EX-120", body="XEX-12", branch="ex-120-other"))
         self.assertFalse(mentions(title="lowercase ex-12", body="ex-12"))
+
+    def test_a_pull_request_is_for_the_item_by_its_title_or_branch(self):
+        def is_for(title="", body="", branch=""):
+            return development.PullRequest(1, title, body, branch, "open", "").is_for("EX-12")
+
+        self.assertTrue(is_for(title="Drag cards (EX-12)"))
+        self.assertTrue(is_for(branch="ex-12-drag-cards"))
+        self.assertTrue(is_for(branch="feature/EX-12"))
+        self.assertFalse(is_for(body="Part of EX-12."))
+        self.assertFalse(is_for(title="Only EX-120", branch="ex-120-other"))
+        self.assertFalse(is_for(title="lowercase ex-12"))
 
 
 if __name__ == "__main__":
