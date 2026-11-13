@@ -57,7 +57,7 @@ What it tells Claude to do:
 
 1. Find the item the work belongs to (`corkboard list`, `corkboard show`), or create one with `corkboard new`, piping in a short description and subtasks.
 2. Every change Claude commits gets an item, except trivial fixes such as a typo or a one-line fix.
-3. `corkboard move <ID> in-progress`. Claude keeps one item in progress at a time, and finishes or parks one (back to `todo`) before starting another.
+3. `corkboard move <ID> in-progress`. Claude keeps one item in progress at a time, and finishes or parks one (back to `todo`) before starting another. If the item's epic is still `todo`, move the epic to `in-progress` too.
 4. On the default branch, switch to a branch named after the item's file name: `EX-12-drag-cards.md` → `ex-12-drag-cards`.
 
 ### While working
@@ -76,6 +76,7 @@ What it tells Claude to do:
 
 - An item is done when its subtasks are all ticked and the project's formatter, linter and tests pass.
 - Work that goes through a PR moves to `done` once the PR merges. Work committed without a PR moves to `done` right away.
+- When an epic's last open task or bug is done, move the epic to `done` too.
 
 ### Saying where things stand
 

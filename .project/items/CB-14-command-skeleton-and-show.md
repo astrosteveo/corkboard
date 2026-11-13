@@ -2,7 +2,7 @@
 id: CB-14
 type: task
 title: Command skeleton and show
-status: todo
+status: done
 priority: high
 owner: claude
 created: 2026-11-12
@@ -14,9 +14,15 @@ blocked_by: [CB-13]
 Done when `corkboard show CB-12` on this repo matches the layout in `cli.md`.
 
 ## Subtasks
-- [ ] `bin/corkboard` and running commands
-- [ ] Errors, warnings, help, `--as` and `CLAUDECODE`
-- [ ] `show`, with links both ways and `mentioned in`
+- [x] `bin/corkboard` and running commands
+- [x] Errors, warnings, help, `--as` and `CLAUDECODE`
+- [x] `show`, with links both ways and `mentioned in`
 
 ## Log
 - 2026-11-12 21:21 claude: created
+- 2026-11-12 21:42 claude: moved to in-progress
+- 2026-11-12 21:46 claude: done subtask: `bin/corkboard` and running commands
+- 2026-11-12 21:46 claude: done subtask: Errors, warnings, help, `--as` and `CLAUDECODE`
+- 2026-11-12 21:46 claude: done subtask: `show`, with links both ways and `mentioned in`
+- 2026-11-12 21:46 claude: Wrote a small argument parser instead of argparse, which prints its own usage format and exits 2; the spec wants one `error:` line and exit 1. No color yet: the spec allows it only in a terminal, and plain text was enough. `corkboard show CB-12` on this repo matches the layout in cli.md.
+- 2026-11-12 21:46 claude: moved to done
