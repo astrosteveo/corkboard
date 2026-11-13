@@ -7,13 +7,12 @@ import { html, useEffect, useRef, useState } from "./lib.js";
 import { openNewItem } from "./newitem.js";
 import { navigate } from "./router.js";
 import { changedSince, useSeen } from "./seen.js";
-import { Avatar, High, Icon, STATUS_LABEL, pageTitle, panelHref, subtaskCount } from "./ui.js";
+import { Avatar, DRAG_TYPE, High, Icon, STATUS_LABEL, pageTitle, panelHref, subtaskCount } from "./ui.js";
 
 const SHOWN = ["todo", "in-progress", "waiting", "done"];
 const ALL = ["backlog", "todo", "in-progress", "waiting", "done", "cancelled"];
 const DONE_LIMIT = 5;
 const RANK = { high: 0, medium: 1, low: 2 };
-const DRAG_TYPE = "application/x-corkboard-item";
 
 export function BoardPage({ project, route, refresh }) {
   const seen = useSeen(project);
