@@ -404,3 +404,8 @@ h1, h2, h3 { margin: 0; }
 .activity .who.me { color: var(--you-text); }
 .activity .what { flex: 1 1 300px; min-width: 0; overflow-wrap: anywhere; }
 .markdown a:not([href]) { color: inherit; text-decoration: none; }
+
+.live { display: flex; align-items: center; gap: 6px; color: var(--ok-text); font-weight: 600; }
+.live .dot { width: 8px; height: 8px; border-radius: 4px; background: var(--ok-dot); }
+.live.off { color: var(--muted); }
+.live.off .dot { background: var(--border-strong); }
