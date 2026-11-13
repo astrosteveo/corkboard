@@ -65,14 +65,16 @@ One developer working with Claude Code on their own repos. Not for teams.
 - 2026-11-12: Build our own instead of adopting or forking Backlog.md. Why: to get the release → epic → task → subtask structure and its views exactly the way the user wants, built around Claude Code.
 - 2026-11-12: Items nest as release → epic → task or bug → subtask, and any item can have labels. Why: the user wants to see a release as the epics it delivered and the work under each.
 - 2026-11-12: No "story" type, only task. Why: for one person and Claude, story and task mean the same thing in practice.
+- 2026-11-12: The file format is specified in `.project/docs/file-format.md`. Why: Claude, `cpm` and the web app all read and write the same files.
+- 2026-11-12: Subtasks are checklist lines inside their task or bug, not their own files. Why: cheaper for Claude to update and no extra files; a subtask that needs its own owner or log becomes a task.
+- 2026-11-12: Statuses are backlog, todo, in-progress, waiting, done and cancelled. Why: `waiting` covers everything Claude needs from the user, questions and reviews alike, and `cancelled` keeps dropped work visible instead of deleted.
+- 2026-11-12: Item files are named like `CP-12-drag-cards.md`, and the ID prefix is set per repo in `.project/config.yml`. Why: the names stay readable in diffs and search results, and each repo gets its own key, like a Jira project.
 
 ## Open questions
 
 - What's the real name? "Claude Project" is a placeholder, and "Projects" is already a claude.ai feature.
 - Will it be published, and under what license?
 - Stack: TypeScript with pnpm for both the CLI and the web app, sharing one core library?
-- Which fields go in an item's YAML header, and which statuses exist?
-- Are subtasks their own files, or checklist lines inside their task?
 - What exactly do `cpm board`, `cpm next` and the session-start summary print?
 - Leave out sprints and time tracking for v1? (Releases replace milestones.)
 - Which web app views are in v1 besides Now, Board, Release, Issue and Docs?
@@ -82,9 +84,9 @@ One developer working with Claude Code on their own repos. Not for teams.
 - **Release:** a named version, such as `v0.2`, that groups the epics shipping in it.
 - **Epic:** a large piece of work made of tasks and bugs.
 - **Task / Bug:** one piece of work, or one defect to fix. Can have subtasks.
-- **Subtask:** a small step inside a task or bug.
+- **Subtask:** a checklist line inside a task or bug.
 - **Label:** a free-form tag on any item, such as `ui` or `cli`, used for filtering.
-- **Item:** any epic, task, bug or subtask.
+- **Item:** an epic, task or bug, each one file in `.project/items/`.
 - **Doc:** a Markdown page in `.project/docs/`. Decisions are docs in `.project/docs/decisions/`.
 - **Owner:** `me` or `claude`, whoever does the item.
 - **Waiting on you:** items where Claude needs the user's answer or approval before it can go on.
@@ -93,4 +95,4 @@ One developer working with Claude Code on their own repos. Not for teams.
 
 ## Status
 
-Design stage, no code yet. Next: spec the file format and the CLI's output, then sketch the web app screens.
+Design stage, no code yet. The file format is settled. Next: the CLI's commands and exact output, then sketches of the web app screens.
