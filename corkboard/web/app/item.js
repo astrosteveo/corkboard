@@ -137,9 +137,10 @@ function Title({ item, changes }) {
     if (!title) setText(item.title);
     else if (title !== item.title) changes.change("set", { fields: { title } });
   };
-  return html`<label class="title-field">
-    <span class="visually-hidden">Title</span>
-    <input class="item-title" value=${text} disabled=${changes.busy}
+  // The heading's text is the title, for screen readers; the field shows it and edits it in place.
+  return html`<h1 class="title-field">
+    <span class="visually-hidden">${item.title}</span>
+    <input class="item-title" aria-label="Title" value=${text} disabled=${changes.busy}
       onInput=${(event) => setText(event.currentTarget.value)}
       onBlur=${save}
       onKeyDown=${(event) => {
@@ -150,7 +151,7 @@ function Title({ item, changes }) {
           event.currentTarget.blur();
         }
       }} />
-  </label>`;
+  </h1>`;
 }
 
 function Fields({ project, item, changes }) {

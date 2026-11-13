@@ -570,7 +570,7 @@ h1, h2, h3 { margin: 0; }
 .panel-bar { display: flex; justify-content: flex-end; align-items: center; gap: 6px; }
 .panel .item { max-width: none; }
 
-.title-field { display: block; }
+.title-field { display: block; margin: 0; font-size: inherit; }
 input.item-title {
   width: 100%;
   margin: 0 -8px;
