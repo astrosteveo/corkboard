@@ -99,8 +99,14 @@ def _tasks(project: Project, epic: Item) -> list[str]:
 
 
 def _development(project: Project, item: Item) -> list[str]:
-    """The item's branch and its last commits, from git. Left out when there are none."""
+    """The item's branch, pull requests and last commits. Left out when there are none."""
     lines = [f"  branch: {name}" for name in development.branches(project.root, item.id)]
+    for pr in development.pull_requests(project.root):
+        if pr.mentions(item.id):
+            state = pr.state
+            if pr.checks and state in ("open", "draft"):
+                state += f" · checks {pr.checks}"
+            lines.append(f"  PR #{pr.number} {pr.title} · {state}")
     lines += [f"  {c.hash} {c.subject}" for c in development.commits(project.root, item.id)]
     return ["Development", *lines] if lines else []
 

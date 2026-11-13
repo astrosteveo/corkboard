@@ -1,5 +1,7 @@
+import json
 import os
 import subprocess
+import time
 import unittest
 from unittest import mock
 
@@ -45,6 +47,28 @@ class GitFixture(Fixture):
         with mock.patch.dict(os.environ, {"GIT_AUTHOR_DATE": date, "GIT_COMMITTER_DATE": date}):
             self.git("commit", "-q", "--allow-empty", "-m", message)
         return self.git("log", "-1", "--format=%h")
+
+
+def pr(number, title, state="MERGED", body="", branch="other", draft=False, checks=None):
+    """One pull request the way GitHub's API returns it."""
+    rollup = {"state": checks} if checks else None
+    return {
+        "number": number,
+        "title": title,
+        "body": body,
+        "headRefName": branch,
+        "state": state,
+        "isDraft": draft,
+        "commits": {"nodes": [{"commit": {"statusCheckRollup": rollup}}]},
+    }
+
+
+def answer(fixture: Fixture, *prs: dict) -> None:
+    """Makes the fake gh print these pull requests, as `gh api graphql` would."""
+    reply = {"data": {"repository": {"pullRequests": {"nodes": list(prs)}}}}
+    path = fixture.tools / "reply.json"
+    path.write_text(json.dumps(reply), encoding="utf-8")
+    fixture.gh(f"exec cat '{path}'")
 
 
 class ShowDevelopmentTest(unittest.TestCase):
@@ -94,6 +118,62 @@ class ShowDevelopmentTest(unittest.TestCase):
             "  2026-11-12 10:00 me: created\n",
         )
 
+    def test_lists_pull_requests_between_the_branch_and_the_commits(self):
+        fixture = GitFixture(self)
+        fixture.item("EX-12", title="Drag cards between columns")
+        commit = fixture.commit("feat(board): detect drop column (EX-12)")
+        fixture.git("branch", "ex-12-drag-cards")
+        answer(
+            fixture,
+            pr(17, "Drag cards, part two", "OPEN", body="Follows EX-12.", checks="PENDING"),
+            pr(
+                16, "fix: card order", "OPEN", branch="EX-12-card-order", draft=True, checks="ERROR"
+            ),
+            pr(15, "Only EX-120", "OPEN"),
+            pr(14, "Drag cards between columns (EX-12)", checks="SUCCESS"),
+            pr(13, "Lowercase ex-12 in a title isn't the ID"),
+            pr(12, "Dropped idea (EX-12)", "CLOSED", checks="FAILURE"),
+            pr(11, "No checks yet (EX-12)", "OPEN"),
+        )
+
+        code, out, err = fixture.run("show", "EX-12")
+        self.assertEqual((code, err), (0, ""))
+        self.assertIn(
+            "Development\n"
+            "  branch: ex-12-drag-cards\n"
+            "  PR #17 Drag cards, part two · open · checks pending\n"
+            "  PR #16 fix: card order · draft · checks failing\n"
+            "  PR #14 Drag cards between columns (EX-12) · merged\n"
+            "  PR #12 Dropped idea (EX-12) · closed\n"
+            "  PR #11 No checks yet (EX-12) · open\n"
+            f"  {commit} feat(board): detect drop column (EX-12)\n"
+            "\n",
+            out,
+        )
+
+    def test_without_pull_requests_nothing_else_changes(self):
+        fixture = GitFixture(self)
+        fixture.item("EX-12")
+        fixture.commit("feat(board): detect drop column (EX-12)")
+        fixture.git("branch", "ex-12-drag-cards")
+        answer(fixture)
+        _, expected, _ = fixture.run("show", "EX-12")
+        self.assertIn("Development\n  branch: ex-12-drag-cards\n", expected)
+
+        cases = {
+            "fails": "echo 'no git remotes found' >&2; exit 1",
+            "prints something else": "echo 'not json'",
+            "hangs": "exec sleep 30",
+        }
+        for name, script in cases.items():
+            with self.subTest(gh=name):
+                fixture.gh(script)
+                started = time.monotonic()
+                with mock.patch("corkboard.development.TIMEOUT", 0.5):
+                    code, out, err = fixture.run("show", "EX-12")
+                self.assertLess(time.monotonic() - started, 5)
+                self.assertEqual((code, out, err), (0, expected, ""))
+
     def test_left_out_when_nothing_mentions_the_item(self):
         fixture = GitFixture(self)
         fixture.item("EX-1")
@@ -124,14 +204,71 @@ class DevelopmentTest(unittest.TestCase):
         self.assertEqual(development.branches(fixture.root, "EX-1"), [])
         self.assertEqual(development.commits(fixture.root, "EX-1"), [])
 
-    def test_git_missing_or_too_slow_gives_nothing(self):
+    def test_git_or_gh_missing_or_too_slow_gives_nothing(self):
         fixture = GitFixture(self)
         fixture.commit("feat: thing (EX-1)")
+        answer(fixture, pr(1, "Thing (EX-1)"))
+        self.assertEqual(len(development.pull_requests(fixture.root)), 1)
         for error in (FileNotFoundError("git"), subprocess.TimeoutExpired("git", 3)):
             with self.subTest(error=error):
                 with mock.patch("corkboard.development.subprocess.run", side_effect=error):
                     self.assertEqual(development.commits(fixture.root, "EX-1"), [])
                     self.assertEqual(development.branches(fixture.root, "EX-1"), [])
+                    self.assertEqual(development.pull_requests(fixture.root), [])
+
+    def test_pull_request_states_and_checks(self):
+        fixture = Fixture(self)
+        no_commits = pr(5, "Five", "OPEN")
+        no_commits["commits"]["nodes"] = []
+        answer(
+            fixture,
+            pr(7, "Seven", "OPEN", body=None, checks="EXPECTED"),
+            pr(6, "Six", "OPEN", draft=True, checks="SUCCESS"),
+            no_commits,
+            pr(4, "Four", "MERGED", draft=True, checks="ERROR"),
+            pr(3, "Three", "CLOSED", checks="SOMETHING_NEW"),
+        )
+        self.assertEqual(
+            [
+                (p.number, p.body, p.state, p.checks)
+                for p in development.pull_requests(fixture.root)
+            ],
+            [
+                (7, "", "open", "pending"),
+                (6, "", "draft", "passing"),
+                (5, "", "open", ""),
+                (4, "", "merged", "failing"),
+                (3, "", "closed", ""),
+            ],
+        )
+
+    def test_unexpected_gh_output_gives_nothing(self):
+        fixture = Fixture(self)
+        replies = [
+            "",
+            "not json",
+            "[]",
+            '{"data": null}',
+            '{"errors": [{"message": "Could not resolve to a Repository"}]}',
+            '{"data": {"repository": {"pullRequests": {"nodes": [{"number": 1}]}}}}',
+        ]
+        for reply in replies:
+            with self.subTest(reply=reply):
+                path = fixture.tools / "reply.txt"
+                path.write_text(reply, encoding="utf-8")
+                fixture.gh(f"exec cat '{path}'")
+                self.assertEqual(development.pull_requests(fixture.root), [])
+
+    def test_a_pull_request_mentions_the_exact_id_or_the_branch_in_any_case(self):
+        def mentions(title="", body="", branch=""):
+            return development.PullRequest(1, title, body, branch, "open", "").mentions("EX-12")
+
+        self.assertTrue(mentions(title="Drag cards (EX-12)"))
+        self.assertTrue(mentions(body="Part of EX-12."))
+        self.assertTrue(mentions(branch="ex-12-drag-cards"))
+        self.assertTrue(mentions(branch="feature/EX-12"))
+        self.assertFalse(mentions(title="Only EX-120", body="XEX-12", branch="ex-120-other"))
+        self.assertFalse(mentions(title="lowercase ex-12", body="ex-12"))
 
 
 if __name__ == "__main__":
