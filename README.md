@@ -153,16 +153,24 @@ The full format is in [.project/docs/file-format.md](.project/docs/file-format.m
 Corkboard runs on Python 3.11 or newer and uses only the standard library, so it needs nothing installed. The formatter and linter run through `uvx`.
 
 ```
-python3 -m unittest discover -s tests   # run the tests
-uvx ruff format                         # format the code
-uvx ruff check                          # lint
+python3 -m unittest discover -s tests                   # run the tests
+python3 -m unittest discover -s tests -p test_cli.py    # run one test file
+uvx ruff format                                         # format the code
+uvx ruff check                                          # lint
 ```
 
-CI runs the same three on every pull request.
+CI runs the tests and both ruff checks on every pull request, and also builds the package and runs `corkboard help`.
 
 To run your working copy as `corkboard` from anywhere, install it in editable mode: `uv tool install --editable .`
 
-Don't load the plugin from the folder you're editing (`claude --plugin-dir .`), because Claude Code won't let a session edit a plugin it has loaded. Work on this repo with `bin/corkboard`, and try plugin changes in a separate test repo with the plugin loaded from a copy.
+Things that aren't obvious from the code:
+
+- **Don't load the plugin from the folder you're editing** (`claude --plugin-dir .`). Claude Code won't let a session edit a plugin it has loaded. Work on this repo with `bin/corkboard`, and try plugin changes in a separate test repo with the plugin loaded from a copy.
+- **The specs in `.project/docs/` are the contract.** Change a spec in the same pull request as the code. The output tests are built from the examples in `cli.md`.
+- **Examples in docs use the prefix `EX-`,** never this repo's `CB-`. Any ID in a doc counts as a mention of that item.
+- **Bump the version in `.claude-plugin/plugin.json` and `pyproject.toml` together** when a change should reach installed copies. `claude plugin update` only updates when the version changes, and a test checks the two match.
+- **Corkboard tracks its own work.** Each change gets an item in `.project/items/`, created and changed with `corkboard`, with its ID in the branch name and commit messages.
+- **Tests mustn't depend on this repo's own item state,** such as which release is active, since that changes as the work moves.
 
 ## License
 
