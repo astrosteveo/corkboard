@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from . import development
 from .cli import Context, cut, find_item, usage_error
 from .project import Item, Project
 
@@ -23,6 +24,9 @@ def render(ctx: Context, project: Project, item: Item) -> str:
     work = _tasks(project, item) if item.is_epic else _subtasks(item)
     if work:
         sections.append(work)
+    built = _development(project, item)
+    if built:
+        sections.append(built)
     if item.log:
         sections.append(_log(item))
     return "\n\n".join("\n".join(lines) for lines in sections)
@@ -92,6 +96,13 @@ def _tasks(project: Project, epic: Item) -> list[str]:
     lines = [f"Tasks {done}/{total}"]
     lines += [f"  {child.status:<11}  {child.id} {cut(child.title)}" for child in children]
     return lines
+
+
+def _development(project: Project, item: Item) -> list[str]:
+    """The item's branch and its last commits, from git. Left out when there are none."""
+    lines = [f"  branch: {name}" for name in development.branches(project.root, item.id)]
+    lines += [f"  {c.hash} {c.subject}" for c in development.commits(project.root, item.id)]
+    return ["Development", *lines] if lines else []
 
 
 def _log(item: Item) -> list[str]:

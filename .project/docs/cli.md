@@ -117,7 +117,7 @@ Log (last 5 of 9)
 - For an epic, a `Tasks 3/6` list of its tasks and bugs, as `status ID title`, takes the place of Subtasks.
 - `mentioned in` lists docs and items whose text mentions the ID.
 - Links show both sides: what this item stores (`blocked by`, `related`, `duplicate of`) and what other items store about it (`blocks`, `duplicated by`).
-- **Development** lists the branch, the pull requests and the last 5 commits that mention the ID, as described in [file-format.md](file-format.md). Pull requests are read with `gh`, with a 3-second limit. Without `gh`, a GitHub remote or a connection, the PR line is left out and nothing else changes.
+- **Development** lists the branch, the pull requests and the last 5 commits that mention the ID, as described in [file-format.md](file-format.md). The branch is any local branch whose name has the ID, and the section is left out when there's nothing to list. Pull requests are read with `gh`, with a 3-second limit. Without `gh`, a GitHub remote or a connection, the PR line is left out and nothing else changes.
 
 ### `corkboard list [field=value…] [--all]`
 

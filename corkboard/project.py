@@ -276,7 +276,7 @@ class Project:
         A mention is the ID on its own, so EX-12 doesn't count inside EX-120 or XEX-12. Only an
         item's body is searched; its header links are shown separately.
         """
-        pattern = re.compile(rf"(?<![A-Za-z0-9]){re.escape(item_id)}(?![0-9])")
+        pattern = mention_pattern(item_id)
         found: list[str] = []
         docs = self.root / "docs"
         if docs.is_dir():
@@ -349,6 +349,12 @@ def parse_id(item_id: str) -> tuple[str, int] | None:
     """An ID's prefix and number, such as ("EX", 12) for EX-12."""
     match = _ID.fullmatch(item_id)
     return (match.group(1), int(match.group(2))) if match else None
+
+
+def mention_pattern(item_id: str, ignore_case: bool = False) -> re.Pattern[str]:
+    """The ID on its own in some text, so EX-12 doesn't match inside EX-120 or XEX-12."""
+    flags = re.IGNORECASE if ignore_case else 0
+    return re.compile(rf"(?<![A-Za-z0-9]){re.escape(item_id)}(?![0-9])", flags)
 
 
 def natural_key(name: str) -> list[str | int]:
