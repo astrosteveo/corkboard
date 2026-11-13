@@ -1,7 +1,7 @@
 // The app: loads the project from the server, and shows the sidebar and the screen for the URL.
 import { indexProject, loadProject } from "./api.js";
 import { BoardPage } from "./board.js";
-import { ItemPage } from "./item.js";
+import { ItemPage, ItemPanel } from "./item.js";
 import { html, render, useCallback, useEffect, useState } from "./lib.js";
 import { NowPage } from "./now.js";
 import { ReleasesPage } from "./releases.js";
@@ -55,6 +55,9 @@ function App() {
       ${error && project ? html`<p class="notice error">Lost touch with the server. ${error}</p>` : null}
       ${body}
     </main>
+    ${project && route.name !== "item" && route.query.get("item")
+      ? html`<${ItemPanel} project=${project} id=${route.query.get("item").toUpperCase()} refresh=${refresh} />`
+      : null}
   </div>`;
 }
 

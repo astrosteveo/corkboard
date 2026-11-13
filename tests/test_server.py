@@ -254,6 +254,15 @@ class ReadApiTest(ServerTest):
         # The order of work: answered first, then the active release; EX-5 is blocked.
         self.assertEqual(data["next"], ["EX-4", "EX-7"])
 
+    def test_an_items_mentions(self):
+        self.fixture.doc("plan.md", "EX-2 comes first.\n")
+        self.fixture.item("EX-9", "See EX-2.\n" + LOG)
+        status, _, body = get(self.running.port, "/api/items/ex-2")
+        self.assertEqual(status, 200)
+        self.assertEqual(json.loads(body), {"id": "EX-2", "mentions": ["docs/plan.md", "EX-9"]})
+        status, _, body = get(self.running.port, "/api/items/EX-99")
+        self.assertEqual((status, json.loads(body)), (404, {"error": "there's no item EX-99"}))
+
     def test_reads_the_files_again_on_each_request(self):
         self.api(self.running)
         self.fixture.item("EX-9", title="Added later")
