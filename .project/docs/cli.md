@@ -63,8 +63,9 @@ Details: corkboard show <ID>
 ```
 
 - **First line:** the project name, the active release, and done tasks and bugs out of the release's total, leaving out cancelled ones. With no active release it says `no active release`. The due date is left out when the release has none.
-- **Waiting on you:** every `waiting` item, with the question from its last log line, cut to 70 characters. At most 5 lines, then `…and 3 more: corkboard list status=waiting`.
-- **In progress:** every `in-progress` item. Items the user owns are marked `(you)`. Priority is shown only when high, and subtask progress only when there are subtasks. At most 5 lines.
+- **Unreadable files:** if any file in `.project/` couldn't be read, the second line says how many and to run `corkboard check`. Claude only sees what the session-start hook prints, so this can't go to stderr as a warning.
+- **Waiting on you:** every `waiting` item, with the message from its last move to `waiting`, cut to 70 characters. At most 5 lines, then `…and 3 more: corkboard list status=waiting`.
+- **In progress:** every `in-progress` task and bug. Epics are left out, since an epic is in progress whenever any of its work is. Items the user owns are marked `(you)`. Priority is shown only when high, and subtask progress only when there are subtasks. At most 5 lines, then `…and 2 more: corkboard list status=in-progress`.
 - **Next up:** the first 3 items in the order of work.
 - With nothing in any section, it prints the first line and `Nothing in progress or planned. Add work with corkboard new.`
 - It never contacts GitHub, so it's fast and works offline.
