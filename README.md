@@ -4,7 +4,7 @@ A lightweight issue tracker and wiki for one person working with Claude Code, ke
 
 Corkboard keeps a repo's releases, epics, tasks, bugs and docs as Markdown files in a `.project/` folder, next to the code. Claude reads and changes them through the `corkboard` command, which does the bookkeeping: IDs, file names, and log lines with who and when. Every session starts with a short summary of where things stand, so Claude knows what's in progress, what's next and what's waiting on you without being told.
 
-The files are plain Markdown with a small header, so they read fine on GitHub, diff cleanly, and need nothing running. A web app with a board, a release view and the docs is planned for v0.2.
+The files are plain Markdown with a small header, so they read fine on GitHub, diff cleanly, and need nothing running. When you want to see it all at once, `/corkboard:ui` opens a web app on localhost with what's waiting on you, a board, the releases and every item.
 
 ## Get started
 
@@ -66,8 +66,20 @@ The plugin's update takes effect in new sessions.
 | `/corkboard:plan <goal>` | Drafts a release, epics, tasks and subtasks for a goal, and creates them once you approve |
 | `/corkboard:next [ID]` | Starts the next item, or the one you name: moves it to in progress, makes a branch, and gets going |
 | `/corkboard:done [ID]` | Finishes the current item: checks its subtasks, runs the tests, commits, and opens a PR or closes the item |
+| `/corkboard:ui` | Opens the web app: starts it in the background, or finds the one already running, and gives you its URL |
 
 You don't have to use the commands. Claude loads the `corkboard:track` skill on its own when it starts, finishes or plans work. It makes an item for every change it commits (trivial fixes aside), puts the item's ID in commit messages and branch names, ticks subtasks as it goes, and logs choices worth keeping. When Claude needs your answer, it asks in chat and moves the item to `waiting`, so the question is still on the board if you step away.
+
+## The web app
+
+`/corkboard:ui` in Claude Code, or `corkboard ui` in your own terminal, serves the web app on http://localhost:4747 (or the next free port). It reads and writes the same files as Claude, through the same code as the `corkboard` command.
+
+- **Now:** what Claude is asking you, with a box to reply or mark it done, what's in progress, what Claude will do next, and everything Claude logged since you last clicked Mark seen.
+- **Board:** columns by status for a release, with filters for epic, label and owner. Drag a card to change its status.
+- **Releases:** each release as a tree of epics, tasks and subtasks, with progress. Change a release's status and date, drag an epic to another release, and copy release notes.
+- **Items:** click any item to open it in a side panel and change its fields, labels, subtasks and description, or add a note. Press `c` anywhere for a new item.
+
+When Claude changes a file, the page updates within a second, and the cards it touched get a dot. Everything you do in the app is logged as you. The server listens on 127.0.0.1 only and accepts changes only from its own page. `corkboard ui` stops with Ctrl-C; one started in the background prints the `kill` command that stops it.
 
 ## What Claude sees when a session starts
 
@@ -108,6 +120,7 @@ It's at most 25 lines, about a few hundred tokens, and nothing is added in a rep
 | `corkboard release <name> [status=…] [date=…]` | Creates or changes a release |
 | `corkboard check [--fix]` | Finds files that break the format, and repairs the safe ones |
 | `corkboard init` | Starts `.project/` in this folder |
+| `corkboard ui [--background]` | Serves the web app on localhost; `--background` starts it as its own process and exits |
 
 `corkboard help` lists them, and `corkboard <command> --help` explains one.
 
@@ -146,7 +159,7 @@ What and why, in a few lines.
 - 2026-11-12 14:20 claude: moved to in-progress
 ```
 
-The full format is in [.project/docs/file-format.md](.project/docs/file-format.md). The command's behavior is in [cli.md](.project/docs/cli.md), the plugin's in [plugin.md](.project/docs/plugin.md), and the planned web app's in [ui.md](.project/docs/ui.md). What the project is for, and the decisions behind it, are in [PROJECT.md](PROJECT.md). Corkboard tracks its own work: its items are in [.project/items/](.project/items/).
+The full format is in [.project/docs/file-format.md](.project/docs/file-format.md). The command's behavior is in [cli.md](.project/docs/cli.md), the plugin's in [plugin.md](.project/docs/plugin.md), and the web app's in [ui.md](.project/docs/ui.md). What the project is for, and the decisions behind it, are in [PROJECT.md](PROJECT.md). Corkboard tracks its own work: its items are in [.project/items/](.project/items/).
 
 ## Development
 
@@ -162,6 +175,8 @@ uvx ruff check                                          # lint
 CI runs the tests and both ruff checks on every pull request, and also builds the package and runs `corkboard help`.
 
 To run your working copy as `corkboard` from anywhere, install it in editable mode: `uv tool install --editable .`
+
+The web app is plain HTML, CSS and JavaScript in `corkboard/web/`, with no build step: edit a file and reload the page. Preact, htm and marked are committed in `corkboard/web/vendor/`, whose README says which versions they are and how to update them.
 
 Things that aren't obvious from the code:
 
