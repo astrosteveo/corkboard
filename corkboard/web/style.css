@@ -623,7 +623,8 @@ input.item-title:focus { border-color: var(--border-strong); background: var(--s
 .checks-failing { color: var(--high); }
 .nowrap { white-space: nowrap; }
 
-.links { display: grid; grid-template-columns: max-content minmax(0, 1fr); column-gap: 16px; }
+.links { display: grid; grid-template-columns: max-content minmax(0, 1fr) auto; align-items: center; column-gap: 16px; }
+.link-remove { width: 28px; height: 28px; }
 .link-row { display: contents; }
 .link-kind { align-self: center; }
 .link-add { flex-wrap: wrap; }

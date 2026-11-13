@@ -155,6 +155,34 @@ class WriteApiTest(ServerTest):
                     ["set", item_id, arg], f"/api/items/{item_id}/set", {"fields": fields}
                 )
 
+    def test_removing_links(self):
+        # The page removes a link by sending the list without it, or an empty value.
+        for item_id, arg, fields in (
+            ("EX-3", "related=", {"related": []}),
+            ("EX-3", "duplicate_of=", {"duplicate_of": ""}),
+        ):
+            with self.subTest(arg=arg):
+                self.assert_same_as_cli(
+                    ["set", item_id, arg], f"/api/items/{item_id}/set", {"fields": fields}
+                )
+
+    def test_a_removed_link_goes_from_both_items(self):
+        fixture, running = self.serve_fixture()
+        post(running.port, "/api/items/EX-2/set", {"fields": {"blocked_by": ["EX-3", "EX-1"]}})
+        # On EX-3, the x on "Blocks EX-2" writes EX-2's list without EX-3, and the x on
+        # "Related to EX-2" writes EX-3's own list, which stores that link.
+        for path, fields in (
+            ("/api/items/EX-2/set", {"blocked_by": ["EX-1"]}),
+            ("/api/items/EX-3/set", {"related": []}),
+        ):
+            status, answer = post(running.port, path, {"fields": fields})
+            self.assertEqual(status, 200, answer)
+        items = {item["id"]: item for item in self.api(running)["items"]}
+        self.assertEqual((items["EX-3"]["blocks"], items["EX-3"]["related_to"]), ([], []))
+        self.assertEqual((items["EX-2"]["blocked_by"], items["EX-2"]["related_to"]), (["EX-1"], []))
+        self.assertIn("- 2026-11-13 15:30 me: set blocked_by=EX-1\n", fixture.text("EX-2"))
+        self.assertIn("- 2026-11-13 15:30 me: set related=\n", fixture.text("EX-3"))
+
     def test_a_link_shows_on_both_items(self):
         fixture, running = self.serve_fixture()
         status, answer = post(
