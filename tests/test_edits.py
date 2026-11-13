@@ -282,6 +282,16 @@ class BlockingCycleTest(EditTest):
         self.assertEqual(item.path.read_text(encoding="utf-8"), before)
         return str(raised.exception)
 
+    def test_the_cli_prints_the_chain_and_writes_nothing(self):
+        path = self.fixture.load().item("EX-9").path
+        before = path.read_text(encoding="utf-8")
+        code, out, err = self.fixture.run("set", "EX-9", "blocked_by=EX-12")
+        self.assertEqual(
+            (code, out, err),
+            (1, "", "error: EX-9 would be blocked by itself through EX-9 → EX-12 → EX-9\n"),
+        )
+        self.assertEqual(path.read_text(encoding="utf-8"), before)
+
     def test_a_chain_back_to_the_item_is_refused(self):
         self.assertEqual(
             self.refused("EX-9", {"blocked_by": "EX-14,EX-13"}),
