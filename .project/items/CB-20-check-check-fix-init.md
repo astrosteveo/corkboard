@@ -2,7 +2,7 @@
 id: CB-20
 type: task
 title: check, check --fix, init
-status: todo
+status: in-progress
 priority: medium
 owner: claude
 created: 2026-11-12
@@ -20,3 +20,4 @@ Done when `corkboard check` passes on this repo, each rule has a test that break
 
 ## Log
 - 2026-11-12 21:21 claude: created
+- 2026-11-12 22:09 claude: moved to in-progress
