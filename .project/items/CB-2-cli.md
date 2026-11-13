@@ -2,7 +2,7 @@
 id: CB-2
 type: epic
 title: CLI
-status: todo
+status: in-progress
 priority: medium
 owner: claude
 created: 2026-11-12
@@ -12,3 +12,4 @@ Every command in `.project/docs/cli.md`, except the GitHub parts, which come wit
 
 ## Log
 - 2026-11-12 21:21 claude: created
+- 2026-11-12 21:45 claude: moved to in-progress
