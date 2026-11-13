@@ -2,7 +2,7 @@
 id: CB-4
 type: epic
 title: Web app basics
-status: in-progress
+status: done
 priority: medium
 owner: claude
 created: 2026-11-12
@@ -13,3 +13,4 @@ release: v0.2
 ## Log
 - 2026-11-12 21:21 claude: created
 - 2026-11-12 23:05 claude: moved to in-progress
+- 2026-11-13 00:12 claude: moved to done

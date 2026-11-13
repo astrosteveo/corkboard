@@ -295,7 +295,8 @@ class PortsTest(ServerTest):
         running = self.serve(fixture)
         ports = [free_port(), running.port]
         self.assertEqual(
-            server.find_running(fixture.root, ports), f"http://localhost:{running.port}"
+            server.find_running(fixture.root, ports),
+            (f"http://localhost:{running.port}", os.getpid()),
         )
         self.assertIsNone(server.find_running(Fixture(self).root, ports))
 
@@ -409,9 +410,49 @@ class UiCommandTest(unittest.TestCase):
         self.assertEqual(process.wait(timeout=10), 0)
         self.assertEqual(process.stderr.read(), "")
 
+    def background(self, fixture: Fixture, cwd: Path | None = None) -> tuple[str, int, str]:
+        """Run bin/corkboard ui --background. Returns the URL, the process ID and all output."""
+        result = subprocess.run(
+            [sys.executable, str(BIN), "ui", "--background"],
+            cwd=cwd or fixture.repo,
+            capture_output=True,
+            text=True,
+            timeout=30,
+            env={key: value for key, value in os.environ.items() if key != "CLAUDECODE"},
+        )
+        match = re.fullmatch(
+            r"Corkboard: (http://localhost:\d+)\n"
+            r"Running in the background as process (\d+)\. Stop it with: kill \2\n",
+            result.stdout,
+        )
+        self.assertIsNotNone(match, result.stdout + result.stderr)
+        pid = int(match.group(2))
+        self.addCleanup(stop, pid)
+        self.assertEqual((result.returncode, result.stderr), (0, ""))
+        return match.group(1), pid, result.stdout
+
+    def test_background_starts_one_detached_server(self):
+        fixture = Fixture(self)
+        fixture.item("EX-1")
+        (fixture.repo / "deeper").mkdir()
+        url, pid, output = self.background(fixture, cwd=fixture.repo / "deeper")
+        self.assertNotEqual(pid, os.getpid())
+        port = int(url.rsplit(":", 1)[1])
+        self.assertEqual(json.loads(get(port, "/api/project")[2])["items"][0]["id"], "EX-1")
+        # Running it again finds that server instead of starting another.
+        self.assertEqual(self.background(fixture)[2], output)
+
     def test_takes_no_arguments(self):
         code, _, err = run_cli(Fixture(self).repo, "ui", "extra")
-        self.assertEqual((code, err), (1, "error: usage: corkboard ui\n"))
+        self.assertEqual((code, err), (1, "error: usage: corkboard ui [--background]\n"))
+
+
+def stop(pid: int) -> None:
+    """Stop a server a test started in the background, if it's still running."""
+    try:
+        os.kill(pid, signal.SIGTERM)
+    except ProcessLookupError:
+        pass
 
 
 if __name__ == "__main__":
