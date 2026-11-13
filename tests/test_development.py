@@ -7,7 +7,7 @@ from unittest import mock
 
 from helpers import LOG, Fixture
 
-from corkboard import development
+from corkboard import api, development
 
 
 class GitFixture(Fixture):
@@ -59,6 +59,7 @@ def pr(number, title, state="MERGED", body="", branch="other", draft=False, chec
         "headRefName": branch,
         "state": state,
         "isDraft": draft,
+        "url": f"https://github.com/example/repo/pull/{number}",
         "commits": {"nodes": [{"commit": {"statusCheckRollup": rollup}}]},
     }
 
@@ -187,6 +188,67 @@ class ShowDevelopmentTest(unittest.TestCase):
         code, out, err = fixture.run("show", "EX-1")
         self.assertEqual((code, err), (0, ""))
         self.assertNotIn("Development", out)
+
+
+class ApiDevelopmentTest(unittest.TestCase):
+    def test_the_item_panel_gets_what_show_lists(self):
+        fixture = GitFixture(self)
+        fixture.item("EX-12", title="Drag cards between columns")
+        first = fixture.commit("feat(board): detect drop column (EX-12)")
+        fixture.commit("chore: something else")
+        second = fixture.commit("fix(board): keep card order on drop (EX-12)")
+        fixture.git("branch", "ex-12-drag-cards")
+        answer(
+            fixture,
+            pr(14, "Drag cards between columns (EX-12)", "OPEN", checks="SUCCESS"),
+            pr(13, "Only EX-120"),
+        )
+
+        _, out, _ = fixture.run("show", "EX-12")
+        self.assertIn(
+            "Development\n"
+            "  branch: ex-12-drag-cards\n"
+            "  PR #14 Drag cards between columns (EX-12) · open · checks passing\n"
+            f"  {second} fix(board): keep card order on drop (EX-12)\n"
+            f"  {first} feat(board): detect drop column (EX-12)\n",
+            out,
+        )
+        self.assertEqual(
+            api.item_extras(fixture.load(), "ex-12")["development"],
+            {
+                "branches": ["ex-12-drag-cards"],
+                "pull_requests": [
+                    {
+                        "number": 14,
+                        "title": "Drag cards between columns (EX-12)",
+                        "state": "open",
+                        "checks": "passing",
+                        "url": "https://github.com/example/repo/pull/14",
+                    }
+                ],
+                "commits": [
+                    {
+                        "hash": second,
+                        "subject": "fix(board): keep card order on drop (EX-12)",
+                        "date": "2026-11-12",
+                    },
+                    {
+                        "hash": first,
+                        "subject": "feat(board): detect drop column (EX-12)",
+                        "date": "2026-11-12",
+                    },
+                ],
+            },
+        )
+
+    def test_nothing_when_nothing_mentions_the_item(self):
+        fixture = GitFixture(self)
+        fixture.item("EX-1")
+        fixture.commit("chore: nothing about EX-10")
+        self.assertEqual(
+            api.item_extras(fixture.load(), "EX-1")["development"],
+            {"branches": [], "pull_requests": [], "commits": []},
+        )
 
 
 class DevelopmentTest(unittest.TestCase):

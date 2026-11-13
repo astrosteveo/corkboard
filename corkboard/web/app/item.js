@@ -7,6 +7,7 @@ import { Markdown } from "./markdown.js";
 import { navigate } from "./router.js";
 import {
   Icon,
+  PrState,
   Progress,
   STATUS_ICON,
   STATUS_LABEL,
@@ -98,8 +99,27 @@ function useChanges(item, refresh) {
   return { busy, error, warnings, change, shown, refresh };
 }
 
+// What /api/items/<ID> adds to the project view: the docs and items that mention the item, and
+// its development. The server runs git and gh for it, so it arrives after the rest of the panel,
+// and loads again when the project changes.
+function useExtras(item, project) {
+  const [extras, setExtras] = useState(null);
+  useEffect(() => {
+    let current = true;
+    fetch(`/api/items/${encodeURIComponent(item.id)}`, { cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => current && setExtras(data))
+      .catch(() => current && setExtras(null));
+    return () => {
+      current = false;
+    };
+  }, [item.id, project]);
+  return extras?.id === item.id ? extras : null;
+}
+
 export function ItemView({ project, item, refresh }) {
   const changes = useChanges(item, refresh);
+  const extras = useExtras(item, project);
   const epic = item.parent ? project.byId.get(item.parent) : null;
   return html`<div class="item">
     <div class="crumbs small muted">
@@ -125,8 +145,9 @@ export function ItemView({ project, item, refresh }) {
       ? html`<${EpicTasks} project=${project} epic=${item} />`
       : html`<${Subtasks} item=${item} changes=${changes} />`}
     <${Links} project=${project} item=${item} refresh=${refresh} />
+    <${Development} development=${extras?.development} />
     <${Activity} item=${item} changes=${changes} />
-    <${Mentions} project=${project} item=${item} />
+    <${Mentions} project=${project} mentions=${extras?.mentions} />
   </div>`;
 }
 
@@ -559,18 +580,44 @@ function Activity({ item, changes }) {
   </section>`;
 }
 
-function Mentions({ project, item }) {
-  const [mentions, setMentions] = useState(null);
-  useEffect(() => {
-    let current = true;
-    fetch(`/api/items/${encodeURIComponent(item.id)}`, { cache: "no-store" })
-      .then((response) => (response.ok ? response.json() : null))
-      .then((data) => current && setMentions(data?.mentions ?? []))
-      .catch(() => current && setMentions([]));
-    return () => {
-      current = false;
-    };
-  }, [item.id, project]);
+// The branches, pull requests and commits that mention the item, as corkboard show lists them.
+// Hidden when there are none.
+function Development({ development }) {
+  if (!development) return null;
+  const { branches, pull_requests: pulls, commits } = development;
+  if (!branches.length && !pulls.length && !commits.length) return null;
+  return html`<section class="item-section">
+    <h2 class="section-label">Development</h2>
+    <ul class="development">
+      ${branches.map(
+        (name) => html`<li>
+          <span class="dev-kind small muted">Branch</span>
+          <span class="what mono small">${name}</span>
+        </li>`,
+      )}
+      ${pulls.map(
+        (pr) => html`<li>
+          <span class="dev-kind small muted">PR</span>
+          <span class="what">
+            ${pr.url.startsWith("https://")
+              ? html`<a href=${pr.url} target="_blank" rel="noopener noreferrer">#${pr.number} ${pr.title}</a>`
+              : html`#${pr.number} ${pr.title}`}
+          </span>
+          <${PrState} pr=${pr} />
+        </li>`,
+      )}
+      ${commits.map(
+        (commit) => html`<li>
+          <span class="dev-kind mono small muted">${commit.hash}</span>
+          <span class="what">${commit.subject}</span>
+          <span class="small muted nowrap">${shortDate(commit.date)}</span>
+        </li>`,
+      )}
+    </ul>
+  </section>`;
+}
+
+function Mentions({ project, mentions }) {
   if (!mentions?.length) return null;
   return html`<p class="small muted mentions">Mentioned in ${mentions.map(
     (mention, index) => html`${index ? " · " : ""}${

@@ -610,6 +610,15 @@ input.item-title:focus { border-color: var(--border-strong); background: var(--s
 .inline-add { display: flex; gap: 8px; }
 .inline-add .input { flex: 1 1 auto; }
 
+.development { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.development li { display: flex; align-items: baseline; gap: 10px; }
+.development .dev-kind { flex: 0 0 auto; min-width: 64px; }
+.development .what { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.pr-state { display: inline-flex; align-items: baseline; gap: 8px; white-space: nowrap; }
+.pr-state .chip.draft { background: transparent; border: 1px solid var(--border-strong); }
+.checks-failing { color: var(--high); }
+.nowrap { white-space: nowrap; }
+
 .links { display: grid; grid-template-columns: max-content minmax(0, 1fr); column-gap: 16px; }
 .link-row { display: contents; }
 .link-kind { align-self: center; }

@@ -39,6 +39,19 @@ export function Progress({ done, total, small = false }) {
   </span>`;
 }
 
+// A pull request's state as GitHub colors it, and its checks while it's open or a draft.
+const PR_CHIP = { open: "ok", draft: "draft", merged: "purple", closed: "bug" };
+
+export function PrState({ pr }) {
+  const live = pr.state === "open" || pr.state === "draft";
+  return html`<span class="pr-state">
+    <span class=${`chip ${PR_CHIP[pr.state] ?? ""}`}>${pr.state}</span>
+    ${live && pr.checks
+      ? html`<span class=${`small ${pr.checks === "failing" ? "checks-failing" : "muted"}`}>checks ${pr.checks}</span>`
+      : null}
+  </span>`;
+}
+
 export function subtaskCount(item) {
   if (!item.subtasks.length) return null;
   const done = item.subtasks.filter((subtask) => subtask.done).length;
