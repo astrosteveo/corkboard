@@ -34,7 +34,7 @@ class SessionStartHookTest(unittest.TestCase):
             "This repo tracks its work in .project/ with corkboard. "
             "Use the corkboard:track skill before you start, finish or plan work.",
         )
-        self.assertTrue(summary.startswith("Corkboard · v0.1"))
+        self.assertTrue(summary.startswith("Corkboard · "))  # the release changes over time
         self.assertLess(len(result.stdout), 10_000)  # Claude Code's limit for hook context
 
     def test_silent_outside_a_project(self):
