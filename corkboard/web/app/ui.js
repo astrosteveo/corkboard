@@ -45,6 +45,9 @@ export function subtaskCount(item) {
   return `${done}/${item.subtasks.length}`;
 }
 
+// The drag data type for items, so only Corkboard's own cards and rows can be dropped.
+export const DRAG_TYPE = "application/x-corkboard-item";
+
 export const STATUS_ICON = {
   done: "✓",
   "in-progress": "◐",
