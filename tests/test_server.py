@@ -266,6 +266,8 @@ class UiCommandTest(unittest.TestCase):
             stderr=subprocess.PIPE,
             text=True,
             env={key: value for key, value in os.environ.items() if key != "CLAUDECODE"},
+            # A test run started in the background ignores SIGINT, and the child would inherit it.
+            preexec_fn=lambda: signal.signal(signal.SIGINT, signal.SIG_DFL),
         )
         self.addCleanup(process.kill)
         self.addCleanup(process.stdout.close)
