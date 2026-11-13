@@ -2,7 +2,7 @@
 id: CB-7
 type: epic
 title: Releases view
-status: todo
+status: in-progress
 priority: medium
 owner: claude
 created: 2026-11-12
@@ -12,3 +12,4 @@ The release tree with progress, moving epics between releases, and copying relea
 
 ## Log
 - 2026-11-12 21:21 claude: created
+- 2026-11-13 00:01 claude: moved to in-progress

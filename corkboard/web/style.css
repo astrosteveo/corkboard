@@ -714,3 +714,78 @@ input.item-title:focus { border-color: var(--border-strong); background: var(--s
 .form-field .input, .form-field .select { font-weight: 400; color: var(--text); }
 .form-field .textarea { font-weight: 400; min-height: 120px; }
 .form-note { justify-content: flex-end; font-weight: 400; padding-bottom: 8px; }
+
+/* ---------- Releases ---------- */
+
+.release-tabs { display: flex; flex-wrap: wrap; gap: 6px; border-bottom: 1px solid var(--border); }
+.release-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 14px;
+  border-bottom: 2px solid transparent;
+  color: var(--text-2);
+  font-weight: 600;
+}
+.release-tab:hover { text-decoration: none; color: var(--text); }
+.release-tab[aria-current="page"] { color: var(--text); border-bottom-color: var(--accent); }
+.release-tab.over { background: var(--you-bg); border-radius: 8px 8px 0 0; }
+.tab-sub { font-size: 11.5px; font-weight: 500; color: var(--muted); }
+.tab-sub.active { color: var(--ok-text); }
+
+.release { display: flex; flex-direction: column; gap: 12px; }
+.release-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.release-info { flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.release-title { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.release-title h2 { font-size: 20px; font-weight: 700; }
+.release-status.active { background: var(--ok-bg); color: var(--ok-text); border-color: transparent; font-weight: 600; }
+.release-status.released { background: var(--surface-2); }
+.release-date { display: inline-flex; align-items: center; gap: 6px; }
+.date-input { height: 32px; font-size: 13px; padding: 0 8px; }
+.release-goal { color: var(--text-2); }
+.release-progress { display: flex; align-items: center; gap: 12px; padding-top: 4px; }
+
+.tree-group { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.tree-epic { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 8px 14px 8px 6px; background: var(--surface-2); border-bottom: 1px solid var(--border); }
+.tree-epic.loose { padding: 10px 14px; }
+.loose-name { font-weight: 600; color: var(--muted); }
+.toggle { width: 30px; height: 30px; }
+.chevron { display: inline-flex; transition: transform 0.12s; }
+.chevron.open { transform: rotate(90deg); }
+.tree-title { flex: 1 1 200px; min-width: 0; color: var(--text); font-weight: 500; overflow-wrap: anywhere; }
+.tree-epic .tree-title { font-weight: 600; }
+.tree-title.cancelled { color: var(--muted); text-decoration: line-through; }
+.tree-status { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.tree-status.status-in-progress { color: var(--you-text); font-weight: 600; }
+.tree-status.status-waiting { color: var(--warn-text); font-weight: 600; }
+.tree-status.status-done { color: var(--ok-text); }
+.tree-tasks { list-style: none; margin: 0; padding: 4px 0; }
+.tree-task + .tree-task { border-top: 1px solid var(--border); }
+.tree-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; min-height: 42px; padding: 4px 14px 4px 44px; }
+.tree-icon { width: 16px; text-align: center; color: var(--muted); font-weight: 700; }
+.tree-icon.status-done { color: var(--ok-text); }
+.tree-icon.status-in-progress { color: var(--you-text); }
+.tree-icon.status-waiting { color: var(--warn-text); }
+.blocked-text { color: var(--high); }
+.sub-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 56px;
+  height: 28px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+  justify-content: flex-end;
+}
+.sub-toggle:hover { background: var(--hover); color: var(--text); }
+.sub-toggle.placeholder { visibility: hidden; }
+.tree-subtasks { list-style: none; margin: 0 0 8px; padding: 0 14px 0 74px; display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.tree-subtasks li { display: flex; gap: 8px; }
+.tree-subtasks li.done span:last-child { color: var(--muted); text-decoration: line-through; }
+.tree-empty { padding: 10px 44px; }
