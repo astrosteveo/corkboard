@@ -185,6 +185,7 @@ class ReadApiTest(ServerTest):
             (data["name"], data["prefix"], data["active_release"]), ("Example", "EX", "v0.1")
         )
         self.assertEqual([item["id"] for item in data["items"]], [f"EX-{n}" for n in range(1, 8)])
+        self.assertEqual(data["root"], str(self.fixture.root.resolve()))
         self.assertEqual(
             data["problems"], ["EX-8-broken.md: line 1: the file must start with a --- line"]
         )
