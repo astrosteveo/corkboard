@@ -67,6 +67,15 @@ export function itemUrl(id) {
   return `/items/${encodeURIComponent(id)}`;
 }
 
+// A link that opens the item in the side panel over the current screen, or, on an item's full
+// page, goes to the other item's page.
+export function panelHref(id) {
+  if (location.pathname.startsWith("/items/")) return itemUrl(id);
+  const query = new URLSearchParams(location.search);
+  query.set("item", id);
+  return `${location.pathname}?${query}`;
+}
+
 export function releaseUrl(name) {
   return name ? `/releases/${encodeURIComponent(name)}` : "/releases/none";
 }

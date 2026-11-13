@@ -7,6 +7,9 @@ answered items and the order of work. The page only arranges it.
 Writing: each change calls the same function in edits.py as its CLI command, so the file ends up
 the same either way. Changes from the page are always logged as `me`.
 
+    GET  /api/project                the whole project, as project_view builds it
+    GET  /api/items/<ID>             {"id", "mentions"}: docs and items that mention it
+
     POST /api/items                  {"type", "title", "fields": {…}, "body"}     corkboard new
     POST /api/items/<ID>/move        {"status", "message"}                       corkboard move
     POST /api/items/<ID>/set         {"fields": {"priority": "high", …}}         corkboard set
@@ -50,6 +53,14 @@ def project_view(project: Project) -> dict:
         "next": [item.id for item in work.next_items(project)],
         "problems": [str(problem) for problem in project.problems],
     }
+
+
+def item_extras(project: Project, item_id: str) -> dict:
+    """What the item panel shows beyond the project view: the docs and items that mention it.
+
+    Kept out of project_view, since finding mentions reads every doc."""
+    item = _find_item(project, item_id)
+    return {"id": item.id, "mentions": project.mentions(item.id)}
 
 
 def _release(project: Project, release: Release) -> dict:

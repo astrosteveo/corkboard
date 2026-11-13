@@ -3,7 +3,7 @@
 import { html } from "./lib.js";
 import { navigate } from "./router.js";
 import { changedSince, useSeen } from "./seen.js";
-import { Avatar, High, STATUS_LABEL, itemUrl, pageTitle, subtaskCount } from "./ui.js";
+import { Avatar, High, STATUS_LABEL, pageTitle, panelHref, subtaskCount } from "./ui.js";
 
 const SHOWN = ["todo", "in-progress", "waiting", "done"];
 const ALL = ["backlog", "todo", "in-progress", "waiting", "done", "cancelled"];
@@ -146,7 +146,8 @@ function Card({ project, item, seen, grouped }) {
   const epic = epicOf(project, item);
   const progress = subtaskCount(item);
   const changed = changedSince(item, seen);
-  return html`<a class="card-item" href=${itemUrl(item.id)} data-id=${item.id}>
+  const selected = new URLSearchParams(location.search).get("item") === item.id;
+  return html`<a class=${selected ? "card-item selected" : "card-item"} href=${panelHref(item.id)} data-id=${item.id}>
     <span class="card-top">
       <span class="id">${item.id}</span>
       ${item.type === "bug" ? html`<span class="chip bug">Bug</span>` : null}

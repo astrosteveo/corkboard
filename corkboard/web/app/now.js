@@ -4,7 +4,7 @@ import { write } from "./api.js";
 import { shortDate } from "./item.js";
 import { html, useState } from "./lib.js";
 import { markSeen, nowStamp, unseenEntries, useSeen } from "./seen.js";
-import { Avatar, High, Icon, Progress, itemUrl, pageTitle, releaseUrl, subtaskCount } from "./ui.js";
+import { Avatar, High, Icon, Progress, pageTitle, panelHref, releaseUrl, subtaskCount } from "./ui.js";
 
 const NEXT_UP = 3;
 const SINCE_LINES = 30;
@@ -94,8 +94,8 @@ function WaitingCard({ item, refresh, setNotice }) {
   const inputId = `reply-${item.id}`;
   return html`<article class="waiting-card">
     <div class="waiting-head">
-      <a class="id" href=${itemUrl(item.id)}>${item.id}</a>
-      <a class="waiting-title" href=${itemUrl(item.id)}>${item.title}</a>
+      <a class="id" href=${panelHref(item.id)}>${item.id}</a>
+      <a class="waiting-title" href=${panelHref(item.id)}>${item.title}</a>
       ${item.type === "bug" ? html`<span class="chip bug">Bug</span>` : null}
       <${High} item=${item} />
     </div>
@@ -129,7 +129,7 @@ function InProgress({ project }) {
     <h2 id="progress-h" class="section-label">In progress · ${items.length}</h2>
     ${items.length
       ? items.map(
-          (item) => html`<a class="row-link" href=${itemUrl(item.id)}>
+          (item) => html`<a class="row-link" href=${panelHref(item.id)}>
             <span class="id">${item.id}</span>
             <span class="title">${item.title}</span>
             <${High} item=${item} />
@@ -147,7 +147,7 @@ function NextUp({ project }) {
     <h2 id="next-h" class="section-label">Next up for Claude</h2>
     ${items.length
       ? items.map(
-          (item) => html`<a class="row-link" href=${itemUrl(item.id)}>
+          (item) => html`<a class="row-link" href=${panelHref(item.id)}>
             <span class="id">${item.id}</span>
             <span class="title">${item.title}</span>
             ${item.answered ? html`<span class="chip warn">Answered by you</span>` : html`<${High} item=${item} />`}
@@ -185,7 +185,7 @@ function Since({ project }) {
             ({ item, entry }) => html`<li>
               <span class="when mono small muted">${whenShort(entry)}</span>
               <${Avatar} who="claude" />
-              <a class="id" href=${itemUrl(item.id)}>${item.id}</a>
+              <a class="id" href=${panelHref(item.id)}>${item.id}</a>
               <span class="what">${capital(entry.text)} <span class="muted small">· ${item.title}</span></span>
             </li>`,
           )}

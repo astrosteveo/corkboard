@@ -181,6 +181,11 @@ class Handler(BaseHTTPRequestHandler):
         path = urlsplit(self.path).path
         if path == "/api/project":
             self._json(200, api.project_view(load(self.server.root)))
+        elif path.startswith("/api/items/") and path.count("/") == 3:
+            try:
+                self._json(200, api.item_extras(load(self.server.root), path.rsplit("/", 1)[1]))
+            except api.ApiError as error:
+                self._json(error.status, {"error": str(error)})
         elif path == "/api/events":
             self._events()
         elif path == "/api/server":
