@@ -12,6 +12,9 @@ the same either way. Changes from the page are always logged as `me`.
                                      mention it, and its branches, pull requests and commits
     GET  /api/pulls                  {"latest", "merged_not_done"}: each item's newest own pull
                                      request, and the items whose one merged while they're open
+    GET  /api/docs                   {"docs": [{"name", "title", "changed"}]}: every page
+    GET  /api/docs/<name>            {"name", "title", "path", "text", "changed", "mentions"}:
+                                     one page, with the IDs of the items it mentions
 
     POST /api/items                  {"type", "title", "fields": {…}, "body"}     corkboard new
     POST /api/items/<ID>/move        {"status", "message"}                       corkboard move
@@ -31,7 +34,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from datetime import datetime
 
-from . import development, edits, work
+from . import development, docs, edits, work
 from .development import PullRequest
 from .project import TYPES, Item, Project, Release
 
@@ -72,7 +75,7 @@ def item_extras(project: Project, item_id: str, prs: list[PullRequest]) -> dict:
     built = development.for_item(project.root, item.id, prs)
     return {
         "id": item.id,
-        "mentions": project.mentions(item.id),
+        "mentions": [_mention(project, mention) for mention in project.mentions(item.id)],
         "development": {
             "branches": built.branches,
             "pull_requests": [_pull_request(pr) for pr in built.pull_requests],
@@ -81,6 +84,44 @@ def item_extras(project: Project, item_id: str, prs: list[PullRequest]) -> dict:
             ],
         },
     }
+
+
+def _mention(project: Project, mention: str) -> dict:
+    """An item as {"item": ID}, or a doc as {"doc": name, "title"} for a link to its page."""
+    if mention in project.items:
+        return {"item": mention}
+    name = mention.removeprefix(f"{docs.DOCS_DIR}/").removesuffix(docs.SUFFIX)
+    doc = docs.find(project.root, name)
+    return {"doc": name, "title": doc.title if doc else name}
+
+
+def docs_view(project: Project) -> dict:
+    """Every page in docs/, for the tree."""
+    return {
+        "docs": [
+            {"name": doc.name, "title": doc.title, "changed": _when(doc.changed)}
+            for doc in docs.list_docs(project.root)
+        ]
+    }
+
+
+def doc_view(project: Project, name: str) -> dict:
+    """One page: its text, the items it mentions, and when it last changed."""
+    doc = docs.find(project.root, name)
+    if doc is None:
+        raise ApiError(404, f"there's no doc {name}")
+    return {
+        "name": doc.name,
+        "title": doc.title,
+        "path": project.relative(doc.path),
+        "text": doc.text,
+        "changed": _when(doc.changed),
+        "mentions": docs.mentioned_items(project, doc.text),
+    }
+
+
+def _when(moment: datetime) -> str:
+    return moment.strftime("%Y-%m-%d %H:%M")
 
 
 def pulls_view(project: Project, prs: list[PullRequest]) -> dict:
