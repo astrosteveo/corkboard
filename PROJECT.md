@@ -4,7 +4,7 @@ A lightweight issue tracker and wiki for one person working with Claude Code, ke
 
 ## What it is
 
-A Claude Code plugin with a small CLI (`cpm`) and a local web app. Each repo keeps its releases, epics, tasks, subtasks and docs as Markdown files in a `.project/` folder. Claude reads and edits them with its normal tools and uses `cpm` for structured changes. The user works in a browser tab on localhost: a board, a release view, issue pages and docs. It covers what teams use Jira (issues, epics, releases) and Confluence (specs, decisions) for.
+A Claude Code plugin with a small CLI (`cpm`) and a local web app. Each repo keeps its releases, epics, tasks, subtasks and docs as Markdown files in a `.project/` folder. Claude reads and edits them with its normal tools and uses `cpm` for structured changes. The user works in a browser tab on localhost: a home page showing where things stand, a board, a release view, a list, item pages and docs. It covers what teams use Jira (issues, epics, releases) and Confluence (specs, decisions) for.
 
 ## The problem
 
@@ -72,6 +72,9 @@ One developer working with Claude Code on their own repos. Not for teams.
 - 2026-11-12: The CLI's commands and output are specified in `.project/docs/cli.md`. Output is plain text with no JSON mode. Why: text is cheaper for Claude to read, and the web app uses the shared core library instead of the CLI.
 - 2026-11-12: `cpm now` is the session-start summary, at most 25 lines, and items the user just answered come first in Next up. Why: keeps each session's starting context under 500 tokens, and Claude picks up the user's answers right away.
 - 2026-11-12: `cpm` tells Claude and the user apart by the `CLAUDECODE` variable Claude Code sets in Claude's shells. Why: log lines get the right author with nothing to pass in.
+- 2026-11-12: The web app's screens are specified in `.project/docs/ui.md`: Now, Board, Releases, List, Item and Docs, plus Ctrl-K search. Why: the fewest screens that cover the goals; List gives the backlog a home, since the board hides it.
+- 2026-11-12: Cards can't be reordered by hand; they're sorted by priority, then number. Why: manual order would need a position field on every item and rewrite many files on each drag.
+- 2026-11-12: "Since you last looked" clears only when the user clicks Mark seen. Why: glancing at the tab shouldn't lose the list of what Claude did.
 
 ## Open questions
 
@@ -79,7 +82,6 @@ One developer working with Claude Code on their own repos. Not for teams.
 - Will it be published, and under what license?
 - Stack: TypeScript with pnpm for both the CLI and the web app, sharing one core library?
 - Leave out sprints and time tracking for v1? (Releases replace milestones.)
-- Which web app views are in v1 besides Now, Board, Release, Issue and Docs?
 
 ## Glossary
 
@@ -97,4 +99,4 @@ One developer working with Claude Code on their own repos. Not for teams.
 
 ## Status
 
-Design stage, no code yet. The file format and the CLI are settled. Next: sketches of the web app screens, then the Claude Code plugin (skill, session-start hook, slash commands).
+Design stage, no code yet. The file format, the CLI and the web app's screens are settled. Next: a clickable mockup to judge the look, then the Claude Code plugin (skill, session-start hook, slash commands).
