@@ -2,7 +2,7 @@
 id: CB-15
 type: task
 title: "Write items: new, move, sub, log"
-status: todo
+status: in-progress
 priority: high
 owner: claude
 created: 2026-11-12
@@ -24,3 +24,4 @@ Done when tests cover each command, and this item is closed with `corkboard move
 
 ## Log
 - 2026-11-12 21:21 claude: created
+- 2026-11-12 21:47 claude: moved to in-progress

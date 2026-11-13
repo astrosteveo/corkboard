@@ -3,6 +3,7 @@
 import io
 import tempfile
 import unittest
+from datetime import datetime
 from pathlib import Path
 
 from corkboard import header
@@ -10,6 +11,9 @@ from corkboard.cli import main
 from corkboard.project import ITEM_FIELDS, load
 
 REPO = Path(__file__).resolve().parents[1]
+
+# Every command run through run_cli sees this as the time.
+NOW = datetime(2026, 11, 13, 15, 30)
 
 LOG = "\n## Log\n- 2026-11-12 10:00 me: created\n"
 
@@ -54,12 +58,32 @@ class Fixture:
     def load(self):
         return load(self.root)
 
-    def run(self, *argv: str, env: dict[str, str] | None = None) -> tuple[int, str, str]:
-        return run_cli(self.repo, *argv, env=env)
+    def run(
+        self, *argv: str, env: dict[str, str] | None = None, stdin: str | None = None
+    ) -> tuple[int, str, str]:
+        return run_cli(self.repo, *argv, env=env, stdin=stdin)
+
+    def text(self, item_id: str) -> str:
+        """The current text of an item's file."""
+        (path,) = (self.root / "items").glob(f"{item_id}-*.md")
+        return path.read_text(encoding="utf-8")
 
 
-def run_cli(cwd: Path, *argv: str, env: dict[str, str] | None = None) -> tuple[int, str, str]:
-    """Run corkboard in `cwd`. Returns the exit code, stdout and stderr."""
+def run_cli(
+    cwd: Path, *argv: str, env: dict[str, str] | None = None, stdin: str | None = None
+) -> tuple[int, str, str]:
+    """Run corkboard in `cwd`. Returns the exit code, stdout and stderr.
+
+    `stdin` is text piped in; None means nothing is piped.
+    """
     out, err = io.StringIO(), io.StringIO()
-    code = main(list(argv), cwd=cwd, env=env or {}, out=out, err=err)
+    code = main(
+        list(argv),
+        cwd=cwd,
+        env=env or {},
+        out=out,
+        err=err,
+        stdin=None if stdin is None else io.StringIO(stdin),
+        clock=lambda: NOW,
+    )
     return code, out.getvalue(), err.getvalue()
