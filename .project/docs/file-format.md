@@ -45,6 +45,7 @@ created: 2026-11-12
 parent: CP-3
 labels: [ui, board]
 blocked_by: [CP-9]
+related: [CP-13]
 ---
 What and why, in a few lines. Free Markdown.
 
@@ -76,6 +77,8 @@ What and why, in a few lines. Free Markdown.
 | `release` | no | a release name. Epics, and tasks or bugs with no parent. |
 | `labels` | no | list of free-form words, such as `[ui, cli]` |
 | `blocked_by` | no | list of item IDs |
+| `related` | no | list of item IDs |
+| `duplicate_of` | no | one item ID |
 
 There's no `updated` field: the last log line says when the item last changed.
 
@@ -99,6 +102,18 @@ Blocked isn't a status. An item is blocked while any item in its `blocked_by` is
 - A task or bug belongs to an epic through `parent`. Epics have no parent.
 - An item's release is its own `release` field, or else its epic's. A task or bug with a parent doesn't set `release`, so each item's release is decided in one place.
 - An epic's progress is its done tasks and bugs out of all of them, leaving out cancelled ones.
+
+### Links
+
+Each link is stored on one item and shown on both:
+
+| Field | Shown on this item | Shown on the other item |
+|---|---|---|
+| `blocked_by` | Blocked by | Blocks |
+| `related` | Related to | Related to |
+| `duplicate_of` | Duplicate of | Duplicated by |
+
+Storing one side means adding a link changes one file, and the two sides can't disagree. A duplicate is usually also `cancelled`.
 
 ### Body
 
@@ -135,6 +150,15 @@ A subtask is only done or not done. It has no owner, labels or log of its own. I
 - When a title changes, `cpm` renames the file. A short title that's out of date or missing breaks nothing, and `cpm check` fixes it.
 - Items refer to each other by ID, never by file path, so renames don't break references.
 
+## Commits and pull requests
+
+Nothing about commits or pull requests is stored in item files. They're found by the item's ID appearing in them:
+
+- A commit belongs to an item when its message contains the ID, such as `fix(board): keep card order on drop (CP-12)`. Commits are read from `git log`, so this works offline.
+- A pull request belongs to an item when the ID is in its title, its body or its branch name. Branch names use the lowercase ID and short title, such as `cp-12-drag-cards`.
+- IDs match exactly, so `CP-12` doesn't match `CP-120`. Branch names match regardless of case.
+- Pull requests are read from GitHub with `gh`, only when something shows them, and never written anywhere. Without `gh`, a GitHub remote or a connection, they just aren't shown.
+
 ## Releases
 
 One file per release in `releases/`, named after the release, such as `v0.1.md`.
@@ -167,6 +191,6 @@ Plain Markdown pages in `docs/`. Subfolders make the page tree in the web app.
 - IDs are unique, and every file name starts with its item's ID.
 - Every `parent` exists and is an epic. Epics have no parent.
 - Tasks and bugs with a parent don't set `release`. Every `release` named has a file in `releases/`.
-- Every ID in `blocked_by` exists, and nothing is blocked by itself through a chain.
+- Every ID in `blocked_by`, `related` and `duplicate_of` exists, no item links to itself, and nothing is blocked by itself through a chain.
 - Only tasks and bugs have a `## Subtasks` section.
 - Log lines match the log format.

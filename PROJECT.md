@@ -4,7 +4,7 @@ A lightweight issue tracker and wiki for one person working with Claude Code, ke
 
 ## What it is
 
-A Claude Code plugin with a small CLI (`cpm`) and a local web app. Each repo keeps its releases, epics, tasks, subtasks and docs as Markdown files in a `.project/` folder. Claude reads and edits them with its normal tools and uses `cpm` for structured changes. The user works in a browser tab on localhost: a home page showing where things stand, a board, a release view, a list, item pages and docs. It covers what teams use Jira (issues, epics, releases) and Confluence (specs, decisions) for.
+A Claude Code plugin with a small CLI (`cpm`) and a local web app. Each repo keeps its releases, epics, tasks, subtasks and docs as Markdown files in a `.project/` folder. Claude reads and edits them with its normal tools and uses `cpm` for structured changes. The user works in a browser tab on localhost: a home page showing where things stand, a board, a release view, a list, item pages and docs. Items link to each other and show the commits and pull requests that mention them. It covers what teams use Jira (issues, epics, releases) and Confluence (specs, decisions) for, kept local instead of in a hosted tracker or GitHub Issues.
 
 ## The problem
 
@@ -18,13 +18,15 @@ One developer working with Claude Code on their own repos. Not for teams.
 
 1. Claude knows where the project stands at the start of every session and keeps it up to date as it works, at a low token cost.
 2. The user sees at a glance what's in progress, what's next, what Claude did, and what Claude is waiting on them for.
-3. Work is organized the way it is in Jira: releases are made of epics, epics of tasks and bugs, tasks of subtasks, with labels across all of them. The user can open a release and see everything it contains.
+3. Work is organized the way it is in Jira: releases are made of epics, epics of tasks and bugs, tasks of subtasks, with labels across all of them and links between items. The user can open a release and see everything it contains.
 4. Issues and docs live together as plain files next to the code, readable without the tool.
-5. Stays lightweight: one command to set up, and no server running for Claude to work.
+5. Each item shows the commits and pull requests that did its work.
+6. Stays lightweight: one command to set up, and no server running for Claude to work.
 
 ## Non-goals
 
 - Team features: other users, permissions, mentions, notifications, hosting or sync. Why: it's for one person and Claude.
+- Syncing items with GitHub Issues or GitHub Projects. Why: it's meant as a local alternative to them, with the data in the repo.
 
 ## Success looks like
 
@@ -75,6 +77,10 @@ One developer working with Claude Code on their own repos. Not for teams.
 - 2026-11-12: The web app's screens are specified in `.project/docs/ui.md`: Now, Board, Releases, List, Item and Docs, plus Ctrl-K search. Why: the fewest screens that cover the goals; List gives the backlog a home, since the board hides it.
 - 2026-11-12: Cards can't be reordered by hand; they're sorted by priority, then number. Why: manual order would need a position field on every item and rewrite many files on each drag.
 - 2026-11-12: "Since you last looked" clears only when the user clicks Mark seen. Why: glancing at the tab shouldn't lose the list of what Claude did.
+- 2026-11-12: Items link as blocked by, related to or duplicate of. Each link is stored on one item and shown on both. Why: adding a link changes one file, and the two sides can't disagree.
+- 2026-11-12: Commits and pull requests belong to an item when its ID appears in them, and are never stored in item files. Pull requests are read with `gh` only when shown, and `cpm now` never contacts GitHub. Why: nothing in git goes stale, everything else works offline, and sessions start fast.
+- 2026-11-12: Claude puts the item ID in commit messages and PR titles, names branches like `cp-12-drag-cards`, and moves the item to `waiting` when it opens a PR. Why: that's what matches commits and PRs to items, and it puts PRs in the user's Waiting on you list.
+- 2026-11-12: A merged PR doesn't close its item automatically; the Now page offers a one-click Mark done. Why: the tool never changes an item unless the user or Claude does it.
 
 ## Open questions
 
@@ -90,6 +96,7 @@ One developer working with Claude Code on their own repos. Not for teams.
 - **Task / Bug:** one piece of work, or one defect to fix. Can have subtasks.
 - **Subtask:** a checklist line inside a task or bug.
 - **Label:** a free-form tag on any item, such as `ui` or `cli`, used for filtering.
+- **Link:** a blocked by, related to or duplicate of connection between two items.
 - **Item:** an epic, task or bug, each one file in `.project/items/`.
 - **Doc:** a Markdown page in `.project/docs/`. Decisions are docs in `.project/docs/decisions/`.
 - **Owner:** `me` or `claude`, whoever does the item.
@@ -99,4 +106,4 @@ One developer working with Claude Code on their own repos. Not for teams.
 
 ## Status
 
-Design stage, no code yet. The file format, the CLI and the web app's screens are settled. Next: a clickable mockup to judge the look, then the Claude Code plugin (skill, session-start hook, slash commands).
+Design stage, no code yet. The file format, the CLI and the web app's screens are settled, including links and commit/PR display, and the user likes the clickable mockup of the web app so far (https://claude.ai/artifact/7WHHdLRhsnAn4oUeEuBw1k). Next: the Claude Code plugin (skill, session-start hook, slash commands).

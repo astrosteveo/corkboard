@@ -11,6 +11,7 @@ What each screen of the web app shows and does. `cpm ui` serves it on localhost.
 - **Who:** everything you do in the app is logged as `me`.
 - **Writes:** a change in the app makes the same change to the file that the matching `cpm` command would make. Dragging a card to Done is `cpm move <ID> done`, and so on.
 - **Editing conflicts:** if Claude changes an item or doc while you're editing its text, saving shows both versions and lets you choose. Nothing is silently overwritten. Field changes such as status or priority apply to the file as it is on disk, so they never conflict.
+- **GitHub:** pull requests are read with `gh` when a screen shows them, and never stored. Offline or without a GitHub remote, they just aren't shown.
 - **Theme:** light or dark, following your system setting.
 - **URLs:** every screen has its own, so links can be shared between the CLI, docs and the browser:
   - `/` (Now)
@@ -47,6 +48,7 @@ SINCE YOU LAST LOOKED  (yesterday 18:40)                   [Mark seen]
 - **Waiting on you** shows every `waiting` item with the question from its last log line.
   - **Send** moves the item to `todo` and logs your reply as `moved to todo: <reply>`, so it comes first in Claude's Next up.
   - **Mark done** is for approving a review. It moves the item to `done`, with your reply as the message if you wrote one.
+- **Merged, not done** appears when an item's pull request has merged but the item isn't `done` or `cancelled`, for example "PR #15 merged, but CP-21 Write the README is still in progress", with a **Mark CP-21 done** button. Nothing changes an item on its own.
 - **In progress** and **Next up** match `cpm now`.
 - **Since you last looked** lists log lines written by Claude since you last clicked Mark seen, newest last. It only clears when you click Mark seen, not when you open the page. The time of your last Mark seen is kept in the browser, not in the repo.
 
@@ -70,7 +72,7 @@ Backlog (12) and Cancelled (1) hidden · show                ● changed since y
 ```
 
 - Shows tasks and bugs in the active release by default. Epics aren't cards; they appear as the name on each card, and as rows when **Group by epic** is on.
-- A card shows its ID, title, epic, and type when it's a bug. It also shows priority when high, labels, owner, subtask progress, blockers, and the question when it's waiting.
+- A card shows its ID, title, epic, and type when it's a bug. It also shows priority when high, labels, owner, subtask progress, blockers, the question when it's waiting, and its latest pull request with its state, such as `#14 merged`.
 - **Dragging** a card to another column changes its status. Dropping on Waiting asks for a message first.
 - **Order** within a column is priority, then number, the same as `cpm next`. Cards can't be reordered by hand.
 - Backlog and Cancelled are hidden until you click **show**.
@@ -139,7 +141,7 @@ One item, in a side panel over the screen you came from, or as a full page at `/
 Board view › CP-12                                     [Full page] [×]
 Drag cards between columns
 In progress ▾   High ▾   Claude ▾   Release v0.1 (from epic)
-Labels: ui  board  +        Blocked by: CP-9 Card component · todo
+Labels: ui  board  +
 
 Description, rendered as Markdown                              [Edit]
 
@@ -148,6 +150,16 @@ Subtasks 1/3
   ☐ Save the status change through cpm
   ☐ Put the card back if saving fails
   + Add subtask
+
+Links
+  Blocks       CP-18 Keyboard shortcuts for the board · todo
+  Related to   CP-13 Board column limits · todo
+  + Add link
+
+Development
+  cp-12-drag-cards
+  #14 Drag cards between columns · open · checks passing
+  a1b2c3d feat(board): detect drop column (CP-12) · Nov 12
 
 Activity
   Nov 12 14:03  you     created
@@ -161,6 +173,8 @@ Mentioned in: Architecture (doc) · CP-14
 - Every header field can be changed in place. Release shows "(from epic)" when it's inherited, and can't be changed there.
 - **Edit** turns the description into a Markdown text box with a preview.
 - **Subtasks** are ticked, unticked and added in place.
+- **Links** shows both sides of every link. **+ Add link** takes a link type and an item ID.
+- **Development** shows the branch, pull requests and commits that mention the item's ID. It's hidden when there are none.
 - **Activity** is the log. Notes you add go in as `me` lines.
 - For an epic, the subtasks section is replaced by its tasks and bugs with their statuses and progress.
 - **Mentioned in** lists docs and items that mention this ID.

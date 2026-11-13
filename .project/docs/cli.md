@@ -7,6 +7,7 @@
 - **Finding the project:** `cpm` walks up from the current folder to the first `.project/config.yml`, the way git finds `.git`. If there's none, it fails with `no .project/ folder here or above. Run cpm init to start one.` The one exception is `cpm now`, which prints nothing and exits 0, so the session-start hook is harmless in other repos.
 - **Who:** log lines are written as `claude` when the `CLAUDECODE` environment variable is set (Claude Code sets it in Claude's shells) and as `me` otherwise. Any write command takes `--as me` or `--as claude` to override.
 - **Output:** plain text. Color only when output goes to a terminal. No JSON mode.
+- **GitHub:** only `cpm show` and `cpm ui` contact GitHub, through `gh`, to read pull requests. Every other command works offline.
 - **Fields:** always `field=value`. Lists are comma-separated, such as `labels=ui,board`. An empty value clears a field, such as `parent=`. Quote values with spaces: `title="New title"`.
 - **Writes** print one line naming what changed and the file's path, such as `moved CP-12 to done .project/items/CP-12-drag-cards.md`. Files are written whole and swapped in, so the web app never reads half a file.
 - **Warnings** start with `warning:` and don't stop the command. **Errors** are one line on stderr starting with `error:`, say how to fix the problem, and exit with code 1. For example: `error: "inprogress" isn't a status. Use one of: backlog, todo, in-progress, waiting, done, cancelled`.
@@ -66,6 +67,7 @@ Details: cpm show <ID>
 - **In progress:** every `in-progress` item. Items the user owns are marked `(you)`. Priority is shown only when high, and subtask progress only when there are subtasks. At most 5 lines.
 - **Next up:** the first 3 items in the order of work.
 - With nothing in any section, it prints the first line and `Nothing in progress or planned. Add work with cpm new.`
+- It never contacts GitHub, so it's fast and works offline.
 
 ### `cpm next`
 
@@ -87,6 +89,8 @@ Drag cards between columns
 path: .project/items/CP-12-drag-cards.md
 epic: CP-3 Board view · release: v0.1 · labels: ui, board
 blocked by: CP-9 Card component (todo)
+blocks: CP-18 Keyboard shortcuts for the board (todo)
+related: CP-13 Board column limits (todo)
 mentioned in: docs/ui.md, CP-14
 
 What and why, as written in the file.
@@ -95,6 +99,12 @@ Subtasks 1/3
   1 [x] Work out which column a card was dropped on
   2 [ ] Save the status change through cpm
   3 [ ] Put the card back if saving fails
+
+Development
+  branch: cp-12-drag-cards
+  PR #14 Drag cards between columns · open · checks passing
+  a1b2c3d feat(board): detect drop column (CP-12)
+  9f8e7d6 fix(board): keep card order on drop (CP-12)
 
 Log (last 5 of 9)
   2026-11-12 14:20 claude: moved to in-progress
@@ -105,6 +115,8 @@ Log (last 5 of 9)
 - The log shows its last 5 lines. The heading says how many there are in all.
 - For an epic, a `Tasks 3/6` list of its tasks and bugs, as `status ID title`, takes the place of Subtasks.
 - `mentioned in` lists docs and items whose text mentions the ID.
+- Links show both sides: what this item stores (`blocked by`, `related`, `duplicate of`) and what other items store about it (`blocks`, `duplicated by`).
+- **Development** lists the branch, the pull requests and the last 5 commits that mention the ID, as described in [file-format.md](file-format.md). Pull requests are read with `gh`, with a 3-second limit. Without `gh`, a GitHub remote or a connection, the PR line is left out and nothing else changes.
 
 ### `cpm list [field=value…] [--all]`
 
@@ -146,7 +158,7 @@ v0.1 · active · due 2026-12-01 · 7/15 done
 Creates an item.
 
 - Defaults: `status=todo`, `priority=medium`, `owner=claude`, and `created` set to today.
-- Fields that can be set: `status`, `priority`, `owner`, `parent`, `release`, `labels`, `blocked_by`.
+- Fields that can be set: `status`, `priority`, `owner`, `parent`, `release`, `labels`, `blocked_by`, `related`, `duplicate_of`.
 - When input is piped in, it becomes the body, so the description and a `## Subtasks` checklist can go in with one command. `cpm` writes the `## Log` section itself, with a `created` line, so piped input can't contain one.
 - It checks the new item the way `cpm check` would and writes nothing if there's a problem.
 
@@ -180,7 +192,8 @@ moved CP-12 to done .project/items/CP-12-drag-cards.md
 
 Changes header fields other than `id`, `created` and `status`. Status goes through `cpm move`.
 
-- Fields that can be set: `title`, `type`, `priority`, `owner`, `parent`, `release`, `labels`, `blocked_by`. `type` can only switch between task and bug.
+- Fields that can be set: `title`, `type`, `priority`, `owner`, `parent`, `release`, `labels`, `blocked_by`, `related`, `duplicate_of`. `type` can only switch between task and bug.
+- Links are set the same way, such as `cpm set CP-18 related=CP-9`.
 - It logs one line, such as `set priority=high labels=ui,board`.
 - Changing the title renames the file, and the printed path is the new one.
 
