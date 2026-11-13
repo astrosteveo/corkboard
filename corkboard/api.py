@@ -43,6 +43,7 @@ def project_view(project: Project) -> dict:
     return {
         "name": project.name,
         "prefix": project.prefix,
+        "root": str(project.root.resolve()),
         "active_release": active.name if active else None,
         "releases": [_release(project, release) for release in project.releases.values()],
         "items": [_item(project, item) for item in project.sorted_items()],
