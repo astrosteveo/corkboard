@@ -199,7 +199,7 @@ function ReleaseHead({ project, release, loose, refresh }) {
           : null}
       </div>
       ${release?.goal
-        ? html`<${Markdown} className="release-goal" text=${release.goal} />`
+        ? html`<${Markdown} className="release-goal" text=${release.goal} items=${project.byId} />`
         : release
           ? html`<p class="muted small">No goal written. It's the text of .project/releases/${release.name}.md.</p>`
           : html`<p class="muted small">Tasks and bugs that aren't in any release${loose.length ? "" : " (there are none)"}.</p>`}

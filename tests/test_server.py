@@ -13,6 +13,7 @@ import unittest
 from datetime import datetime
 from pathlib import Path
 from unittest import mock
+from urllib.parse import quote
 
 from helpers import LOG, REPO, Fixture, run_cli
 
@@ -258,14 +259,19 @@ class ReadApiTest(ServerTest):
         self.assertEqual(data["next"], ["EX-4", "EX-7"])
 
     def test_an_items_mentions(self):
-        self.fixture.doc("plan.md", "EX-2 comes first.\n")
+        self.fixture.doc("plan.md", "# The plan\n\nEX-2 comes first.\n")
+        self.fixture.doc("decisions/0001-order.md", "EX-2 before EX-5.\n")
         self.fixture.item("EX-9", "See EX-2.\n" + LOG)
         status, _, body = get(self.running.port, "/api/items/ex-2")
         self.assertEqual(status, 200)
         nothing = {"branches": [], "pull_requests": [], "commits": []}  # not a git repo
+        mentions = [
+            {"doc": "decisions/0001-order", "title": "0001-order"},
+            {"doc": "plan", "title": "The plan"},
+            {"item": "EX-9"},
+        ]
         self.assertEqual(
-            json.loads(body),
-            {"id": "EX-2", "mentions": ["docs/plan.md", "EX-9"], "development": nothing},
+            json.loads(body), {"id": "EX-2", "mentions": mentions, "development": nothing}
         )
         status, _, body = get(self.running.port, "/api/items/EX-99")
         self.assertEqual((status, json.loads(body)), (404, {"error": "there's no item EX-99"}))
@@ -275,6 +281,92 @@ class ReadApiTest(ServerTest):
         self.fixture.item("EX-9", title="Added later")
         titles = [item["title"] for item in self.api(self.running)["items"]]
         self.assertIn("Added later", titles)
+
+
+class DocsApiTest(ServerTest):
+    def setUp(self):
+        fixture = Fixture(self)
+        fixture.item("EX-1", title="Board view", type="epic")
+        fixture.item("EX-12", title="Drag cards")
+        fixture.doc("ui.md", "# Web app\n\nThe board (EX-12, EX-1) and EX-12 again, not EX-120.\n")
+        fixture.doc("cli.md", "```\n# not a title\n```\n\nNo heading.\n## Not level one\n")
+        fixture.doc("decisions/0002-later.md", "# Later\n")
+        fixture.doc("decisions/0010-latest.md", "# Latest #\n")
+        fixture.doc("my notes.md", "# Spaced\n")
+        fixture.doc("notes.txt", "# Not Markdown\n")
+        (fixture.repo / "secret.md").write_text("# Secret\n", encoding="utf-8")
+        (fixture.root / "docs" / "outside.md").symlink_to(fixture.repo / "secret.md")
+        self.changed = datetime(2026, 11, 12, 15, 40)
+        stamp = self.changed.timestamp()
+        os.utime(fixture.root / "docs" / "ui.md", (stamp, stamp))
+        self.fixture = fixture
+        self.running = self.serve(fixture)
+
+    def get_json(self, path: str) -> tuple[int, dict]:
+        status, content_type, body = get(self.running.port, path)
+        self.assertEqual(content_type, "application/json")
+        return status, json.loads(body)
+
+    def test_the_list(self):
+        status, data = self.get_json("/api/docs")
+        self.assertEqual(status, 200)
+        names = [(doc["name"], doc["title"]) for doc in data["docs"]]
+        self.assertEqual(
+            names,
+            [
+                ("cli", "cli"),  # no level-one heading outside a code block: the file name
+                ("decisions/0002-later", "Later"),
+                ("decisions/0010-latest", "Latest"),
+                ("my notes", "Spaced"),
+                ("ui", "Web app"),
+            ],
+        )
+        self.assertEqual(data["docs"][-1]["changed"], "2026-11-12 15:40")
+
+    def test_no_docs_folder(self):
+        fixture = Fixture(self)
+        running = self.serve(fixture)
+        status, _, body = get(running.port, "/api/docs")
+        self.assertEqual((status, json.loads(body)), (200, {"docs": []}))
+
+    def test_one_page(self):
+        status, data = self.get_json("/api/docs/ui")
+        self.assertEqual(status, 200)
+        self.assertEqual(
+            data,
+            {
+                "name": "ui",
+                "title": "Web app",
+                "path": ".project/docs/ui.md",
+                "text": "# Web app\n\nThe board (EX-12, EX-1) and EX-12 again, not EX-120.\n",
+                "changed": "2026-11-12 15:40",
+                "mentions": ["EX-1", "EX-12"],  # items that exist, once each, in number order
+            },
+        )
+
+    def test_names_with_md_folders_and_spaces(self):
+        self.assertEqual(self.get_json("/api/docs/ui.md")[1]["name"], "ui")
+        self.assertEqual(self.get_json("/api/docs/decisions/0002-later")[1]["title"], "Later")
+        self.assertEqual(self.get_json("/api/docs/my%20notes")[1]["title"], "Spaced")
+
+    def test_only_md_files_inside_docs(self):
+        for path in [
+            "/api/docs/notes.txt",
+            "/api/docs/decisions",
+            "/api/docs/outside",  # a symlink to a file outside docs/
+            "/api/docs/../items/EX-1-board-view",
+            "/api/docs/..%2Fitems%2FEX-1-board-view",
+            "/api/docs/%2e%2e/%2e%2e/secret",
+            "/api/docs/" + quote(str(self.fixture.repo / "secret")),
+            "/api/docs/ui%00",
+            "/api/docs/",
+        ]:
+            with self.subTest(path=path):
+                status, data = self.get_json(path)
+                self.assertEqual(status, 404)
+                self.assertTrue(data["error"].startswith("there's no doc"))
+        names = [doc["name"] for doc in self.get_json("/api/docs")[1]["docs"]]
+        self.assertNotIn("outside", names)
 
 
 class PortsTest(ServerTest):

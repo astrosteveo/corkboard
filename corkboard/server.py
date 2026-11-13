@@ -259,6 +259,14 @@ class Handler(BaseHTTPRequestHandler):
                 self._json(error.status, {"error": str(error)})
         elif path == "/api/pulls":
             self._json(200, api.pulls_view(load(self.server.root), self.server.pull_requests()))
+        elif path == "/api/docs":
+            self._json(200, api.docs_view(load(self.server.root)))
+        elif path.startswith("/api/docs/"):
+            try:
+                name = unquote(path.removeprefix("/api/docs/"))
+                self._json(200, api.doc_view(load(self.server.root), name))
+            except api.ApiError as error:
+                self._json(error.status, {"error": str(error)})
         elif path == "/api/events":
             self._events()
         elif path == "/api/server":

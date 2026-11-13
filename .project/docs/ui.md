@@ -20,7 +20,7 @@ What each screen of the web app shows and does. `corkboard ui` serves it on loca
   - `/releases/v0.1`
   - `/list`
   - `/items/EX-12`
-  - `/docs/architecture`
+  - `/docs` and `/docs/architecture`
 
 ## Now
 
@@ -172,13 +172,14 @@ Mentioned in: Architecture (doc) · EX-14
 ```
 
 - Every header field can be changed in place. Release shows "(from epic)" when it's inherited, and can't be changed there.
+- Item IDs in the description show as chips, the same as in docs.
 - **Edit** turns the description into a Markdown text box with a preview.
 - **Subtasks** are ticked, unticked and added in place.
 - **Links** shows both sides of every link, with each item's status. **+ Add link** takes a link type (blocked by, related to or duplicate of) and an item ID, or just its number, and stores the link on this item. It refuses an unknown ID, a link to the item itself, a link that's already there and a blocker that leads back to the item. An item is a duplicate of one item at most, so that type is offered only while it has none. The × on a link removes it from whichever item stores it, so removing a Blocks link changes the other item's file.
 - **Development** shows the branch, pull requests and commits that mention the item's ID, as `corkboard show` lists them. Each pull request shows its state, its checks while it's open, and links to GitHub. It's hidden when there are none.
 - **Activity** is the log. Notes you add go in as `me` lines.
 - For an epic, the subtasks section is replaced by its tasks and bugs with their statuses and progress.
-- **Mentioned in** lists docs and items that mention this ID.
+- **Mentioned in** lists docs and items that mention this ID. A doc shows its title and links to its page.
 
 ## New item form
 
@@ -200,8 +201,10 @@ Search docs…          │ Architecture                                   [Edit
 + New page            │ Changed Nov 12 15:40
 ```
 
-- The tree on the left is the `docs/` folder. A page's title is its first `#` heading, or else its file name.
-- Item IDs in a page show as chips with the item's current title and status, and link to it.
+- The tree on the left is the `docs/` folder: each folder's pages, then its subfolders, which collapse. A page's title is its first `#` heading, or else its file name. Typing in **Search docs** lists the pages whose title or file name has the text.
+- A page's URL is its path under `docs/` without `.md`: `docs/decisions/0001-markdown.md` is `/docs/decisions/0001-markdown`. A URL ending in `.md` shows the same page, so a link to another page written for GitHub, such as `[CLI](cli.md)`, works in the app too. `/docs` shows the tree alone.
+- Only `.md` files inside `docs/` are served. A path that leads out of it, through `..` or a symlink, finds no page.
+- Item IDs in a page show as chips with the item's current title and status, and open the item in the side panel. IDs inside links and code, and IDs with no item, stay as text.
 - **Edit** opens a Markdown text box with a preview.
 - **+ New page** asks for a title and a folder, and creates the file.
-- The footer lists the items the page mentions and when the file last changed.
+- The footer lists the items the page mentions, when the file last changed (its modification time), and its path.

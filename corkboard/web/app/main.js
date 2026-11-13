@@ -1,6 +1,7 @@
 // The app: loads the project from the server, and shows the sidebar and the screen for the URL.
 import { indexProject, loadProject } from "./api.js";
 import { BoardPage } from "./board.js";
+import { DocsPage } from "./docs.js";
 import { ItemPage, ItemPanel } from "./item.js";
 import { html, render, useCallback, useEffect, useState } from "./lib.js";
 import { NewItem, openNewItem } from "./newitem.js";
@@ -99,6 +100,8 @@ function Screen({ route, project, refresh, pulls }) {
       return html`<${ReleasesPage} ...${props} />`;
     case "item":
       return html`<${ItemPage} ...${props} id=${route.id} />`;
+    case "docs":
+      return html`<${DocsPage} ...${props} />`;
     default:
       document.title = "Not found · Corkboard";
       return html`<div class="page-title"><h1>Not found</h1>
@@ -110,6 +113,7 @@ const NAV = [
   { name: "now", href: "/", label: "Now", icon: "now" },
   { name: "board", href: "/board", label: "Board", icon: "board" },
   { name: "releases", href: "/releases", label: "Releases", icon: "releases" },
+  { name: "docs", href: "/docs", label: "Docs", icon: "docs" },
 ];
 
 function Sidebar({ project, route, live }) {

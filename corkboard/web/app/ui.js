@@ -5,6 +5,7 @@ const ICONS = {
   now: html`<circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="2.5"></circle>`,
   board: html`<rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M9 4v16M15 4v16"></path>`,
   releases: html`<path d="M5 21V4"></path><path d="M5 4h12l-2.5 4.5L17 13H5"></path>`,
+  docs: html`<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5M9 13h6M9 17h4"></path>`,
   up: html`<path d="M12 19V5M5 12l7-7 7 7"></path>`,
   close: html`<path d="M6 6l12 12M18 6 6 18"></path>`,
   expand: html`<path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"></path>`,
@@ -101,6 +102,19 @@ export function panelHref(id) {
 
 export function releaseUrl(name) {
   return name ? `/releases/${encodeURIComponent(name)}` : "/releases/none";
+}
+
+// A doc's page, by its path under docs/ without .md, such as /docs/decisions/0001-markdown.
+export function docUrl(name) {
+  return `/docs/${name.split("/").map(encodeURIComponent).join("/")}`;
+}
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+// 2026-11-12 as Nov 12.
+export function shortDate(date) {
+  const [, month, day] = date.split("-");
+  return `${MONTHS[Number(month) - 1] ?? month} ${Number(day)}`;
 }
 
 export function pageTitle(text, project) {

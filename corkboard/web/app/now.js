@@ -1,10 +1,19 @@
 // The Now page: where things stand, what Claude needs from you, and what changed since you looked.
 // In progress and Next up match `corkboard now`, using the order of work the server sends.
 import { write } from "./api.js";
-import { shortDate } from "./item.js";
 import { html, useState } from "./lib.js";
 import { markSeen, nowStamp, unseenEntries, useSeen } from "./seen.js";
-import { Avatar, High, Icon, Progress, pageTitle, panelHref, releaseUrl, subtaskCount } from "./ui.js";
+import {
+  Avatar,
+  High,
+  Icon,
+  Progress,
+  pageTitle,
+  panelHref,
+  releaseUrl,
+  shortDate,
+  subtaskCount,
+} from "./ui.js";
 
 const NEXT_UP = 3;
 const SINCE_LINES = 30;
