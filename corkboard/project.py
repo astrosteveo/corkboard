@@ -206,6 +206,14 @@ class Project:
     def item(self, item_id: str) -> Item | None:
         return self.items.get(item_id.upper())
 
+    def relative(self, path: Path) -> str:
+        """A path relative to the repo, the folder that holds .project/."""
+        repo = self.root.parent
+        try:
+            return path.resolve().relative_to(repo.resolve()).as_posix()
+        except ValueError:
+            return str(path)
+
     def sorted_items(self) -> list[Item]:
         return sorted(self.items.values(), key=lambda item: item.number)
 
