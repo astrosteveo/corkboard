@@ -88,9 +88,17 @@ Headers use a strict subset of YAML, so `corkboard` can read them with Python's 
 
 - One `key: value` per line, in the order above. No nesting, comments or blank lines.
 - A value is plain text, a date, or a list in brackets, such as `[ui, board]`.
-- A value or list item is wrapped in double quotes when it contains `: ` or ` #`, starts with `[`, `"` or a space, or would otherwise read as something else in YAML, such as `yes`, `no`, `null` or a number like `1.0`. For example: `title: "Fix: crash on drop"`. Inside quotes, `\"` is a quote and `\\` is a backslash.
+- A value is wrapped in double quotes when it:
+  - is empty, or starts or ends with a space
+  - starts with one of ``- ? : , [ ] { } # & * ! | > ' " % @`` or a backtick
+  - contains `: ` or ` #`, or ends with `:`
+  - would read as something else in YAML: `yes`, `no`, `on`, `off`, `y`, `n`, `true`, `false`, `null`, `~`, `=` or `<<` in any of their usual spellings, a number such as `12`, `1.0` or `0x1F`, or a date or time. `created` and `date` are the exception: they're always written as plain `YYYY-MM-DD` dates.
 
-`corkboard` always writes headers this way, and `corkboard check` reports any header that isn't.
+  For example: `title: "Fix: crash on drop"`.
+- A list item is left unquoted only when it's letters, digits, spaces and `.`, `/`, `-` or `_`, starts with a letter or digit, and doesn't read as something else in YAML. Anything else is quoted, such as `labels: ["a, b", ui]`.
+- Inside quotes, `\"` is a quote and `\\` is a backslash. Values can't contain line breaks.
+
+`corkboard` always writes headers this way, and `corkboard check` reports any header that isn't, including quotes a value doesn't need.
 
 ### Statuses
 
