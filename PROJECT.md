@@ -81,12 +81,17 @@ One developer working with Claude Code on their own repos. Not for teams.
 - 2026-11-12: Commits and pull requests belong to an item when its ID appears in them, and are never stored in item files. Pull requests are read with `gh` only when shown, and `cpm now` never contacts GitHub. Why: nothing in git goes stale, everything else works offline, and sessions start fast.
 - 2026-11-12: Claude puts the item ID in commit messages and PR titles, names branches like `cp-12-drag-cards`, and moves the item to `waiting` when it opens a PR. Why: that's what matches commits and PRs to items, and it puts PRs in the user's Waiting on you list.
 - 2026-11-12: A merged PR doesn't close its item automatically; the Now page offers a one-click Mark done. Why: the tool never changes an item unless the user or Claude does it.
+- 2026-11-12: The Claude Code plugin is specified in `.project/docs/plugin.md`: `cpm` in its `bin/`, a session-start hook that runs `cpm now`, a `track` skill with the workflow, and `/cp:next`, `/cp:done`, `/cp:plan` and `/cp:ui`. Why: the fewest pieces that keep Claude on track, and every session starts knowing where things stand.
+- 2026-11-12: `cpm` ships inside the plugin, so it must run with no install step. This repo is the plugin, listed in the astro-plugins marketplace by its GitHub repo. Why: one install, and the CLI always matches the plugin's version.
+- 2026-11-12: Every change Claude commits gets an item, except trivial fixes such as a typo. Why: the board has to match reality, without the upkeep costing more than it saves.
+- 2026-11-12: One-line decisions stay in PROJECT.md; a decision that needs more than a line gets a page in `.project/docs/decisions/`, linked from its one-liner. Why: PROJECT.md already loads into every session, and the two would otherwise overlap.
+- 2026-11-12: No coordination with the github-tracking plugin. Why: it's being retired, and a repo uses one or the other.
 
 ## Open questions
 
 - What's the real name? "Claude Project" is a placeholder, and "Projects" is already a claude.ai feature.
 - Will it be published, and under what license?
-- Stack: TypeScript with pnpm for both the CLI and the web app, sharing one core library?
+- Stack: TypeScript with pnpm for both the CLI and the web app, sharing one core library? Whatever it is has to run straight from the installed plugin, with no install step.
 - Leave out sprints and time tracking for v1? (Releases replace milestones.)
 
 ## Glossary
@@ -98,7 +103,7 @@ One developer working with Claude Code on their own repos. Not for teams.
 - **Label:** a free-form tag on any item, such as `ui` or `cli`, used for filtering.
 - **Link:** a blocked by, related to or duplicate of connection between two items.
 - **Item:** an epic, task or bug, each one file in `.project/items/`.
-- **Doc:** a Markdown page in `.project/docs/`. Decisions are docs in `.project/docs/decisions/`.
+- **Doc:** a Markdown page in `.project/docs/`. Decisions that need more than a line are docs in `.project/docs/decisions/`.
 - **Owner:** `me` or `claude`, whoever does the item.
 - **Waiting on you:** items where Claude needs the user's answer or approval before it can go on.
 - **Now view:** the web app's home page: what Claude is working on, what's next, and what's waiting on you.
@@ -106,4 +111,4 @@ One developer working with Claude Code on their own repos. Not for teams.
 
 ## Status
 
-Design stage, no code yet. The file format, the CLI and the web app's screens are settled, including links and commit/PR display, and the user likes the clickable mockup of the web app so far (https://claude.ai/artifact/7WHHdLRhsnAn4oUeEuBw1k). Next: the Claude Code plugin (skill, session-start hook, slash commands).
+Design stage, no code yet. The file format, the CLI, the web app's screens and the Claude Code plugin are specified in `.project/docs/`, and the user likes the clickable mockup of the web app so far (https://claude.ai/artifact/7WHHdLRhsnAn4oUeEuBw1k). Next: settle the stack and the real name, then plan v0.1 as items in `.project/` and start building.
