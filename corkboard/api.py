@@ -1,8 +1,8 @@
 """The web app's API, apart from HTTP: the project as one view, and the changes the page makes.
 
 Reading: everything comes from the core library the CLI uses, so the pages show what `corkboard
-now`, `next`, `show` and `tree` would: the effective release, open blockers, waiting messages,
-answered items and the order of work. The page only arranges it.
+now`, `next`, `show` and `tree` would: the effective release, open blockers, both sides of each
+link, waiting messages, answered items and the order of work. The page only arranges it.
 
 Writing: each change calls the same function in edits.py as its CLI command, so the file ends up
 the same either way. Changes from the page are always logged as `me`.
@@ -94,8 +94,11 @@ def _item(project: Project, item: Item) -> dict:
         "labels": item.labels,
         "blocked_by": item.blocked_by,
         "open_blockers": project.open_blockers(item),
+        "blocks": [other.id for other in project.blocks(item)],
         "related": item.related,
+        "related_to": [other.id for other in project.related_to(item)],
         "duplicate_of": item.duplicate_of,
+        "duplicated_by": [other.id for other in project.duplicated_by(item)],
         "path": project.relative(item.path),
         "description": item.description,
         "subtasks": [{"text": s.text, "done": s.done} for s in item.subtasks],

@@ -610,6 +610,12 @@ input.item-title:focus { border-color: var(--border-strong); background: var(--s
 .inline-add { display: flex; gap: 8px; }
 .inline-add .input { flex: 1 1 auto; }
 
+.links { display: grid; grid-template-columns: max-content minmax(0, 1fr); column-gap: 16px; }
+.link-row { display: contents; }
+.link-kind { align-self: center; }
+.link-add { flex-wrap: wrap; }
+.link-add .input { flex: 1 1 220px; }
+
 .warn-note { background: var(--warn-bg); border-color: var(--warn-border); color: var(--warn-text); margin: 0; }
 .blocked-note { margin: 0; color: var(--high); }
 .mentions { margin: 0; }
