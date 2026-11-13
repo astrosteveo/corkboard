@@ -26,7 +26,7 @@ query($owner: String!, $repo: String!) {
   repository(owner: $owner, name: $repo) {
     pullRequests(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {
       nodes {
-        number title body headRefName state isDraft
+        number title body headRefName state isDraft url
         commits(last: 1) { nodes { commit { statusCheckRollup { state } } } }
       }
     }
@@ -47,6 +47,7 @@ CHECKS = {
 class Commit:
     hash: str
     subject: str
+    date: str  # when it was written, as 2026-11-12
 
 
 @dataclass(frozen=True)
@@ -57,6 +58,7 @@ class PullRequest:
     branch: str
     state: str  # open, draft, merged or closed
     checks: str  # passing, failing, pending, or "" when it has none
+    url: str = ""
 
     def mentions(self, item_id: str) -> bool:
         """Whether the exact ID is in the title or body, or the ID in any case in the branch."""
@@ -64,6 +66,21 @@ class PullRequest:
             mention_pattern(item_id).search(f"{self.title}\n{self.body}")
             or mention_pattern(item_id, ignore_case=True).search(self.branch)
         )
+
+
+@dataclass(frozen=True)
+class Development:
+    """Everything that mentions one item: its branches, pull requests and newest commits."""
+
+    branches: list[str]
+    pull_requests: list[PullRequest]
+    commits: list[Commit]
+
+
+def for_item(root: Path, item_id: str) -> Development:
+    """The item's branches, the pull requests that mention it and its newest commits."""
+    prs = [pr for pr in pull_requests(root) if pr.mentions(item_id)]
+    return Development(branches(root, item_id), prs, commits(root, item_id))
 
 
 def branches(root: Path, item_id: str) -> list[str]:
@@ -85,13 +102,13 @@ def commits(root: Path, item_id: str, limit: int = COMMITS) -> list[Commit]:
         "--no-show-signature",
         "--fixed-strings",
         f"--grep={item_id}",
-        "--format=%h%x1f%s%x1f%B%x1e",
+        "--format=%h%x1f%s%x1f%as%x1f%B%x1e",
     )
     found = []
     for record in out.split("\x1e"):
         parts = record.strip().split("\x1f")
-        if len(parts) == 3 and pattern.search(parts[2]):
-            found.append(Commit(parts[0], parts[1]))
+        if len(parts) == 4 and pattern.search(parts[3]):
+            found.append(Commit(parts[0], parts[1], parts[2]))
             if len(found) == limit:
                 break
     return found
@@ -129,7 +146,13 @@ def _pull_request(node: dict) -> PullRequest:
     rollup = last[0]["commit"]["statusCheckRollup"] if last else None
     checks = CHECKS.get(rollup["state"], "") if rollup else ""
     return PullRequest(
-        int(node["number"]), node["title"], node["body"] or "", node["headRefName"], state, checks
+        int(node["number"]),
+        node["title"],
+        node["body"] or "",
+        node["headRefName"],
+        state,
+        checks,
+        node.get("url") or "",
     )
 
 

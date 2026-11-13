@@ -8,7 +8,8 @@ Writing: each change calls the same function in edits.py as its CLI command, so 
 the same either way. Changes from the page are always logged as `me`.
 
     GET  /api/project                the whole project, as project_view builds it
-    GET  /api/items/<ID>             {"id", "mentions"}: docs and items that mention it
+    GET  /api/items/<ID>             {"id", "mentions", "development"}: docs and items that
+                                     mention it, and its branches, pull requests and commits
 
     POST /api/items                  {"type", "title", "fields": {…}, "body"}     corkboard new
     POST /api/items/<ID>/move        {"status", "message"}                       corkboard move
@@ -28,7 +29,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from datetime import datetime
 
-from . import edits, work
+from . import development, edits, work
 from .project import TYPES, Item, Project, Release
 
 WHO = "me"
@@ -59,11 +60,33 @@ def project_view(project: Project) -> dict:
 
 
 def item_extras(project: Project, item_id: str) -> dict:
-    """What the item panel shows beyond the project view: the docs and items that mention it.
+    """What the item panel shows beyond the project view: the docs and items that mention it, and
+    its development, as `corkboard show` lists it.
 
-    Kept out of project_view, since finding mentions reads every doc."""
+    Kept out of project_view, since finding mentions reads every doc, and development runs git
+    and gh."""
     item = _find_item(project, item_id)
-    return {"id": item.id, "mentions": project.mentions(item.id)}
+    built = development.for_item(project.root, item.id)
+    return {
+        "id": item.id,
+        "mentions": project.mentions(item.id),
+        "development": {
+            "branches": built.branches,
+            "pull_requests": [
+                {
+                    "number": pr.number,
+                    "title": pr.title,
+                    "state": pr.state,
+                    "checks": pr.checks,
+                    "url": pr.url,
+                }
+                for pr in built.pull_requests
+            ],
+            "commits": [
+                {"hash": c.hash, "subject": c.subject, "date": c.date} for c in built.commits
+            ],
+        },
+    }
 
 
 def _release(project: Project, release: Release) -> dict:

@@ -262,7 +262,11 @@ class ReadApiTest(ServerTest):
         self.fixture.item("EX-9", "See EX-2.\n" + LOG)
         status, _, body = get(self.running.port, "/api/items/ex-2")
         self.assertEqual(status, 200)
-        self.assertEqual(json.loads(body), {"id": "EX-2", "mentions": ["docs/plan.md", "EX-9"]})
+        nothing = {"branches": [], "pull_requests": [], "commits": []}  # not a git repo
+        self.assertEqual(
+            json.loads(body),
+            {"id": "EX-2", "mentions": ["docs/plan.md", "EX-9"], "development": nothing},
+        )
         status, _, body = get(self.running.port, "/api/items/EX-99")
         self.assertEqual((status, json.loads(body)), (404, {"error": "there's no item EX-99"}))
 
