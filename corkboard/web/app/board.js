@@ -1,6 +1,9 @@
 // The board: tasks and bugs in one release, in columns by status. Filters live in the URL, so a
 // reload or a live update keeps them, and a board view can be shared as a link.
-import { html } from "./lib.js";
+// Dragging a card to another column moves the item, the same as `corkboard move`. The card moves
+// at once and goes back if the save fails. Dropping on Waiting asks for the message first.
+import { write } from "./api.js";
+import { html, useEffect, useRef, useState } from "./lib.js";
 import { navigate } from "./router.js";
 import { changedSince, useSeen } from "./seen.js";
 import { Avatar, High, STATUS_LABEL, pageTitle, panelHref, subtaskCount } from "./ui.js";
@@ -9,9 +12,38 @@ const SHOWN = ["todo", "in-progress", "waiting", "done"];
 const ALL = ["backlog", "todo", "in-progress", "waiting", "done", "cancelled"];
 const DONE_LIMIT = 5;
 const RANK = { high: 0, medium: 1, low: 2 };
+const DRAG_TYPE = "application/x-corkboard-item";
 
-export function BoardPage({ project, route }) {
+export function BoardPage({ project, route, refresh }) {
   const seen = useSeen(project);
+  const [moved, setMoved] = useState({}); // id → status, while a drop is saving
+  const [asking, setAsking] = useState(null); // { id, status } for a drop on Waiting
+  const [error, setError] = useState("");
+  const statusOf = (item) => moved[item.id] ?? item.status;
+
+  async function moveCard(id, status, message = "") {
+    const item = project.byId.get(id);
+    if (!item || statusOf(item) === status) return;
+    if (status === "waiting" && !message) {
+      setAsking({ id, status });
+      return;
+    }
+    setError("");
+    setMoved((current) => ({ ...current, [id]: status }));
+    try {
+      await write(`/api/items/${encodeURIComponent(id)}/move`, { status, message });
+      await refresh();
+    } catch (problem) {
+      setError(`Couldn't move ${id}: ${problem.message} It's back in ${STATUS_LABEL[item.status]}.`);
+    } finally {
+      setMoved((current) => {
+        const rest = { ...current };
+        delete rest[id];
+        return rest;
+      });
+    }
+  }
+
   const query = route.query;
   const release = boardRelease(project, query.get("release"));
   const filters = {
@@ -33,7 +65,7 @@ export function BoardPage({ project, route }) {
   );
   const statuses = filters.hidden ? ALL : SHOWN;
   const hiddenCounts = ["backlog", "cancelled"]
-    .map((status) => [status, visible.filter((item) => item.status === status).length])
+    .map((status) => [status, visible.filter((item) => statusOf(item) === status).length])
     .filter(([, count]) => count);
 
   const set = (changes) => {
@@ -54,13 +86,22 @@ export function BoardPage({ project, route }) {
       </div>
     </header>
     <${Filters} project=${project} release=${release} inRelease=${inRelease} filters=${filters} set=${set} />
+    ${error ? html`<p class="notice error" role="alert">${error}</p>` : null}
     <div class="board" role="list" aria-label="Columns">
       ${statuses.map(
         (status) => html`<${Column} key=${status} project=${project} status=${status} seen=${seen}
-          items=${visible.filter((item) => item.status === status).sort(byOrder)}
-          filters=${filters} set=${set} />`,
+          items=${visible.filter((item) => statusOf(item) === status).sort(byOrder)}
+          filters=${filters} set=${set} moveCard=${moveCard} saving=${moved} />`,
       )}
     </div>
+    ${asking
+      ? html`<${AskDialog} item=${project.byId.get(asking.id)}
+          onCancel=${() => setAsking(null)}
+          onSubmit=${(message) => {
+            setAsking(null);
+            moveCard(asking.id, asking.status, message);
+          }} />`
+      : null}
     <p class="board-foot small muted">
       ${hiddenCounts.length && !filters.hidden
         ? html`<span>${hiddenCounts.map(([status, count]) => `${STATUS_LABEL[status]} (${count})`).join(" and ")} hidden</span>
@@ -115,11 +156,29 @@ function Filters({ project, release, inRelease, filters, set }) {
   </div>`;
 }
 
-function Column({ project, status, items, seen, filters, set }) {
+function Column({ project, status, items, seen, filters, set, moveCard, saving }) {
+  const [over, setOver] = useState(false);
   const limited = status === "done" && !filters.done && items.length > DONE_LIMIT;
   const shown = limited ? items.slice(0, DONE_LIMIT) : items;
   const groups = filters.group ? groupByEpic(project, shown) : [{ name: null, items: shown }];
-  return html`<section class=${`column column-${status}`} role="listitem" aria-labelledby=${`col-${status}`}>
+  const accepts = (event) => event.dataTransfer?.types.includes(DRAG_TYPE);
+  return html`<section class=${`column column-${status}${over ? " over" : ""}`} role="listitem"
+    aria-labelledby=${`col-${status}`} data-status=${status}
+    onDragOver=${(event) => {
+      if (!accepts(event)) return;
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+      setOver(true);
+    }}
+    onDragLeave=${(event) => {
+      if (!event.currentTarget.contains(event.relatedTarget)) setOver(false);
+    }}
+    onDrop=${(event) => {
+      if (!accepts(event)) return;
+      event.preventDefault();
+      setOver(false);
+      moveCard(event.dataTransfer.getData(DRAG_TYPE), status);
+    }}>
     <h2 class="column-head" id=${`col-${status}`}>
       <span class="column-dot" aria-hidden="true"></span>
       <span>${STATUS_LABEL[status]}</span>
@@ -129,7 +188,8 @@ function Column({ project, status, items, seen, filters, set }) {
       (group) => html`
         ${group.name ? html`<span class="group-name">${group.name}</span>` : null}
         ${group.items.map(
-          (item) => html`<${Card} key=${item.id} project=${project} item=${item} seen=${seen} grouped=${filters.group} />`,
+          (item) => html`<${Card} key=${item.id} project=${project} item=${item} seen=${seen}
+            grouped=${filters.group} saving=${item.id in saving} />`,
         )}
       `,
     )}
@@ -142,12 +202,21 @@ function Column({ project, status, items, seen, filters, set }) {
   </section>`;
 }
 
-function Card({ project, item, seen, grouped }) {
+function Card({ project, item, seen, grouped, saving }) {
+  const [dragging, setDragging] = useState(false);
   const epic = epicOf(project, item);
   const progress = subtaskCount(item);
   const changed = changedSince(item, seen);
   const selected = new URLSearchParams(location.search).get("item") === item.id;
-  return html`<a class=${selected ? "card-item selected" : "card-item"} href=${panelHref(item.id)} data-id=${item.id}>
+  const classes = ["card-item", selected && "selected", dragging && "dragging", saving && "saving"];
+  return html`<a class=${classes.filter(Boolean).join(" ")} href=${panelHref(item.id)} data-id=${item.id}
+    draggable="true" aria-busy=${saving ? "true" : null}
+    onDragStart=${(event) => {
+      event.dataTransfer.setData(DRAG_TYPE, item.id);
+      event.dataTransfer.effectAllowed = "move";
+      setDragging(true);
+    }}
+    onDragEnd=${() => setDragging(false)}>
     <span class="card-top">
       <span class="id">${item.id}</span>
       ${item.type === "bug" ? html`<span class="chip bug">Bug</span>` : null}
@@ -164,11 +233,40 @@ function Card({ project, item, seen, grouped }) {
     <span class="card-bottom">
       <${High} item=${item} />
       ${item.labels.map((label) => html`<span class="chip label">${label}</span>`)}
-      <span class="spacer"></span>
-      ${progress ? html`<span class="small muted num">${progress}</span>` : null}
-      <${Avatar} who=${item.owner} />
+      <span class="card-meta">
+        ${progress ? html`<span class="small muted num">${progress}</span>` : null}
+        <${Avatar} who=${item.owner} />
+      </span>
     </span>
   </a>`;
+}
+
+// Asks what an item dropped on Waiting is waiting for, since moving to waiting needs a message.
+function AskDialog({ item, onSubmit, onCancel }) {
+  const dialog = useRef(null);
+  const [message, setMessage] = useState("");
+  useEffect(() => {
+    dialog.current?.showModal();
+  }, []);
+  return html`<dialog class="ask-dialog" ref=${dialog} aria-labelledby="ask-title"
+    onCancel=${(event) => {
+      event.preventDefault();
+      onCancel();
+    }}>
+    <form onSubmit=${(event) => {
+      event.preventDefault();
+      if (message.trim()) onSubmit(message.trim());
+    }}>
+      <h2 id="ask-title">Move ${item.id} to Waiting</h2>
+      <label for="ask-message">What is it waiting for? The question, or what to review.</label>
+      <input id="ask-message" class="input tall" value=${message} autofocus
+        onInput=${(event) => setMessage(event.currentTarget.value)} />
+      <div class="dialog-buttons">
+        <button class="btn" type="button" onClick=${onCancel}>Cancel</button>
+        <button class="btn primary" type="submit" disabled=${!message.trim()}>Move to waiting</button>
+      </div>
+    </form>
+  </dialog>`;
 }
 
 // The release the board shows: the one in the URL, else the active one, else the first.
