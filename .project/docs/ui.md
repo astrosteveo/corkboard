@@ -1,17 +1,18 @@
 # Web app
 
-What each screen of the web app shows and does. `cpm ui` serves it on localhost. It reads and writes the files described in [file-format.md](file-format.md) through the same core library as the CLI ([cli.md](cli.md)).
+What each screen of the web app shows and does. `cpm ui` serves it on localhost. It reads and writes the files described in [file-format.md](file-format.md) through the same core library as the CLI ([cli.md](cli.md)). It's plain HTML, CSS and JavaScript with no build step, and Preact, htm and marked are committed as single files, since the app works offline.
 
 ## Everywhere
 
 - **Sidebar:** Now (with a count of items waiting on you), Board, Releases, List, Docs.
 - **Ctrl-K** opens search: jump to any item or doc by ID or title, or run an action such as "New task" or "Go to v0.1". Search covers titles, descriptions and docs.
 - **Keys:** `c` opens the new item form, and `Esc` closes a panel or form.
-- **Live updates:** the app watches `.project/`. When Claude changes a file, the screen updates without a reload, and the item gets a dot (●) until you click Mark seen on the Now page.
+- **Live updates:** the server checks `.project/` for changed files every second and pushes the changes to the page. When Claude changes a file, the screen updates without a reload, and the item gets a dot (●) until you click Mark seen on the Now page.
 - **Who:** everything you do in the app is logged as `me`.
 - **Writes:** a change in the app makes the same change to the file that the matching `cpm` command would make. Dragging a card to Done is `cpm move <ID> done`, and so on.
 - **Editing conflicts:** if Claude changes an item or doc while you're editing its text, saving shows both versions and lets you choose. Nothing is silently overwritten. Field changes such as status or priority apply to the file as it is on disk, so they never conflict.
 - **GitHub:** pull requests are read with `gh` when a screen shows them, and never stored. Offline or without a GitHub remote, they just aren't shown.
+- **Safety:** Markdown renders with raw HTML turned off, and the server only accepts changes from the app's own page. The app can write files, so a doc in a cloned repo must never be able to run a script in it.
 - **Theme:** light or dark, following your system setting.
 - **URLs:** every screen has its own, so links can be shared between the CLI, docs and the browser:
   - `/` (Now)

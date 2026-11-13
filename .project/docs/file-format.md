@@ -82,6 +82,16 @@ What and why, in a few lines. Free Markdown.
 
 There's no `updated` field: the last log line says when the item last changed.
 
+### Header format
+
+Headers use a strict subset of YAML, so `cpm` can read them with Python's standard library and GitHub still renders them. Release headers follow the same rules.
+
+- One `key: value` per line, in the order above. No nesting, comments or blank lines.
+- A value is plain text, a date, or a list in brackets, such as `[ui, board]`.
+- A value or list item is wrapped in double quotes when it contains `: ` or ` #`, starts with `[`, `"` or a space, or would otherwise read as something else in YAML, such as `yes`, `no`, `null` or a number like `1.0`. For example: `title: "Fix: crash on drop"`. Inside quotes, `\"` is a quote and `\\` is a backslash.
+
+`cpm` always writes headers this way, and `cpm check` reports any header that isn't.
+
 ### Statuses
 
 | Status | Meaning |
@@ -187,7 +197,7 @@ Plain Markdown pages in `docs/`. Subfolders make the page tree in the web app.
 
 ## What cpm check verifies
 
-- Every header parses, required fields are present, and every value is one of the allowed ones.
+- Every header follows the header format, required fields are present, and every value is one of the allowed ones.
 - IDs are unique, and every file name starts with its item's ID.
 - Every `parent` exists and is an epic. Epics have no parent.
 - Tasks and bugs with a parent don't set `release`. Every `release` named has a file in `releases/`.

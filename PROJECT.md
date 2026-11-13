@@ -54,6 +54,7 @@ One developer working with Claude Code on their own repos. Not for teams.
 - Runs on the user's Linux machine. The web app serves on localhost only.
 - Project data is plain Markdown in the repo, readable and diffable in git without the tool.
 - Claude must be able to work without a server running.
+- `cpm` and the web server use only Python 3.11+'s standard library, and the web app has no build step, so the plugin runs right after it installs.
 
 ## Decisions
 
@@ -86,12 +87,14 @@ One developer working with Claude Code on their own repos. Not for teams.
 - 2026-11-12: Every change Claude commits gets an item, except trivial fixes such as a typo. Why: the board has to match reality, without the upkeep costing more than it saves.
 - 2026-11-12: One-line decisions stay in PROJECT.md; a decision that needs more than a line gets a page in `.project/docs/decisions/`, linked from its one-liner. Why: PROJECT.md already loads into every session, and the two would otherwise overlap.
 - 2026-11-12: No coordination with the github-tracking plugin. Why: it's being retired, and a repo uses one or the other.
+- 2026-11-12: The CLI and web server are Python 3.11+ with only the standard library. The web app is plain HTML, CSS and JavaScript, with Preact, htm and marked committed as single files. Turned down TypeScript (Node isn't installed, and it needs a build) and Go (it needs a committed binary or a release step). Why: the plugin must run right after it installs, with nothing to install and no build output committed, the way the user's other plugins already work.
+- 2026-11-12: Item and release headers use a strict subset of YAML, specified in `.project/docs/file-format.md`. Why: the standard library has no YAML parser, and headers must stay valid YAML so GitHub still renders them.
+- 2026-11-12: Markdown renders with raw HTML turned off, and the web server only accepts changes from its own page. Why: the app can write files, so a doc in a cloned repo must never be able to run a script in it.
 
 ## Open questions
 
 - What's the real name? "Claude Project" is a placeholder, and "Projects" is already a claude.ai feature.
 - Will it be published, and under what license?
-- Stack: TypeScript with pnpm for both the CLI and the web app, sharing one core library? Whatever it is has to run straight from the installed plugin, with no install step.
 - Leave out sprints and time tracking for v1? (Releases replace milestones.)
 
 ## Glossary
@@ -111,4 +114,4 @@ One developer working with Claude Code on their own repos. Not for teams.
 
 ## Status
 
-Design stage, no code yet. The file format, the CLI, the web app's screens and the Claude Code plugin are specified in `.project/docs/`, and the user likes the clickable mockup of the web app so far (https://claude.ai/artifact/7WHHdLRhsnAn4oUeEuBw1k). Next: settle the stack and the real name, then plan v0.1 as items in `.project/` and start building.
+Design stage, no code yet. The file format, the CLI, the web app's screens and the Claude Code plugin are specified in `.project/docs/`, and the user likes the clickable mockup of the web app so far (https://claude.ai/artifact/7WHHdLRhsnAn4oUeEuBw1k). The stack is chosen: Python standard library for the CLI and server, and a web app with no build step. Next: pick the real name, then plan v0.1 as items in `.project/` and start building.

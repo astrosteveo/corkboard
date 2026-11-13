@@ -9,6 +9,9 @@ This repo is the plugin. The astro-plugins marketplace lists it by its GitHub re
 ```
 .claude-plugin/plugin.json
 bin/cpm                  the CLI, on Claude's PATH while the plugin is enabled
+cpm/                     the Python code: core library, CLI commands and web server
+web/                     the web app: HTML, CSS, JavaScript, and Preact, htm and marked as single files
+tests/                   unittest tests
 hooks/hooks.json         the session-start hook
 skills/track/SKILL.md    the workflow, loaded by Claude
 skills/next/SKILL.md     /cp:next
@@ -18,14 +21,15 @@ skills/ui/SKILL.md       /cp:ui
 ```
 
 - `cp` is a placeholder plugin name. The slash commands take the project's final name.
-- `bin/cpm` has to run right after the plugin installs, with no install step, so the CLI ships prebuilt or with no dependencies.
+- `bin/cpm` has to run right after the plugin installs, with no install step. It's a Python 3.11+ script that uses only the standard library. It finds the rest of its code from its own file path, since `${CLAUDE_PLUGIN_ROOT}` isn't set in Claude's shells.
+- Tests run with `python3 -m unittest discover -s tests`. Formatting and linting use `uvx ruff format` and `uvx ruff check`.
 - Each skill holds everything it needs in its own text. Claude Code asks before reading files outside the project, and an installed plugin always is outside it.
 - Plugins can't ship permission rules. Each skill pre-approves `cpm` with `allowed-tools: Bash(cpm *)` while it's active. For other turns, the README tells the user to add `Bash(cpm *)` to their settings once.
-- To run `cpm` in their own terminal, outside Claude Code, the user installs it from this repo with `pnpm add -g`.
+- To run `cpm` in their own terminal, outside Claude Code, the user symlinks this repo's `bin/cpm` into `~/.local/bin`.
 
 ## Session-start hook
 
-Runs `cpm now` when a session starts, resumes, is cleared, or compacts, and prints:
+Runs `${CLAUDE_PLUGIN_ROOT}/bin/cpm now`, by full path, when a session starts, resumes, is cleared or compacts, and prints:
 
 ```
 This repo tracks its work in .project/ with cpm. Use the track skill before you start, finish or plan work.
