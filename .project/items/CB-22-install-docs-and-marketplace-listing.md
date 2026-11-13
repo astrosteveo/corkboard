@@ -20,4 +20,4 @@ Done when the plugin installs from the marketplace into a fresh session, and `co
 
 ## Log
 - 2026-11-12 21:21 claude: created
-- 2026-11-12 21:34 claude: The repo is private, so installing from the marketplace only works on a machine where git is logged in to GitHub as the user. Confirm that works, or settle the open question about publishing first.
+- 2026-11-12 21:27 claude: The repo is private, so installing from the marketplace only works on a machine where git is logged in to GitHub as the user. Confirm that works, or settle the open question about publishing first.

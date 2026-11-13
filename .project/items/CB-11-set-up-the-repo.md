@@ -2,7 +2,7 @@
 id: CB-11
 type: task
 title: Set up the repo
-status: todo
+status: in-progress
 priority: high
 owner: claude
 created: 2026-11-12
@@ -19,3 +19,4 @@ Done when `python3 -m unittest discover -s tests`, `uvx ruff format --check` and
 
 ## Log
 - 2026-11-12 21:21 claude: created
+- 2026-11-12 21:28 claude: moved to in-progress
