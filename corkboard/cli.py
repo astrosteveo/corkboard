@@ -205,7 +205,7 @@ def _utf8(stream: TextIO) -> TextIO:
 
 
 def _commands() -> dict[str, Command]:
-    from . import changes, show, summary
+    from . import changes, show, summary, views
 
     commands = [
         Command(
@@ -234,6 +234,25 @@ def _commands() -> dict[str, Command]:
             "the docs and items that mention it, its description, its numbered subtasks (or an\n"
             "epic's tasks) and the last 5 lines of its log.",
             show.run,
+        ),
+        Command(
+            "list",
+            "list [field=value…] [--all]",
+            "One line per item, with filters",
+            "One line per item, sorted by number, then a count. Filters work on any header field\n"
+            "and must all match; commas inside one mean any of, such as status=todo,in-progress.\n"
+            "labels=ui matches items with that label, and release=v0.1 also matches items whose\n"
+            "epic is in v0.1. Done and cancelled items are hidden unless you pass --all or a\n"
+            "status= filter names them.",
+            views.list_,
+        ),
+        Command(
+            "tree",
+            "tree [release | none]",
+            "A release's epics and their tasks, with progress",
+            "A release, its epics, and each epic's tasks and bugs with their status and progress.\n"
+            "With no argument it shows the active release; none shows items with no release.",
+            views.tree,
         ),
         Command(
             "new",
@@ -269,6 +288,24 @@ def _commands() -> dict[str, Command]:
             "Add a note to an item's log",
             "Adds a note to the item's log: a choice and why, a dead end, a surprise.",
             changes.log,
+        ),
+        Command(
+            "set",
+            "set <ID> field=value…",
+            "Change an item's other fields",
+            "Changes header fields other than id, created and status, and logs the change.\n"
+            "Fields: " + ", ".join(changes.SET_FIELDS) + ". An empty value clears a field,\n"
+            "such as parent=. type only switches between task and bug. A new title renames\n"
+            "the file.",
+            changes.set_,
+        ),
+        Command(
+            "release",
+            "release <name> [status=…] [date=YYYY-MM-DD]",
+            "Create or change a release",
+            "Creates a release, starting as planned, or changes one. Statuses: planned, active,\n"
+            "released; only one release can be active. Text piped in becomes its goal.",
+            changes.release,
         ),
         Command(
             "help",
