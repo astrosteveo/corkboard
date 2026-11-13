@@ -209,6 +209,12 @@ def _utf8(stream: TextIO) -> TextIO:
     return stream
 
 
+def _ui(ctx: Context, args: list[str]) -> None:
+    from . import server  # imported only here: http.server takes longer to load than all the rest
+
+    server.ui(ctx, args)
+
+
 def _commands() -> dict[str, Command]:
     from . import changes, check, edits, show, summary, views
 
@@ -330,6 +336,15 @@ def _commands() -> dict[str, Command]:
             "in the folder's name (claude-project gives CP), or the first three letters of a\n"
             "one-word name; the name defaults to the folder's name in title case.",
             check.init,
+        ),
+        Command(
+            "ui",
+            "ui",
+            "Start the web app on localhost",
+            "Starts the web app on 127.0.0.1, on port 4747 or the next free one up to 4766,\n"
+            "prints its URL and runs until Ctrl-C. If it's already running for this repo, it\n"
+            "prints that URL and exits.",
+            _ui,
         ),
         Command(
             "help",
