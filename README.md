@@ -2,23 +2,62 @@
 
 A lightweight issue tracker and wiki for one person working with Claude Code, kept as Markdown files in the repo.
 
-```
-/plugin install corkboard --marketplace astrosteveo/astro-plugins
-```
-
 Corkboard keeps a repo's releases, epics, tasks, bugs and docs as Markdown files in a `.project/` folder, next to the code. Claude reads and changes them through the `corkboard` command, which does the bookkeeping: IDs, file names, and log lines with who and when. Every session starts with a short summary of where things stand, so Claude knows what's in progress, what's next and what's waiting on you without being told.
 
 The files are plain Markdown with a small header, so they read fine on GitHub, diff cleanly, and need nothing running. A web app with a board, a release view and the docs is planned for v0.2.
 
-## Start
+## Get started
 
-In a repo, ask Claude to run `corkboard init`. It creates `.project/config.yml` with a prefix for the repo's IDs, taken from the folder's name (`claude-project` gives `CP-1`, `CP-2`, …). Then plan some work:
+You need Claude Code and Python 3.11 or newer. Nothing else gets installed.
+
+1. **Install the plugin.** In Claude Code, run:
+
+   ```
+   /plugin install corkboard --marketplace astrosteveo/astro-plugins
+   ```
+
+   Then start a new session, so the plugin loads.
+
+2. **Let Claude run `corkboard` without asking each time.** A plugin can't add permission rules for you, so add this to `~/.claude/settings.json`:
+
+   ```json
+   {
+     "permissions": {
+       "allow": ["Bash(corkboard *)"]
+     }
+   }
+   ```
+
+3. **Set up a repo.** In the repo's folder, ask Claude to set up Corkboard. It runs `corkboard init`, which creates `.project/config.yml` with a prefix for the repo's IDs, taken from the folder's name: `claude-project` gives `CP-1`, `CP-2` and so on. Commit `.project/` along with your code.
+
+4. **Plan some work.** For example:
+
+   ```
+   /corkboard:plan Add a dark mode to the settings page
+   ```
+
+   Claude drafts a release, epics and tasks with subtasks, and creates them once you approve.
+
+5. **Work through it.** `/corkboard:next` starts the next task and `/corkboard:done` finishes it. From then on, every session starts with a summary of what's in progress, what's next and what's waiting on you.
+
+### Run corkboard in your own terminal
+
+This is optional. The plugin gives `corkboard` to Claude, not to your shell. To run it yourself, install it as a tool:
 
 ```
-/corkboard:plan Add a dark mode to the settings page
+uv tool install git+https://github.com/astrosteveo/corkboard
 ```
 
-Claude drafts a release, epics and tasks with subtasks, asks you to approve them, and then creates them.
+`pipx install git+https://github.com/astrosteveo/corkboard` works too. Then `corkboard now`, `corkboard tree` and the rest work in any repo with a `.project/` folder.
+
+### Update
+
+```
+claude plugin update corkboard@astro-plugins   # the plugin Claude uses
+uv tool upgrade corkboard                       # the terminal command, if you installed it
+```
+
+The plugin's update takes effect in new sessions.
 
 ## Use
 
@@ -72,27 +111,6 @@ It's at most 25 lines, about a few hundred tokens, and nothing is added in a rep
 
 `corkboard help` lists them, and `corkboard <command> --help` explains one.
 
-### Skip the permission prompts
-
-A plugin can't add permission rules for you. The Corkboard skills allow `corkboard` while they're running, but Claude also runs it at other times. To stop the prompts, add this to `~/.claude/settings.json`:
-
-```json
-{
-  "permissions": {
-    "allow": ["Bash(corkboard *)"]
-  }
-}
-```
-
-### Use it in your own terminal
-
-The plugin puts `corkboard` on Claude's PATH, not yours. To run it yourself, link it from a clone of this repo. The installed plugin's folder changes with each version, so don't link to that one.
-
-```
-git clone https://github.com/astrosteveo/corkboard ~/Projects/corkboard
-ln -s ~/Projects/corkboard/bin/corkboard ~/.local/bin/corkboard
-```
-
 ## The files
 
 ```
@@ -141,6 +159,8 @@ uvx ruff check                          # lint
 ```
 
 CI runs the same three on every pull request.
+
+To run your working copy as `corkboard` from anywhere, install it in editable mode: `uv tool install --editable .`
 
 Don't load the plugin from the folder you're editing (`claude --plugin-dir .`), because Claude Code won't let a session edit a plugin it has loaded. Work on this repo with `bin/corkboard`, and try plugin changes in a separate test repo with the plugin loaded from a copy.
 
