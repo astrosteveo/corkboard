@@ -2,7 +2,7 @@
 id: CB-14
 type: task
 title: Command skeleton and show
-status: todo
+status: in-progress
 priority: high
 owner: claude
 created: 2026-11-12
@@ -20,3 +20,4 @@ Done when `corkboard show CB-12` on this repo matches the layout in `cli.md`.
 
 ## Log
 - 2026-11-12 21:21 claude: created
+- 2026-11-12 21:42 claude: moved to in-progress
