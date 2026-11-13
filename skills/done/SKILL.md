@@ -11,7 +11,7 @@ allowed-tools: Bash(corkboard *)
 The user ran `/corkboard:done` to finish an item. The arguments are: `$ARGUMENTS`. An item ID there means finish that item. Nothing means finish the one you have in progress.
 
 1. Pick the item. With an ID, use it. Without one, run `corkboard list status=in-progress owner=claude`. If there's exactly one, use it. If there's none or more than one, ask which.
-2. Run `corkboard show <ID>`. If any subtask isn't ticked, list them and ask whether to finish them now or move them into a new item, then wait. A new item is made with `corkboard new task "…" parent=<the epic>`, with those subtasks piped in under `## Subtasks`.
+2. Run `corkboard show <ID>`. If any subtask isn't ticked, list them and ask whether to finish them now or move them into a new item, then wait. A new item is made with `corkboard new task "…" parent=<the epic>`, with those subtasks piped in under `## Subtasks`. Then delete those lines from this item's `## Subtasks` section, and log where they went with `corkboard log`.
 3. Run the project's formatter, linter and tests, as its CLAUDE.md, README or config says, and fix what fails. If the project has none, say so.
 4. Tick any subtask you've just finished with `corkboard sub <ID> done <N>`. If a choice made along the way is worth keeping, log it with `corkboard log <ID> "…"`.
 5. Close the item, so its file goes into the same commit as the work:
