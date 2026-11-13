@@ -69,13 +69,15 @@ One developer working with Claude Code on their own repos. Not for teams.
 - 2026-11-12: Subtasks are checklist lines inside their task or bug, not their own files. Why: cheaper for Claude to update and no extra files; a subtask that needs its own owner or log becomes a task.
 - 2026-11-12: Statuses are backlog, todo, in-progress, waiting, done and cancelled. Why: `waiting` covers everything Claude needs from the user, questions and reviews alike, and `cancelled` keeps dropped work visible instead of deleted.
 - 2026-11-12: Item files are named like `CP-12-drag-cards.md`, and the ID prefix is set per repo in `.project/config.yml`. Why: the names stay readable in diffs and search results, and each repo gets its own key, like a Jira project.
+- 2026-11-12: The CLI's commands and output are specified in `.project/docs/cli.md`. Output is plain text with no JSON mode. Why: text is cheaper for Claude to read, and the web app uses the shared core library instead of the CLI.
+- 2026-11-12: `cpm now` is the session-start summary, at most 25 lines, and items the user just answered come first in Next up. Why: keeps each session's starting context under 500 tokens, and Claude picks up the user's answers right away.
+- 2026-11-12: `cpm` tells Claude and the user apart by the `CLAUDECODE` variable Claude Code sets in Claude's shells. Why: log lines get the right author with nothing to pass in.
 
 ## Open questions
 
 - What's the real name? "Claude Project" is a placeholder, and "Projects" is already a claude.ai feature.
 - Will it be published, and under what license?
 - Stack: TypeScript with pnpm for both the CLI and the web app, sharing one core library?
-- What exactly do `cpm board`, `cpm next` and the session-start summary print?
 - Leave out sprints and time tracking for v1? (Releases replace milestones.)
 - Which web app views are in v1 besides Now, Board, Release, Issue and Docs?
 
@@ -95,4 +97,4 @@ One developer working with Claude Code on their own repos. Not for teams.
 
 ## Status
 
-Design stage, no code yet. The file format is settled. Next: the CLI's commands and exact output, then sketches of the web app screens.
+Design stage, no code yet. The file format and the CLI are settled. Next: sketches of the web app screens, then the Claude Code plugin (skill, session-start hook, slash commands).

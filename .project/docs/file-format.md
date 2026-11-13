@@ -90,7 +90,7 @@ There's no `updated` field: the last log line says when the item last changed.
 | `done` | Finished. |
 | `cancelled` | Decided not to do it. Kept, not deleted, so the decision stays visible. |
 
-When the user answers a `waiting` item in the web app, the reply is added to the log as a `me:` line and the item moves to `todo`.
+When the user answers a `waiting` item in the web app, it moves to `todo` and the reply is logged as `me: moved to todo: <reply>`. Answered items come first in `cpm next`.
 
 Blocked isn't a status. An item is blocked while any item in its `blocked_by` isn't `done`. The web app shows it, and `cpm next` skips it.
 
@@ -122,14 +122,14 @@ A subtask is only done or not done. It has no owner, labels or log of its own. I
 
 - `who` is `me` or `claude`. Time is local, 24-hour.
 - Lines are only ever added, never edited or removed.
-- `cpm` adds `created` when it makes an item and `moved to <status>` on every status change. Moving to `waiting` needs a message, logged as `moved to waiting: <message>`.
+- `cpm` adds a line for every change it makes: `created`, `moved to <status>`, `set <field>=<value>`, and subtask changes. A status change with a message is logged as `moved to <status>: <message>`. Moving to `waiting` always needs one.
 - Status changes go through `cpm` so they're always logged. Anyone can add other lines, such as notes on what was tried.
 
 ## IDs and file names
 
 - IDs are `PREFIX-N`, numbered from 1. A new item gets the highest number in `items/` plus 1. There's no counter file, so there's nothing to conflict on a merge.
 - Numbers of deleted items can come back, which is another reason to cancel rather than delete.
-- If two branches create the same number, `cpm check` reports it and renumbers the newer item, updating references to it.
+- If two branches create the same number, `cpm check` reports it. `cpm check --fix` renumbers the newer item and lists references to the old number for review, since they could mean either item.
 - File names are `PREFIX-N-short-title.md`. The ID is what identifies the item; the rest only helps people read the name. The short title is the title in lowercase with dashes, cut at a word boundary to about 40 characters.
 - To find an item from its ID, match `items/CP-12-*.md`. The dash after the number keeps it from matching `CP-120`.
 - When a title changes, `cpm` renames the file. A short title that's out of date or missing breaks nothing, and `cpm check` fixes it.
