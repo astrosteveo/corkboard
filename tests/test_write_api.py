@@ -143,6 +143,31 @@ class WriteApiTest(ServerTest):
             stdin=goal,
         )
 
+    def test_describe_conflict_answers_409_with_the_version_on_disk(self):
+        fixture, running = self.serve_fixture()
+        status, answer = post(
+            running.port, "/api/items/EX-2/describe", {"description": "Mine.", "base": "Old text."}
+        )
+        self.assertEqual(
+            (status, answer),
+            (
+                409,
+                {
+                    "error": "the description of EX-2 changed while you were editing it",
+                    "current": "Drag cards.",
+                },
+            ),
+        )
+        status, answer = post(
+            running.port,
+            "/api/items/EX-2/describe",
+            {"description": "Mine.", "base": "Drag cards."},
+        )
+        self.assertEqual(status, 200)
+        self.assertTrue(
+            fixture.text("EX-2").split("---\n", 2)[2].startswith("Mine.\n\n## Subtasks")
+        )
+
     def test_writes_are_logged_as_me(self):
         fixture, running = self.serve_fixture()
         post(running.port, "/api/items/EX-2/log", {"text": "A note"})

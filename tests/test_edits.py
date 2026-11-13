@@ -151,6 +151,82 @@ class LogTest(EditTest):
             edits.log(project, item, " \n", "me", NOW)
 
 
+class DescribeTest(EditTest):
+    BODY = (
+        "Draw the columns.\n\n```\n## Log\n```\n\n"
+        "## Subtasks\n- [ ] Draw the column\n" + LOG + "Free text after the log.\n"
+    )
+
+    def setUp(self):
+        super().setUp()
+        self.fixture.item("EX-20", self.BODY, title="Columns")
+
+    def describe(self, item_id, text, base=None):
+        project, item = self.item(item_id)
+        base = item.description if base is None else base
+        return edits.describe(project, item, text, base, "me", NOW)
+
+    def test_replaces_only_the_description(self):
+        result = self.describe("EX-20", "New *text*.\n\n## Notes\nStill the description.\n")
+        self.assertEqual(
+            result.line, "updated the description of EX-20 .project/items/EX-20-columns.md"
+        )
+        text = self.fixture.text("EX-20")
+        body = text.split("---\n", 2)[2]
+        self.assertEqual(
+            body,
+            "New *text*.\n\n## Notes\nStill the description.\n\n"
+            "## Subtasks\n- [ ] Draw the column\n"
+            + LOG
+            + "Free text after the log.\n- 2026-11-13 15:30 me: edited the description\n",
+        )
+        item = self.fixture.load().item("EX-20")
+        self.assertEqual(item.description, "New *text*.\n\n## Notes\nStill the description.")
+        self.assertEqual([s.text for s in item.subtasks], ["Draw the column"])
+
+    def test_a_heading_inside_a_code_block_stays_in_the_description(self):
+        _, item = self.item("EX-20")
+        self.assertEqual(item.description, "Draw the columns.\n\n```\n## Log\n```")
+        self.describe("EX-20", "Short.")
+        self.assertTrue(
+            self.fixture.text("EX-20").split("---\n", 2)[2].startswith("Short.\n\n## Subtasks\n")
+        )
+
+    def test_adds_and_clears_a_description(self):
+        self.describe("EX-9", "Now it has one.")
+        self.assertEqual(self.fixture.load().item("EX-9").description, "Now it has one.")
+        self.describe("EX-9", "  \n")
+        item = self.fixture.load().item("EX-9")
+        self.assertEqual(item.description, "")
+        self.assertTrue(item.body.startswith("## Log\n"))
+
+    def test_a_changed_description_is_a_conflict(self):
+        _, item = self.item("EX-20")
+        old = item.description
+        path = item.path
+        path.write_text(path.read_text().replace("Draw the columns.", "Claude's version."))
+        before = path.read_text()
+        with self.assertRaises(edits.ConflictError) as raised:
+            self.describe("EX-20", "Mine.", base=old)
+        self.assertEqual(raised.exception.current, "Claude's version.\n\n```\n## Log\n```")
+        self.assertEqual(path.read_text(), before)
+
+    def test_a_new_log_line_isnt_a_conflict(self):
+        _, item = self.item("EX-20")
+        old = item.description
+        self.fixture.run("log", "EX-20", "Claude was here", "--as", "claude")
+        self.describe("EX-20", "Mine.", base=old)
+        text = self.fixture.text("EX-20")
+        self.assertIn("claude: Claude was here\n", text)
+        self.assertIn("me: edited the description\n", text)
+        self.assertEqual(self.fixture.load().item("EX-20").description, "Mine.")
+
+    def test_unchanged_and_refused(self):
+        self.assertEqual(self.describe("EX-9", "").line, "EX-9 already has that description")
+        with self.assertRaises(EditError):
+            self.describe("EX-9", "Text\n\n## Log\n- 2026-11-12 10:00 me: sneaky\n")
+
+
 class SetTest(EditTest):
     def test_sets_fields_and_renames_the_file(self):
         project, item = self.item("EX-9")
