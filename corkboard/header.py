@@ -65,18 +65,25 @@ def read(text: str) -> tuple[dict[str, Value], str]:
     lines = text.split("\n")
     if lines[0] != FENCE:
         raise HeaderError(1, "the file must start with a --- line")
-    fields: dict[str, Value] = {}
     for index in range(1, len(lines)):
-        number = index + 1
         if index == len(lines) - 1 and lines[index] == "":
             break  # the end of the file, after its last line break
         if lines[index] == FENCE:
-            return fields, "\n".join(lines[index + 1 :])
-        key, value = _read_line(lines[index], number)
-        if key in fields:
-            raise HeaderError(number, f"{key} appears twice")
-        fields[key] = value
+            return _read_lines(lines[1:index], first_line=2), "\n".join(lines[index + 1 :])
     raise HeaderError(len(lines), "the header has no closing --- line")
+
+
+def read_fields(text: str) -> dict[str, Value]:
+    """Read a whole file of `key: value` lines with no --- lines around them, like config.yml."""
+    lines = text.split("\n")
+    if lines[-1] == "":
+        lines.pop()  # the end of the file, after its last line break
+    return _read_lines(lines, first_line=1)
+
+
+def write_fields(fields: Mapping[str, Value]) -> str:
+    """A whole file of `key: value` lines, like config.yml."""
+    return write(fields, "").removeprefix(FENCE + "\n").removesuffix(FENCE + "\n")
 
 
 def write(fields: Mapping[str, Value], body: str) -> str:
@@ -121,6 +128,17 @@ def _format_scalar(text: str, in_list: bool) -> str:
     if not needs_quotes(text, in_list):
         return text
     return '"' + text.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
+def _read_lines(lines: list[str], first_line: int) -> dict[str, Value]:
+    fields: dict[str, Value] = {}
+    for offset, line in enumerate(lines):
+        number = first_line + offset
+        key, value = _read_line(line, number)
+        if key in fields:
+            raise HeaderError(number, f"{key} appears twice")
+        fields[key] = value
+    return fields
 
 
 def _read_line(line: str, number: int) -> tuple[str, Value]:
