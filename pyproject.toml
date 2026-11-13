@@ -1,0 +1,22 @@
+# Packaging for running corkboard in your own terminal:
+#   uv tool install git+https://github.com/astrosteveo/corkboard
+# The Claude Code plugin doesn't use this; it runs bin/corkboard with no install step.
+# The version must match .claude-plugin/plugin.json (a test checks).
+
+[project]
+name = "corkboard"
+version = "0.1.1"
+description = "A local issue tracker and wiki for one person working with Claude Code, kept as Markdown files in the repo."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+
+[project.scripts]
+corkboard = "corkboard.cli:run"
+
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["corkboard"]

@@ -10,6 +10,6 @@ from pathlib import Path  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from corkboard.cli import main  # noqa: E402
+from corkboard.cli import run  # noqa: E402
 
-sys.exit(main(sys.argv[1:]))
+run()

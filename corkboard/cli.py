@@ -137,6 +137,11 @@ def main(
         return 1
 
 
+def run() -> None:
+    """The `corkboard` command itself: runs main with the command line and exits with its code."""
+    sys.exit(main(sys.argv[1:]))
+
+
 def find_item(project: Project, text: str) -> Item:
     """The item an argument names, or an error saying what's wrong with it."""
     if project_module.parse_id(text.upper()) is None:

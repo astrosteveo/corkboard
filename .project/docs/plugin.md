@@ -25,7 +25,7 @@ skills/ui/SKILL.md       /corkboard:ui
 - Tests run with `python3 -m unittest discover -s tests`. Formatting and linting use `uvx ruff format` and `uvx ruff check`.
 - Each skill holds everything it needs in its own text. Claude Code asks before reading files outside the project, and an installed plugin always is outside it.
 - Plugins can't ship permission rules. Each skill pre-approves `corkboard` with `allowed-tools: Bash(corkboard *)` while it's active. For other turns, the README tells the user to add `Bash(corkboard *)` to their settings once.
-- To run `corkboard` in their own terminal, outside Claude Code, the user symlinks this repo's `bin/corkboard` into `~/.local/bin`.
+- To run `corkboard` in their own terminal, outside Claude Code, the user installs it as a Python tool: `uv tool install git+https://github.com/astrosteveo/corkboard`, built from `pyproject.toml`. The plugin itself never uses that package.
 
 ## Session-start hook
 
