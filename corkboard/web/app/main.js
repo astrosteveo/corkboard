@@ -26,6 +26,20 @@ function App() {
     refresh();
   }, [refresh]);
 
+  // Live updates: the server sends "change" when a file in .project/ changes, such as when Claude
+  // runs corkboard. Reconnecting loads the project again too, in case a change was missed.
+  const [live, setLive] = useState(false);
+  useEffect(() => {
+    const events = new EventSource("/api/events");
+    events.addEventListener("change", refresh);
+    events.addEventListener("open", () => {
+      setLive(true);
+      refresh();
+    });
+    events.addEventListener("error", () => setLive(false));
+    return () => events.close();
+  }, [refresh]);
+
   let body;
   if (!project) {
     body = error
@@ -36,7 +50,7 @@ function App() {
   }
 
   return html`<div class="shell">
-    <${Sidebar} project=${project} route=${route} />
+    <${Sidebar} project=${project} route=${route} live=${live} />
     <main class=${route.name === "board" ? "main wide" : "main"} id="main">
       ${error && project ? html`<p class="notice error">Lost touch with the server. ${error}</p>` : null}
       ${body}
@@ -68,7 +82,7 @@ const NAV = [
   { name: "releases", href: "/releases", label: "Releases", icon: "releases" },
 ];
 
-function Sidebar({ project, route }) {
+function Sidebar({ project, route, live }) {
   const waiting = project ? project.items.filter((item) => item.status === "waiting").length : 0;
   return html`<nav class="sidebar" aria-label="Main">
     <div class="brand">
@@ -88,6 +102,13 @@ function Sidebar({ project, route }) {
             : null}
         </a>`,
       )}
+    </div>
+    <div class="sidebar-foot" role="status">
+      ${live
+        ? html`<span class="live"><span class="dot" aria-hidden="true"></span>Live</span>
+            <span>Watching .project/ for changes</span>`
+        : html`<span class="live off"><span class="dot" aria-hidden="true"></span>Reconnecting…</span>
+            <span>Changes show up when the server is back</span>`}
     </div>
   </nav>`;
 }

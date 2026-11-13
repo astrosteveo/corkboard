@@ -10,6 +10,11 @@ its own domain name at 127.0.0.1 (DNS rebinding) and read the project from the b
 (POST) must also come from the app's own page, by its Origin header, and be JSON, which a form on
 another site can't send. Changes go through api.write one at a time, logged as `me`.
 
+Live updates: GET /api/events is a stream of server-sent events. Each open stream checks the
+modification times and sizes of the files in .project/ every second and sends a `change` event
+when any differ, and the page loads the project again. A comment line every 15 seconds notices a
+closed tab.
+
 Before starting, it asks each port in PORTS whether a corkboard server for this repo is already
 there, and if one is, it prints that server's URL instead of starting another.
 """
@@ -37,6 +42,8 @@ PORTS = range(4747, 4767)
 WEB = Path(__file__).resolve().parent / "web"
 PROBE_TIMEOUT = 0.5
 MAX_BODY = 1_000_000
+POLL_SECONDS = 1.0
+HEARTBEAT_SECONDS = 15.0
 
 # Scripts and styles only from the app's own files, nothing inline, and no framing by other pages.
 # Markdown already renders with raw HTML off; this stops a script even if something slips through.
@@ -95,9 +102,15 @@ class Server(ThreadingHTTPServer):
         self.web = web.resolve()
         self.clock = clock
         self.write_lock = threading.Lock()
+        self.poll_seconds = POLL_SECONDS
+        self.stopping = threading.Event()  # set before binding, since a failed bind closes
         super().__init__((HOST, port), Handler)
         self.hosts = {f"localhost:{self.port}", f"{HOST}:{self.port}"}
         self.origins = {f"http://{host}" for host in self.hosts}
+
+    def server_close(self) -> None:
+        self.stopping.set()  # ends the event streams
+        super().server_close()
 
     def server_bind(self) -> None:
         # HTTPServer's own version looks up the machine's full domain name, which can stall.
@@ -168,6 +181,8 @@ class Handler(BaseHTTPRequestHandler):
         path = urlsplit(self.path).path
         if path == "/api/project":
             self._json(200, api.project_view(load(self.server.root)))
+        elif path == "/api/events":
+            self._events()
         elif path == "/api/server":
             self._json(200, {"app": "corkboard", "project": str(self.server.root.resolve())})
         elif path.startswith("/api/"):
@@ -211,6 +226,34 @@ class Handler(BaseHTTPRequestHandler):
             else:
                 self._json(200, answer)
 
+    def _events(self) -> None:
+        """Send a `change` event whenever a file in .project/ changes, until the page goes away."""
+        self.send_response(200)
+        self.send_header("Content-Type", "text/event-stream")
+        self.send_header("Cache-Control", "no-store")
+        for name, value in SECURITY_HEADERS.items():
+            self.send_header(name, value)
+        self.end_headers()
+        last = files_signature(self.server.root)
+        quiet = 0.0
+        try:
+            self.wfile.write(b"retry: 1000\n\n")
+            self.wfile.flush()
+            while not self.server.stopping.wait(self.server.poll_seconds):
+                current = files_signature(self.server.root)
+                quiet += self.server.poll_seconds
+                if current != last:
+                    last = current
+                    self.wfile.write(b"event: change\ndata: {}\n\n")
+                elif quiet >= HEARTBEAT_SECONDS:
+                    self.wfile.write(b": still here\n\n")
+                else:
+                    continue
+                quiet = 0.0
+                self.wfile.flush()
+        except OSError:
+            pass  # the page closed or reloaded
+
     def log_message(self, format: str, *args: object) -> None:
         pass  # a line per request would bury the URL in the terminal
 
@@ -250,3 +293,16 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header(name, value)
         self.end_headers()
         self.wfile.write(body)
+
+
+def files_signature(root: Path) -> list[tuple[str, int, int]]:
+    """Each file in .project/ with its modification time and size, to tell when any changed."""
+    signature = []
+    for path in root.rglob("*"):
+        try:
+            info = path.stat()
+        except OSError:
+            continue  # removed while we looked
+        if path.is_file():
+            signature.append((path.relative_to(root).as_posix(), info.st_mtime_ns, info.st_size))
+    return sorted(signature)

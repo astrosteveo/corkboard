@@ -8,9 +8,11 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
 import unittest
 from datetime import datetime
 from pathlib import Path
+from unittest import mock
 
 from helpers import LOG, REPO, Fixture, run_cli
 
@@ -293,6 +295,67 @@ class PortsTest(ServerTest):
             other.listen()
             # It accepts the connection and never answers, so the probe has to time out.
             self.assertIsNone(server.find_running(Fixture(self).root, [other.getsockname()[1]]))
+
+
+class EventsTest(ServerTest):
+    """GET /api/events: a server-sent event whenever a file in .project/ changes."""
+
+    def setUp(self):
+        self.fixture = Fixture(self)
+        self.fixture.item("EX-1")
+
+    def stream(self, running: server.Server):
+        connection = http.client.HTTPConnection(server.HOST, running.port, timeout=5)
+        self.addCleanup(connection.close)
+        connection.request("GET", "/api/events")
+        response = connection.getresponse()
+        self.assertEqual(response.getheader("Content-Type"), "text/event-stream")
+        self.assertEqual(next_event(response), "retry: 1000\n")
+        return response
+
+    def test_a_changed_file_sends_an_event_within_2_seconds(self):
+        response = self.stream(self.serve(self.fixture))
+        started = time.monotonic()
+        run_cli(self.fixture.repo, "move", "EX-1", "in-progress")
+        self.assertEqual(next_event(response), "event: change\ndata: {}\n")
+        self.assertLess(time.monotonic() - started, 2)
+
+    def test_new_and_removed_files_count_as_changes(self):
+        running = self.serve(self.fixture)
+        running.poll_seconds = 0.02
+        response = self.stream(running)
+        path = self.fixture.item("EX-2")
+        self.assertEqual(next_event(response), "event: change\ndata: {}\n")
+        path.unlink()
+        self.assertEqual(next_event(response), "event: change\ndata: {}\n")
+
+    def test_a_quiet_stream_still_sends_a_line_now_and_then(self):
+        running = self.serve(self.fixture)
+        running.poll_seconds = 0.02
+        with mock.patch.object(server, "HEARTBEAT_SECONDS", 0.1):
+            response = self.stream(running)
+            self.assertEqual(next_event(response), ": still here\n")
+
+    def test_closing_the_server_ends_the_stream(self):
+        running = self.serve(self.fixture)
+        running.poll_seconds = 0.02
+        response = self.stream(running)
+        running.shutdown()
+        running.server_close()
+        self.assertEqual(next_event(response), "")
+
+
+def next_event(response) -> str:
+    """The next event's lines, up to the blank line after it, or "" when the stream ends."""
+    lines = []
+    while True:
+        line = response.readline().decode("utf-8")
+        if not line:
+            return "".join(lines)
+        if line == "\n" and lines:
+            return "".join(lines)
+        if line != "\n":
+            lines.append(line)
 
 
 class UiCommandTest(unittest.TestCase):
