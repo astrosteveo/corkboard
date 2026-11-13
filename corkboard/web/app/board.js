@@ -7,14 +7,14 @@ import { html, useEffect, useRef, useState } from "./lib.js";
 import { openNewItem } from "./newitem.js";
 import { navigate } from "./router.js";
 import { changedSince, useSeen } from "./seen.js";
-import { Avatar, DRAG_TYPE, High, Icon, STATUS_LABEL, pageTitle, panelHref, subtaskCount } from "./ui.js";
+import { Avatar, DRAG_TYPE, High, Icon, PrBadge, STATUS_LABEL, pageTitle, panelHref, subtaskCount } from "./ui.js";
 
 const SHOWN = ["todo", "in-progress", "waiting", "done"];
 const ALL = ["backlog", "todo", "in-progress", "waiting", "done", "cancelled"];
 const DONE_LIMIT = 5;
 const RANK = { high: 0, medium: 1, low: 2 };
 
-export function BoardPage({ project, route, refresh }) {
+export function BoardPage({ project, route, refresh, pulls }) {
   const seen = useSeen(project);
   const [moved, setMoved] = useState({}); // id → status, while a drop is saving
   const [asking, setAsking] = useState(null); // { id, status } for a drop on Waiting
@@ -95,7 +95,7 @@ export function BoardPage({ project, route, refresh }) {
       ${statuses.map(
         (status) => html`<${Column} key=${status} project=${project} status=${status} seen=${seen}
           items=${visible.filter((item) => statusOf(item) === status).sort(byOrder)}
-          filters=${filters} set=${set} moveCard=${moveCard} saving=${moved} />`,
+          filters=${filters} set=${set} moveCard=${moveCard} saving=${moved} pulls=${pulls} />`,
       )}
     </div>
     ${asking
@@ -160,7 +160,7 @@ function Filters({ project, release, inRelease, filters, set }) {
   </div>`;
 }
 
-function Column({ project, status, items, seen, filters, set, moveCard, saving }) {
+function Column({ project, status, items, seen, filters, set, moveCard, saving, pulls }) {
   const [over, setOver] = useState(false);
   const limited = status === "done" && !filters.done && items.length > DONE_LIMIT;
   const shown = limited ? items.slice(0, DONE_LIMIT) : items;
@@ -193,7 +193,7 @@ function Column({ project, status, items, seen, filters, set, moveCard, saving }
         ${group.name ? html`<span class="group-name">${group.name}</span>` : null}
         ${group.items.map(
           (item) => html`<${Card} key=${item.id} project=${project} item=${item} seen=${seen}
-            grouped=${filters.group} saving=${item.id in saving} />`,
+            grouped=${filters.group} saving=${item.id in saving} pull=${pulls?.latest[item.id]} />`,
         )}
       `,
     )}
@@ -206,7 +206,7 @@ function Column({ project, status, items, seen, filters, set, moveCard, saving }
   </section>`;
 }
 
-function Card({ project, item, seen, grouped, saving }) {
+function Card({ project, item, seen, grouped, saving, pull }) {
   const [dragging, setDragging] = useState(false);
   const epic = epicOf(project, item);
   const progress = subtaskCount(item);
@@ -237,6 +237,7 @@ function Card({ project, item, seen, grouped, saving }) {
     <span class="card-bottom">
       <${High} item=${item} />
       ${item.labels.map((label) => html`<span class="chip label">${label}</span>`)}
+      ${pull ? html`<${PrBadge} pr=${pull} />` : null}
       <span class="card-meta">
         ${progress ? html`<span class="small muted num">${progress}</span>` : null}
         <${Avatar} who=${item.owner} />

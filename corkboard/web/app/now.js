@@ -9,7 +9,7 @@ import { Avatar, High, Icon, Progress, pageTitle, panelHref, releaseUrl, subtask
 const NEXT_UP = 3;
 const SINCE_LINES = 30;
 
-export function NowPage({ project, refresh }) {
+export function NowPage({ project, refresh, pulls }) {
   const waiting = project.items.filter((item) => item.status === "waiting");
   pageTitle(waiting.length ? `(${waiting.length}) Now` : "Now", project);
   return html`
@@ -27,6 +27,7 @@ export function NowPage({ project, refresh }) {
         </p>`
       : null}
     <${Waiting} project=${project} items=${waiting} refresh=${refresh} />
+    <${MergedNotDone} project=${project} pulls=${pulls} refresh=${refresh} />
     <div class="columns">
       <${InProgress} project=${project} />
       <${NextUp} project=${project} />
@@ -121,6 +122,53 @@ function WaitingCard({ item, refresh, setNotice }) {
     </form>
     ${error ? html`<p class="notice error" role="alert">${error}</p>` : null}
   </article>`;
+}
+
+const STILL = { backlog: "in the backlog", todo: "to do", "in-progress": "in progress", waiting: "waiting" };
+
+// Items whose own pull request merged while they're still open. Nothing closes them on its own;
+// Mark done does, once you've looked.
+function MergedNotDone({ project, pulls, refresh }) {
+  const [saving, setSaving] = useState("");
+  const [error, setError] = useState("");
+  const items = (pulls?.merged_not_done ?? [])
+    .map((id) => project.byId.get(id))
+    .filter((item) => item && pulls.latest[item.id] && !["done", "cancelled"].includes(item.status));
+  if (!items.length) return null;
+
+  async function markDone(item) {
+    setSaving(item.id);
+    setError("");
+    try {
+      await write(`/api/items/${encodeURIComponent(item.id)}/move`, { status: "done", message: "" });
+      await refresh();
+    } catch (problem) {
+      setError(problem.message);
+    } finally {
+      setSaving("");
+    }
+  }
+
+  return html`<section class="card merged" aria-labelledby="merged-h">
+    <h2 id="merged-h" class="section-label">Merged, not done · ${items.length}</h2>
+    ${error ? html`<p class="notice error" role="alert">${error}</p>` : null}
+    ${items.map((item) => {
+      const pr = pulls.latest[item.id];
+      return html`<div class="merged-row" key=${item.id}>
+        <span class="merged-text">
+          ${pr.url.startsWith("https://")
+            ? html`<a href=${pr.url} target="_blank" rel="noopener noreferrer">PR #${pr.number}</a>`
+            : html`PR #${pr.number}`}
+          ${" merged, but "}
+          <a href=${panelHref(item.id)}><span class="id">${item.id}</span> ${item.title}</a>
+          ${` is still ${STILL[item.status] ?? item.status}`}
+        </span>
+        <button class="btn" type="button" disabled=${saving !== ""} onClick=${() => markDone(item)}>
+          ${saving === item.id ? "Saving…" : `Mark ${item.id} done`}
+        </button>
+      </div>`;
+    })}
+  </section>`;
 }
 
 function InProgress({ project }) {

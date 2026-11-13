@@ -10,6 +10,8 @@ the same either way. Changes from the page are always logged as `me`.
     GET  /api/project                the whole project, as project_view builds it
     GET  /api/items/<ID>             {"id", "mentions", "development"}: docs and items that
                                      mention it, and its branches, pull requests and commits
+    GET  /api/pulls                  {"latest", "merged_not_done"}: each item's newest own pull
+                                     request, and the items whose one merged while they're open
 
     POST /api/items                  {"type", "title", "fields": {…}, "body"}     corkboard new
     POST /api/items/<ID>/move        {"status", "message"}                       corkboard move
@@ -30,6 +32,7 @@ from collections.abc import Mapping
 from datetime import datetime
 
 from . import development, edits, work
+from .development import PullRequest
 from .project import TYPES, Item, Project, Release
 
 WHO = "me"
@@ -59,33 +62,54 @@ def project_view(project: Project) -> dict:
     }
 
 
-def item_extras(project: Project, item_id: str) -> dict:
+def item_extras(project: Project, item_id: str, prs: list[PullRequest]) -> dict:
     """What the item panel shows beyond the project view: the docs and items that mention it, and
-    its development, as `corkboard show` lists it.
+    its development, as `corkboard show` lists it, given the repo's pull requests.
 
     Kept out of project_view, since finding mentions reads every doc, and development runs git
     and gh."""
     item = _find_item(project, item_id)
-    built = development.for_item(project.root, item.id)
+    built = development.for_item(project.root, item.id, prs)
     return {
         "id": item.id,
         "mentions": project.mentions(item.id),
         "development": {
             "branches": built.branches,
-            "pull_requests": [
-                {
-                    "number": pr.number,
-                    "title": pr.title,
-                    "state": pr.state,
-                    "checks": pr.checks,
-                    "url": pr.url,
-                }
-                for pr in built.pull_requests
-            ],
+            "pull_requests": [_pull_request(pr) for pr in built.pull_requests],
             "commits": [
                 {"hash": c.hash, "subject": c.subject, "date": c.date} for c in built.commits
             ],
         },
+    }
+
+
+def pulls_view(project: Project, prs: list[PullRequest]) -> dict:
+    """Each item's newest own pull request, for the board's badges, and the open items whose own
+    pull request has merged, for Merged, not done. An item's own pull request has its ID in the
+    title or branch; one that only names it in the body, as PRs often name their epic, isn't."""
+    latest: dict[str, PullRequest] = {}
+    for item in project.sorted_items():
+        own = next((pr for pr in prs if pr.is_for(item.id)), None)
+        if own is not None:
+            latest[item.id] = own
+    merged = [
+        item_id
+        for item_id, pr in latest.items()
+        if pr.state == "merged" and project.items[item_id].status not in ("done", "cancelled")
+    ]
+    return {
+        "latest": {item_id: _pull_request(pr) for item_id, pr in latest.items()},
+        "merged_not_done": merged,
+    }
+
+
+def _pull_request(pr: PullRequest) -> dict:
+    return {
+        "number": pr.number,
+        "title": pr.title,
+        "state": pr.state,
+        "checks": pr.checks,
+        "url": pr.url,
     }
 
 

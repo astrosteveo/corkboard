@@ -41,13 +41,15 @@ function App() {
     return () => events.close();
   }, [refresh]);
 
+  const pulls = usePulls(project);
+
   let body;
   if (!project) {
     body = error
       ? html`<p class="notice error">Couldn't load the project. ${error}</p>`
       : html`<p class="muted">Loading…</p>`;
   } else {
-    body = html`<${Screen} route=${route} project=${project} refresh=${refresh} />`;
+    body = html`<${Screen} route=${route} project=${project} refresh=${refresh} pulls=${pulls} />`;
   }
 
   return html`<div class="shell">
@@ -63,8 +65,31 @@ function App() {
   </div>`;
 }
 
-function Screen({ route, project, refresh }) {
-  const props = { project, refresh, route };
+// Each item's newest own pull request and the items whose one merged while they're open, from
+// /api/pulls. The server reads them from GitHub at most once a minute, so this asks again when the
+// project changes, and once a minute while the page is open, since a merge changes no file here.
+function usePulls(project) {
+  const [pulls, setPulls] = useState(null);
+  useEffect(() => {
+    if (!project) return undefined;
+    let current = true;
+    const load = () =>
+      fetch("/api/pulls", { cache: "no-store" })
+        .then((response) => (response.ok ? response.json() : null))
+        .then((data) => current && data && setPulls(data))
+        .catch(() => {});
+    load();
+    const timer = setInterval(load, 60_000);
+    return () => {
+      current = false;
+      clearInterval(timer);
+    };
+  }, [project]);
+  return pulls;
+}
+
+function Screen({ route, project, refresh, pulls }) {
+  const props = { project, refresh, route, pulls };
   switch (route.name) {
     case "now":
       return html`<${NowPage} ...${props} />`;

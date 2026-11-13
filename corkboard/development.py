@@ -67,6 +67,14 @@ class PullRequest:
             or mention_pattern(item_id, ignore_case=True).search(self.branch)
         )
 
+    def is_for(self, item_id: str) -> bool:
+        """Whether this is the item's own pull request: the exact ID in the title, or the ID in any
+        case in the branch. A body that names an item, such as its epic, only mentions it."""
+        return bool(
+            mention_pattern(item_id).search(self.title)
+            or mention_pattern(item_id, ignore_case=True).search(self.branch)
+        )
+
 
 @dataclass(frozen=True)
 class Development:
@@ -77,10 +85,10 @@ class Development:
     commits: list[Commit]
 
 
-def for_item(root: Path, item_id: str) -> Development:
-    """The item's branches, the pull requests that mention it and its newest commits."""
-    prs = [pr for pr in pull_requests(root) if pr.mentions(item_id)]
-    return Development(branches(root, item_id), prs, commits(root, item_id))
+def for_item(root: Path, item_id: str, prs: list[PullRequest]) -> Development:
+    """The item's branches, the pull requests among `prs` that mention it and its newest commits."""
+    mentioning = [pr for pr in prs if pr.mentions(item_id)]
+    return Development(branches(root, item_id), mentioning, commits(root, item_id))
 
 
 def branches(root: Path, item_id: str) -> list[str]:

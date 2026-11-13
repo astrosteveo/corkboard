@@ -10,6 +10,10 @@ its own domain name at 127.0.0.1 (DNS rebinding) and read the project from the b
 (POST) must also come from the app's own page, by its Origin header, and be JSON, which a form on
 another site can't send. Changes go through api.write one at a time, logged as `me`.
 
+Pull requests come from GitHub through gh, which takes a second or so. The server reads them at
+most once a minute and shares the list between requests: the board's badges (/api/pulls) and the
+item panel (/api/items/<ID>).
+
 Live updates: GET /api/events is a stream of server-sent events. Each open stream checks the
 modification times and sizes of the files in .project/ every second and sends a `change` event
 when any differ, and the page loads the project again. A comment line every 15 seconds notices a
@@ -40,7 +44,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
-from . import api
+from . import api, development
 from .cli import CommandError, Context, usage_error
 from .edits import EditError
 from .project import load
@@ -53,6 +57,7 @@ MAX_BODY = 1_000_000
 START_SECONDS = 10.0
 POLL_SECONDS = 1.0
 HEARTBEAT_SECONDS = 15.0
+PULLS_SECONDS = 60.0
 
 # Scripts and styles only from the app's own files, nothing inline, and no framing by other pages.
 # Markdown already renders with raw HTML off; this stops a script even if something slips through.
@@ -120,9 +125,22 @@ class Server(ThreadingHTTPServer):
         self.write_lock = threading.Lock()
         self.poll_seconds = POLL_SECONDS
         self.stopping = threading.Event()  # set before binding, since a failed bind closes
+        self.pulls_seconds = PULLS_SECONDS
+        self.pulls_lock = threading.Lock()
+        self.pulls: tuple[float, list[development.PullRequest]] | None = None
         super().__init__((HOST, port), Handler)
         self.hosts = {f"localhost:{self.port}", f"{HOST}:{self.port}"}
         self.origins = {f"http://{host}" for host in self.hosts}
+
+    def pull_requests(self) -> list[development.PullRequest]:
+        """The repo's pull requests, read with gh at most once every pulls_seconds and shared by
+        every request meanwhile, so a page that refreshes often doesn't wait on GitHub each time.
+        A failed read is kept too, so an offline server doesn't try gh on every request."""
+        with self.pulls_lock:
+            if self.pulls is None or time.monotonic() - self.pulls[0] >= self.pulls_seconds:
+                prs = development.pull_requests(self.root)
+                self.pulls = (time.monotonic(), prs)
+            return self.pulls[1]
 
     def server_close(self) -> None:
         self.stopping.set()  # ends the event streams
@@ -232,9 +250,15 @@ class Handler(BaseHTTPRequestHandler):
             self._json(200, api.project_view(load(self.server.root)))
         elif path.startswith("/api/items/") and path.count("/") == 3:
             try:
-                self._json(200, api.item_extras(load(self.server.root), path.rsplit("/", 1)[1]))
+                item_id = path.rsplit("/", 1)[1]
+                extras = api.item_extras(
+                    load(self.server.root), item_id, self.server.pull_requests()
+                )
+                self._json(200, extras)
             except api.ApiError as error:
                 self._json(error.status, {"error": str(error)})
+        elif path == "/api/pulls":
+            self._json(200, api.pulls_view(load(self.server.root), self.server.pull_requests()))
         elif path == "/api/events":
             self._events()
         elif path == "/api/server":

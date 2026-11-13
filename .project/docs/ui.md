@@ -11,7 +11,7 @@ What each screen of the web app shows and does. `corkboard ui` serves it on loca
 - **Who:** everything you do in the app is logged as `me`.
 - **Writes:** a change in the app makes the same change to the file that the matching `corkboard` command would make. Dragging a card to Done is `corkboard move <ID> done`, and so on.
 - **Editing conflicts:** if Claude changes an item or doc while you're editing its text, saving shows both versions and lets you choose. Nothing is silently overwritten. Field changes such as status or priority apply to the file as it is on disk, so they never conflict.
-- **GitHub:** pull requests are read with `gh` when a screen shows them, and never stored. Offline or without a GitHub remote, they just aren't shown.
+- **GitHub:** pull requests are read with `gh` when a screen shows them, and never stored. The server reads them at most once a minute and shares them between screens, and the page asks again once a minute, since a merge changes no file in the repo. Offline or without a GitHub remote, they just aren't shown.
 - **Safety:** Markdown renders with raw HTML turned off, and the server only accepts changes from the app's own page. The app can write files, so a doc in a cloned repo must never be able to run a script in it. The server listens on 127.0.0.1 only and refuses any request not addressed to `localhost:<port>` or `127.0.0.1:<port>`, so another site can't read the project by pointing its own domain name at 127.0.0.1. Its Content-Security-Policy runs only the app's own script files, never inline scripts, and no other page can frame it.
 - **Theme:** light or dark, following your system setting.
 - **URLs:** every screen has its own, so links can be shared between the CLI, docs and the browser:
@@ -49,7 +49,7 @@ SINCE YOU LAST LOOKED  (yesterday 18:40)                   [Mark seen]
 - **Waiting on you** shows every `waiting` item with the question from its last log line.
   - **Send** moves the item to `todo` and logs your reply as `moved to todo: <reply>`, so it comes first in Claude's Next up.
   - **Mark done** is for approving a review. It moves the item to `done`, with your reply as the message if you wrote one.
-- **Merged, not done** appears when an item's pull request has merged but the item isn't `done` or `cancelled`, for example "PR #15 merged, but EX-21 Write the README is still in progress", with a **Mark EX-21 done** button. Nothing changes an item on its own.
+- **Merged, not done** appears when an item's own pull request has merged but the item isn't `done` or `cancelled`, for example "PR #15 merged, but EX-21 Write the README is still in progress", with a **Mark EX-21 done** button. Nothing changes an item on its own.
 - **In progress** and **Next up** match `corkboard now`.
 - **Since you last looked** lists log lines written by Claude since you last clicked Mark seen, newest last. It only clears when you click Mark seen, not when you open the page. The time of your last Mark seen is kept in the browser, not in the repo.
 
@@ -73,7 +73,7 @@ Backlog (12) and Cancelled (1) hidden · show                ● changed since y
 ```
 
 - Shows tasks and bugs in the active release by default. Epics aren't cards; they appear as the name on each card, and as rows when **Group by epic** is on.
-- A card shows its ID, title, epic, and type when it's a bug. It also shows priority when high, labels, owner, subtask progress, blockers, the question when it's waiting, and its latest pull request with its state, such as `#14 merged`.
+- A card shows its ID, title, epic, and type when it's a bug. It also shows priority when high, labels, owner, subtask progress, blockers, the question when it's waiting, and its newest own pull request with its state, such as `#14 merged`. An item's own pull requests have its ID in the title or branch name; one that only names it in the body, as pull requests often name their epic, is listed under Development but gets no badge.
 - **Dragging** a card to another column changes its status. Dropping on Waiting asks for a message first.
 - **Order** within a column is priority, then number, the same as `corkboard next`. Cards can't be reordered by hand.
 - Backlog and Cancelled are hidden until you click **show**.
