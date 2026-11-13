@@ -173,7 +173,7 @@ class ProblemsTest(unittest.TestCase):
         self.assertEqual(list(project.items), ["EX-1"])
         messages = sorted(str(problem) for problem in project.problems)
         self.assertEqual(len(messages), 3)
-        self.assertIn("EX-1-item.md: EX-1 is also used by EX-1-again.md", messages)
+        self.assertIn("EX-1-item-ex-1.md: EX-1 is also used by EX-1-again.md", messages)
         self.assertIn("EX-2-broken.md: line 3: a value containing ': '", messages[1])
         self.assertIn("no-id.md: the header has no id", messages)
 
