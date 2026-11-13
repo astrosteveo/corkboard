@@ -34,6 +34,7 @@ def write_file(path: Path, text: str) -> None:
 
     The temporary file's name doesn't end in .md, so the loader never picks it up.
     """
+    path.parent.mkdir(parents=True, exist_ok=True)
     mode = path.stat().st_mode & 0o777 if path.exists() else 0o666 & ~_umask()
     descriptor, temp = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.", suffix=".tmp")
     try:

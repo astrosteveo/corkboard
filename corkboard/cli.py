@@ -32,7 +32,7 @@ class Command:
     usage: str
     summary: str
     details: str
-    run: Callable[[Context, list[str]], None]
+    run: Callable[[Context, list[str]], int | None]
 
 
 @dataclass
@@ -48,6 +48,10 @@ class Context:
 
     def now(self) -> datetime:
         return self.clock()
+
+    def forget_project(self) -> None:
+        """Drop the loaded project, so the next call to project() reads the files again."""
+        self._project = None
 
     def piped_input(self) -> str | None:
         """Text piped or redirected in, or None when there's none.
@@ -124,8 +128,7 @@ def main(
         if wants_help:
             _command_help(ctx, command)
             return 0
-        command.run(ctx, args[1:])
-        return 0
+        return command.run(ctx, args[1:]) or 0
     except CommandError as error:
         err.write(f"error: {error}\n")
         return 1
@@ -205,7 +208,7 @@ def _utf8(stream: TextIO) -> TextIO:
 
 
 def _commands() -> dict[str, Command]:
-    from . import changes, show, summary, views
+    from . import changes, check, show, summary, views
 
     commands = [
         Command(
@@ -306,6 +309,25 @@ def _commands() -> dict[str, Command]:
             "Creates a release, starting as planned, or changes one. Statuses: planned, active,\n"
             "released; only one release can be active. Text piped in becomes its goal.",
             changes.release,
+        ),
+        Command(
+            "check",
+            "check [--fix]",
+            "Find files in .project/ that break the format",
+            "Checks every file in .project/ against the rules in file-format.md and prints one\n"
+            "problem per line, then a summary. Exits 1 if any problems are left. --fix repairs\n"
+            "only what's safe: header formatting, file names that don't match the title, and\n"
+            "duplicate IDs, which get a new number, with the references listed for review.",
+            check.check,
+        ),
+        Command(
+            "init",
+            'init [prefix=XX] [name="…"]',
+            "Start a .project/ folder here",
+            "Creates .project/config.yml. The prefix defaults to the first letter of each word\n"
+            "in the folder's name (claude-project gives CP), or the first three letters of a\n"
+            "one-word name; the name defaults to the folder's name in title case.",
+            check.init,
         ),
         Command(
             "help",

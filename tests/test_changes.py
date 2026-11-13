@@ -142,7 +142,7 @@ class MoveTest(unittest.TestCase):
         before = self.fixture.text("EX-9")
         code, out, err = self.fixture.run("move", "ex-9", "in-progress", env=CLAUDE)
         self.assertEqual((code, err), (0, ""))
-        self.assertEqual(out, "moved EX-9 to in-progress .project/items/EX-9-item.md\n")
+        self.assertEqual(out, "moved EX-9 to in-progress .project/items/EX-9-item-ex-9.md\n")
         expected = before.replace("status: todo", "status: in-progress")
         expected += "- 2026-11-13 15:30 claude: moved to in-progress\n"
         self.assertEqual(self.fixture.text("EX-9"), expected)
@@ -190,7 +190,7 @@ class SubTest(unittest.TestCase):
 
     def test_done_and_undo(self):
         code, out, _ = self.fixture.run("sub", "EX-1", "done", "2")
-        self.assertEqual((code, out), (0, "EX-1 subtasks 1/2 .project/items/EX-1-item.md\n"))
+        self.assertEqual((code, out), (0, "EX-1 subtasks 1/2 .project/items/EX-1-item-ex-1.md\n"))
         item = self.fixture.load().item("EX-1")
         self.assertEqual([s.done for s in item.subtasks], [False, True])
         self.assertEqual(item.log[-1].text, "done subtask: Two")
@@ -201,7 +201,7 @@ class SubTest(unittest.TestCase):
 
     def test_add_starts_the_section_above_the_log(self):
         code, out, _ = self.fixture.run("sub", "EX-2", "add", "Write", "tests")
-        self.assertEqual((code, out), (0, "EX-2 subtasks 0/1 .project/items/EX-2-item.md\n"))
+        self.assertEqual((code, out), (0, "EX-2 subtasks 0/1 .project/items/EX-2-item-ex-2.md\n"))
         text = self.fixture.text("EX-2")
         self.assertIn("\n## Subtasks\n- [ ] Write tests\n\n## Log\n", text)
         self.assertTrue(text.endswith("me: added subtask: Write tests\n"))
@@ -235,7 +235,7 @@ class LogTest(unittest.TestCase):
         fixture = Fixture(self)
         fixture.item("EX-1")
         code, out, _ = fixture.run("log", "EX-1", "Tried", "X;", "too slow.", "--as", "claude")
-        self.assertEqual((code, out), (0, "logged EX-1 .project/items/EX-1-item.md\n"))
+        self.assertEqual((code, out), (0, "logged EX-1 .project/items/EX-1-item-ex-1.md\n"))
         entry = fixture.load().item("EX-1").log[-1]
         self.assertEqual(
             (entry.who, entry.text, entry.date, entry.time),

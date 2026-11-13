@@ -15,7 +15,7 @@ class SetTest(unittest.TestCase):
         before = self.fixture.text("EX-12")
         code, out, err = self.fixture.run("set", "EX-12", "priority=high", "labels=ui,board")
         self.assertEqual((code, err), (0, ""))
-        self.assertEqual(out, "updated EX-12 .project/items/EX-12-item.md\n")
+        self.assertEqual(out, "updated EX-12 .project/items/EX-12-drag-cards.md\n")
         expected = before.replace("priority: medium", "priority: high")
         expected = expected.replace("parent: EX-3\n", "parent: EX-3\nlabels: [ui, board]\n")
         expected += "- 2026-11-13 15:30 me: set priority=high labels=ui,board\n"
@@ -25,7 +25,7 @@ class SetTest(unittest.TestCase):
         code, out, _ = self.fixture.run("set", "EX-12", "title=Drag cards between columns")
         self.assertEqual(code, 0)
         self.assertEqual(out, "updated EX-12 .project/items/EX-12-drag-cards-between-columns.md\n")
-        self.assertFalse((self.fixture.root / "items" / "EX-12-item.md").exists())
+        self.assertFalse((self.fixture.root / "items" / "EX-12-drag-cards.md").exists())
         item = self.fixture.load().item("EX-12")
         self.assertEqual(item.title, "Drag cards between columns")
         self.assertEqual(item.log[-1].text, 'set title="Drag cards between columns"')

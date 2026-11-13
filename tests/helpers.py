@@ -6,7 +6,7 @@ import unittest
 from datetime import datetime
 from pathlib import Path
 
-from corkboard import header
+from corkboard import header, write
 from corkboard.cli import main
 from corkboard.project import ITEM_FIELDS, load
 
@@ -39,7 +39,8 @@ class Fixture:
         (self.root / "config.yml").write_text("name: Example\nprefix: EX\n", encoding="utf-8")
 
     def item(self, item_id: str, body: str = LOG, **fields: str | list[str]) -> Path:
-        path = self.root / "items" / f"{item_id}-item.md"
+        title = str(fields.get("title", f"Item {item_id}"))
+        path = self.root / "items" / f"{item_id}-{write.slug(title)}.md"
         path.write_text(item_file(item_id, body, **fields), encoding="utf-8")
         return path
 

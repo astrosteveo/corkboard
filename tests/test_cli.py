@@ -89,7 +89,7 @@ class ShowTest(unittest.TestCase):
             out,
             "EX-12 task · in-progress · high · claude\n"
             "Drag cards between columns\n"
-            "path: .project/items/EX-12-item.md\n"
+            "path: .project/items/EX-12-drag-cards-between-columns.md\n"
             "epic: EX-3 Board view · release: v0.1 · labels: ui, board\n"
             "blocked by: EX-9 Card component (todo)\n"
             "blocks: EX-18 Keyboard shortcuts for the board (todo)\n"
@@ -118,7 +118,7 @@ class ShowTest(unittest.TestCase):
             out,
             "EX-3 epic · in-progress · medium · claude\n"
             "Board view\n"
-            "path: .project/items/EX-3-item.md\n"
+            "path: .project/items/EX-3-board-view.md\n"
             "release: v0.1\n"
             "\n"
             "Tasks 0/2\n"
@@ -135,7 +135,7 @@ class ShowTest(unittest.TestCase):
             out,
             "EX-9 task · todo · medium · claude\n"
             "Card component\n"
-            "path: .project/items/EX-9-item.md\n"
+            "path: .project/items/EX-9-card-component.md\n"
             "blocks: EX-12 Drag cards between columns (in-progress)\n"
             "\n"
             "Log\n"
