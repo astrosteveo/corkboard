@@ -7,9 +7,11 @@ follows are in .project/docs/cli.md, under "Rules for every command".
 from __future__ import annotations
 
 import os
+import stat
 import sys
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
 from typing import TextIO
 
@@ -40,7 +42,28 @@ class Context:
     out: TextIO
     err: TextIO
     who: str
+    stdin: TextIO | None = None
+    clock: Callable[[], datetime] = datetime.now
     _project: Project | None = field(default=None, repr=False)
+
+    def now(self) -> datetime:
+        return self.clock()
+
+    def piped_input(self) -> str | None:
+        """Text piped or redirected in, or None when there's none.
+
+        Reads only from a pipe or a file, such as a heredoc. In Claude Code's shell, stdin with
+        nothing piped in is an open socket, and reading it would wait forever.
+        """
+        if self.stdin is None:
+            return None
+        try:
+            mode = os.fstat(self.stdin.fileno()).st_mode
+        except (AttributeError, OSError, ValueError):
+            return self.stdin.read()  # an in-memory stream, as in tests
+        if stat.S_ISFIFO(mode) or stat.S_ISREG(mode):
+            return self.stdin.read()
+        return None
 
     def project(self) -> Project:
         """The project for the current folder, loaded once. Warns if any file couldn't be read."""
@@ -79,14 +102,19 @@ def main(
     env: Mapping[str, str] | None = None,
     out: TextIO | None = None,
     err: TextIO | None = None,
+    stdin: TextIO | None = None,
+    clock: Callable[[], datetime] | None = None,
 ) -> int:
     """Run one corkboard command. Returns the exit code."""
+    real_streams = out is None
     out = out or _utf8(sys.stdout)
     err = err or _utf8(sys.stderr)
+    if real_streams and stdin is None:
+        stdin = sys.stdin
     env = os.environ if env is None else env
     try:
         args, who, wants_help = _global_options(argv, env)
-        ctx = Context(cwd or Path.cwd(), env, out, err, who)
+        ctx = Context(cwd or Path.cwd(), env, out, err, who, stdin, clock or datetime.now)
         if not args or args[0] in ("help", "--help", "-h"):
             _help(ctx, args[1:2])
             return 0
@@ -100,6 +128,9 @@ def main(
         return 0
     except CommandError as error:
         err.write(f"error: {error}\n")
+        return 1
+    except OSError as error:
+        err.write(f"error: {error.strerror or error}: {error.filename or ''}".rstrip(": ") + "\n")
         return 1
 
 
@@ -174,7 +205,7 @@ def _utf8(stream: TextIO) -> TextIO:
 
 
 def _commands() -> dict[str, Command]:
-    from . import show
+    from . import changes, show
 
     commands = [
         Command(
@@ -185,6 +216,41 @@ def _commands() -> dict[str, Command]:
             "the docs and items that mention it, its description, its numbered subtasks (or an\n"
             "epic's tasks) and the last 5 lines of its log.",
             show.run,
+        ),
+        Command(
+            "new",
+            'new <epic|task|bug> "Title" [field=value…]',
+            "Create an item",
+            "Creates an item with status=todo, priority=medium and owner=claude unless you set\n"
+            "them. Fields: " + ", ".join(changes.NEW_FIELDS) + ".\n"
+            "Lists are comma-separated, such as labels=ui,board.\n\n"
+            "Text piped in becomes the body, so a description and a ## Subtasks checklist can go\n"
+            "in with one command. corkboard writes the ## Log section itself.",
+            changes.new,
+        ),
+        Command(
+            "move",
+            'move <ID> <status> ["message"]',
+            "Change an item's status",
+            "Changes an item's status and logs it. Statuses: "
+            + ", ".join(project_module.STATUSES)
+            + ".\nMoving to waiting needs a message: the question, or what to review.",
+            changes.move,
+        ),
+        Command(
+            "sub",
+            'sub <ID> add "text" | done <N> | undo <N>',
+            "Add, tick or untick a subtask",
+            "Adds a subtask, or ticks or unticks one by its number in corkboard show, and logs\n"
+            "it. To reword or remove a subtask, edit the file.",
+            changes.sub,
+        ),
+        Command(
+            "log",
+            'log <ID> "text"',
+            "Add a note to an item's log",
+            "Adds a note to the item's log: a choice and why, a dead end, a surprise.",
+            changes.log,
         ),
         Command(
             "help",

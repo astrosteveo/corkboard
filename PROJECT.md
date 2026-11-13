@@ -120,4 +120,4 @@ One developer working with Claude Code on their own repos. Not for teams.
 
 ## Status
 
-No code yet. The design is specified in `.project/docs/`, and the user likes the clickable mockup of the web app so far (https://claude.ai/artifact/7WHHdLRhsnAn4oUeEuBw1k). v0.1 is planned as items in `.project/`: tasks CB-11 to CB-22 under epics CB-1 to CB-3. v0.2 and v0.3 have epics only, to be planned with `/corkboard:plan` when v0.1 ships. Next: CB-11, set up the repo.
+Building v0.1 (`bin/corkboard tree` will show it once CB-19 lands). The core library reads and writes `.project/`, and the CLI has `show`, `new`, `move`, `sub` and `log`. Since CB-15, this repo's items change only through `corkboard`. The web app's design is in `.project/docs/ui.md`, with a clickable mockup the user likes (https://claude.ai/artifact/7WHHdLRhsnAn4oUeEuBw1k). Next: CB-16, `now` and `next`, then the plugin's session-start hook.
