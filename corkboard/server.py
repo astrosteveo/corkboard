@@ -15,6 +15,10 @@ modification times and sizes of the files in .project/ every second and sends a 
 when any differ, and the page loads the project again. A comment line every 15 seconds notices a
 closed tab.
 
+`corkboard ui --background` starts the same server as a detached process and exits once it
+answers, printing its URL and process ID. /corkboard:ui uses it, since a skill can't keep a
+foreground server running or read a background shell's output.
+
 Before starting, it asks each port in PORTS whether a corkboard server for this repo is already
 there, and if one is, it prints that server's URL instead of starting another.
 """
@@ -24,8 +28,12 @@ from __future__ import annotations
 import errno
 import http.client
 import json
+import os
 import socketserver
+import subprocess
+import sys
 import threading
+import time
 from collections.abc import Callable, Iterable
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -42,6 +50,7 @@ PORTS = range(4747, 4767)
 WEB = Path(__file__).resolve().parent / "web"
 PROBE_TIMEOUT = 0.5
 MAX_BODY = 1_000_000
+START_SECONDS = 10.0
 POLL_SECONDS = 1.0
 HEARTBEAT_SECONDS = 15.0
 
@@ -68,13 +77,20 @@ CONTENT_TYPES = {
 
 
 def ui(ctx: Context, args: list[str]) -> None:
-    if args:
+    background = "--background" in args
+    if [arg for arg in args if arg != "--background"]:
         raise usage_error("ui")
     root = ctx.project().root
-    url = find_running(root, PORTS)
-    server = None if url else start(root, PORTS)
-    ctx.print(f"Corkboard: {url or server.url}")
-    ctx.out.flush()  # when output is piped, as with /corkboard:ui, the line would wait otherwise
+    running = find_running(root, PORTS)
+    if background:
+        url, pid = running or start_detached(root)
+        ctx.print(f"Corkboard: {url}")
+        if pid:
+            ctx.print(f"Running in the background as process {pid}. Stop it with: kill {pid}")
+        return
+    server = None if running else start(root, PORTS)
+    ctx.print(f"Corkboard: {running[0] if running else server.url}")
+    ctx.out.flush()  # when output is piped, the line would wait otherwise
     if server is None:
         return
     try:
@@ -145,17 +161,50 @@ def start(
     )
 
 
-def find_running(root: Path, ports: Iterable[int]) -> str | None:
-    """The URL of a corkboard server already serving this repo on one of the ports, if any."""
+def find_running(root: Path, ports: Iterable[int]) -> tuple[str, int | None] | None:
+    """The URL and process ID of a corkboard server already serving this repo, if there is one."""
     wanted = str(root.resolve())
     for port in ports:
-        if _serving(port) == wanted:
-            return f"http://localhost:{port}"
+        data = _serving(port)
+        if data and data.get("project") == wanted:
+            pid = data.get("pid")
+            return f"http://localhost:{port}", pid if isinstance(pid, int) else None
     return None
 
 
-def _serving(port: int) -> str | None:
-    """The .project/ folder that a corkboard server on this port serves, or None."""
+def start_detached(root: Path) -> tuple[str, int | None]:
+    """Start `corkboard ui` for the repo as its own detached process, and wait until it answers.
+
+    The child runs this same package with this same Python, found from this file rather than the
+    command line, so it works from the plugin's bin/corkboard and from an installed copy alike.
+    Its output goes nowhere, so nothing waits on it, and its own session keeps it running after
+    the shell that started it is gone.
+    """
+    package_parent = str(Path(__file__).resolve().parent.parent)
+    env = dict(os.environ)
+    env["PYTHONPATH"] = os.pathsep.join(filter(None, [package_parent, env.get("PYTHONPATH")]))
+    child = subprocess.Popen(
+        [sys.executable, "-m", "corkboard", "ui"],
+        cwd=root.parent,
+        env=env,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        start_new_session=True,
+    )
+    deadline = time.monotonic() + START_SECONDS
+    while time.monotonic() < deadline:
+        running = find_running(root, PORTS)
+        if running:
+            return running
+        if child.poll() is not None:
+            break
+        time.sleep(0.1)
+    raise CommandError("the web app didn't start. Run corkboard ui without --background to see why")
+
+
+def _serving(port: int) -> dict | None:
+    """What a corkboard server on this port says about itself (its project and pid), or None."""
     connection = http.client.HTTPConnection(HOST, port, timeout=PROBE_TIMEOUT)
     try:
         connection.request("GET", "/api/server")
@@ -166,7 +215,7 @@ def _serving(port: int) -> str | None:
     finally:
         connection.close()
     if isinstance(data, dict) and data.get("app") == "corkboard":
-        return data.get("project")
+        return data
     return None
 
 
@@ -189,7 +238,8 @@ class Handler(BaseHTTPRequestHandler):
         elif path == "/api/events":
             self._events()
         elif path == "/api/server":
-            self._json(200, {"app": "corkboard", "project": str(self.server.root.resolve())})
+            project = str(self.server.root.resolve())
+            self._json(200, {"app": "corkboard", "project": project, "pid": os.getpid()})
         elif path.startswith("/api/"):
             self._json(404, {"error": f"there's no {path}"})
         else:

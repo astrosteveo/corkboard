@@ -101,6 +101,7 @@ One developer working with Claude Code on their own repos. Not for teams.
 - 2026-11-12: Corkboard is public on GitHub under the MIT license, and installs from the astro-plugins marketplace. Turned down a private marketplace in this repo. Why: the user chose to publish; MIT and astro-plugins match their other plugins.
 - 2026-11-12: `corkboard` in your own terminal comes from `uv tool install git+https://github.com/astrosteveo/corkboard`, packaged by `pyproject.toml` with the same version as the plugin. Turned down a symlink into a clone. Why: a new user shouldn't need a clone, and a symlink breaks when the folder moves; the plugin still needs no install step.
 - 2026-11-12: The web app's files live in `corkboard/web/`, inside the Python package, not in a top-level `web/`. Why: `uv tool install` only installs the package, so `corkboard ui` from that copy would have no page.
+- 2026-11-13: `/corkboard:ui` runs `corkboard ui --background`, which starts the server as its own detached process and exits once it answers. Why: a skill can't keep a foreground server running, and can't count on reading a background shell's output.
 - 2026-11-12: `corkboard ui` finds a server already running for the repo by asking each port from 4747 to 4766 which `.project/` it serves, instead of keeping a file with its port. Why: nothing to go stale after a crash, and nothing new in the repo to ignore in git.
 
 ## Open questions

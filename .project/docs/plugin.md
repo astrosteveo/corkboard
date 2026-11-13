@@ -126,7 +126,7 @@ It plans only. It writes no code.
 
 ### /corkboard:ui
 
-Starts `corkboard ui` in the background and prints its URL. If the web app is already running, it prints the URL.
+Runs `corkboard ui --background`, which starts the web app as its own process, or finds the one already running for this repo, and prints its URL and process ID. Claude replies with the URL and that `kill <pid>` stops it. The web app keeps running after the session ends.
 
 ## Left out for now
 

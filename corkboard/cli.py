@@ -339,11 +339,12 @@ def _commands() -> dict[str, Command]:
         ),
         Command(
             "ui",
-            "ui",
+            "ui [--background]",
             "Start the web app on localhost",
             "Starts the web app on 127.0.0.1, on port 4747 or the next free one up to 4766,\n"
             "prints its URL and runs until Ctrl-C. If it's already running for this repo, it\n"
-            "prints that URL and exits.",
+            "prints that URL and exits. --background starts it as its own process, prints its\n"
+            "URL and process ID, and exits; stop it with kill <pid>.",
             _ui,
         ),
         Command(
