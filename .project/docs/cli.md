@@ -196,6 +196,7 @@ Changes header fields other than `id`, `created` and `status`. Status goes throu
 
 - Fields that can be set: `title`, `type`, `priority`, `owner`, `parent`, `release`, `labels`, `blocked_by`, `related`, `duplicate_of`. `type` can only switch between task and bug.
 - Links are set the same way, such as `corkboard set EX-18 related=EX-9`.
+- A new `blocked_by` that leads back to the item through other items' blockers is refused, with the shortest chain: `error: EX-18 would be blocked by itself through EX-18 → EX-9 → EX-18`. A chain already in the files is left for `corkboard check` to report.
 - It logs one line, such as `set priority=high labels=ui,board`.
 - Changing the title renames the file, and the printed path is the new one.
 

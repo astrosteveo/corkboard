@@ -183,6 +183,17 @@ class WriteApiTest(ServerTest):
         self.assertIn("- 2026-11-13 15:30 me: set blocked_by=EX-1\n", fixture.text("EX-2"))
         self.assertIn("- 2026-11-13 15:30 me: set related=\n", fixture.text("EX-3"))
 
+    def test_a_blocking_cycle_is_refused(self):
+        fixture, running = self.serve_fixture()
+        post(running.port, "/api/items/EX-2/set", {"fields": {"blocked_by": ["EX-3"]}})
+        before = snapshot(fixture)
+        answer = post(running.port, "/api/items/EX-3/set", {"fields": {"blocked_by": ["EX-2"]}})
+        self.assertEqual(
+            answer,
+            (400, {"error": "EX-3 would be blocked by itself through EX-3 → EX-2 → EX-3"}),
+        )
+        self.assertEqual(snapshot(fixture), before)
+
     def test_a_link_shows_on_both_items(self):
         fixture, running = self.serve_fixture()
         status, answer = post(
