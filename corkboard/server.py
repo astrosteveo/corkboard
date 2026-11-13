@@ -32,6 +32,16 @@ PORTS = range(4747, 4767)
 WEB = Path(__file__).resolve().parent / "web"
 PROBE_TIMEOUT = 0.5
 
+# Scripts and styles only from the app's own files, nothing inline, and no framing by other pages.
+# Markdown already renders with raw HTML off; this stops a script even if something slips through.
+SECURITY_HEADERS = {
+    "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self'; "
+    "img-src 'self' data: https:; connect-src 'self'; object-src 'none'; base-uri 'none'; "
+    "form-action 'self'; frame-ancestors 'none'",
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "no-referrer",
+}
+
 CONTENT_TYPES = {
     ".html": "text/html; charset=utf-8",
     ".js": "text/javascript; charset=utf-8",
@@ -180,5 +190,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
+        for name, value in SECURITY_HEADERS.items():
+            self.send_header(name, value)
         self.end_headers()
         self.wfile.write(body)

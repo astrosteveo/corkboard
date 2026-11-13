@@ -1,6 +1,7 @@
 import http.client
 import json
 import os
+import re
 import signal
 import socket
 import subprocess
@@ -98,8 +99,44 @@ class StaticTest(ServerTest):
             with self.subTest(host=host):
                 self.assertEqual(get(port, "/api/project", host=host)[0], 200)
 
-    def test_the_real_web_folder_has_the_page(self):
-        self.assertTrue((server.WEB / "index.html").is_file())
+    def test_security_headers_on_every_response(self):
+        for path in ("/", "/vendor/app.js", "/api/project", "/api/nothing"):
+            with self.subTest(path=path):
+                connection = http.client.HTTPConnection(server.HOST, self.running.port, timeout=5)
+                connection.request("GET", path)
+                response = connection.getresponse()
+                response.read()
+                connection.close()
+                policy = response.getheader("Content-Security-Policy")
+                self.assertIn("script-src 'self';", policy)
+                self.assertIn("frame-ancestors 'none'", policy)
+                self.assertEqual(response.getheader("X-Content-Type-Options"), "nosniff")
+
+
+class WebAppFilesTest(unittest.TestCase):
+    """The page's own files: everything it loads is committed, with no build step."""
+
+    IMPORT = re.compile(r"""(?:from|import)\s*["']([^"']+)["']""")
+
+    def test_the_page_loads_its_script_and_styles(self):
+        page = (server.WEB / "index.html").read_text(encoding="utf-8")
+        for path in re.findall(r'(?:src|href)="/([^"]+)"', page):
+            with self.subTest(path=path):
+                self.assertTrue((server.WEB / path).is_file())
+
+    def test_every_import_is_a_committed_file(self):
+        scripts = sorted((server.WEB / "app").glob("*.js")) + [
+            server.WEB / "vendor" / "hooks.module.js"
+        ]
+        for script in scripts:
+            for target in self.IMPORT.findall(script.read_text(encoding="utf-8")):
+                with self.subTest(script=script.name, target=target):
+                    self.assertTrue(target.startswith("."), "imports must be relative paths")
+                    self.assertTrue((script.parent / target).resolve().is_file())
+
+    def test_vendored_libraries_have_their_licenses(self):
+        for name in ("preact", "htm", "marked"):
+            self.assertTrue((server.WEB / "vendor" / f"{name}.LICENSE").is_file())
 
 
 class ReadApiTest(ServerTest):

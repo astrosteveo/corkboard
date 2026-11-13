@@ -1,0 +1,95 @@
+// The app: loads the project from the server, and shows the sidebar and the screen for the URL.
+import { indexProject, loadProject } from "./api.js";
+import { BoardPage } from "./board.js";
+import { ItemPage } from "./item.js";
+import { html, render, useCallback, useEffect, useState } from "./lib.js";
+import { NowPage } from "./now.js";
+import { ReleasesPage } from "./releases.js";
+import { useRoute } from "./router.js";
+import { Icon } from "./ui.js";
+
+function App() {
+  const route = useRoute();
+  const [project, setProject] = useState(null);
+  const [error, setError] = useState(null);
+
+  const refresh = useCallback(async () => {
+    try {
+      setProject(indexProject(await loadProject()));
+      setError(null);
+    } catch (problem) {
+      setError(problem.message);
+    }
+  }, []);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  let body;
+  if (!project) {
+    body = error
+      ? html`<p class="notice error">Couldn't load the project. ${error}</p>`
+      : html`<p class="muted">Loading…</p>`;
+  } else {
+    body = html`<${Screen} route=${route} project=${project} refresh=${refresh} />`;
+  }
+
+  return html`<div class="shell">
+    <${Sidebar} project=${project} route=${route} />
+    <main class=${route.name === "board" ? "main wide" : "main"} id="main">
+      ${error && project ? html`<p class="notice error">Lost touch with the server. ${error}</p>` : null}
+      ${body}
+    </main>
+  </div>`;
+}
+
+function Screen({ route, project, refresh }) {
+  const props = { project, refresh, route };
+  switch (route.name) {
+    case "now":
+      return html`<${NowPage} ...${props} />`;
+    case "board":
+      return html`<${BoardPage} ...${props} />`;
+    case "releases":
+      return html`<${ReleasesPage} ...${props} />`;
+    case "item":
+      return html`<${ItemPage} ...${props} id=${route.id} />`;
+    default:
+      document.title = "Not found · Corkboard";
+      return html`<div class="page-title"><h1>Not found</h1>
+        <p>There's no page at ${route.path}. <a href="/">Go to Now</a>.</p></div>`;
+  }
+}
+
+const NAV = [
+  { name: "now", href: "/", label: "Now", icon: "now" },
+  { name: "board", href: "/board", label: "Board", icon: "board" },
+  { name: "releases", href: "/releases", label: "Releases", icon: "releases" },
+];
+
+function Sidebar({ project, route }) {
+  const waiting = project ? project.items.filter((item) => item.status === "waiting").length : 0;
+  return html`<nav class="sidebar" aria-label="Main">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">${project?.prefix?.slice(0, 3) || "CB"}</span>
+      <span class="brand-text">
+        <span class="brand-name">${project?.name ?? "Corkboard"}</span>
+        <span class="brand-host">${location.host}</span>
+      </span>
+    </div>
+    <div class="nav">
+      ${NAV.map(
+        (entry) => html`<a href=${entry.href} aria-current=${route.name === entry.name ? "page" : null}>
+          <${Icon} name=${entry.icon} />
+          <span class="label">${entry.label}</span>
+          ${entry.name === "now" && waiting
+            ? html`<span class="badge" aria-label=${`${waiting} waiting on you`}>${waiting}</span>`
+            : null}
+        </a>`,
+      )}
+    </div>
+  </nav>`;
+}
+
+render(html`<${App} />`, document.getElementById("app"));
