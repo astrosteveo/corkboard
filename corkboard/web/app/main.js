@@ -3,6 +3,7 @@ import { indexProject, loadProject } from "./api.js";
 import { BoardPage } from "./board.js";
 import { ItemPage, ItemPanel } from "./item.js";
 import { html, render, useCallback, useEffect, useState } from "./lib.js";
+import { NewItem, openNewItem } from "./newitem.js";
 import { NowPage } from "./now.js";
 import { ReleasesPage } from "./releases.js";
 import { useRoute } from "./router.js";
@@ -58,6 +59,7 @@ function App() {
     ${project && route.name !== "item" && route.query.get("item")
       ? html`<${ItemPanel} project=${project} id=${route.query.get("item").toUpperCase()} refresh=${refresh} />`
       : null}
+    <${NewItem} project=${project} refresh=${refresh} />
   </div>`;
 }
 
@@ -106,6 +108,9 @@ function Sidebar({ project, route, live }) {
         </a>`,
       )}
     </div>
+    <button class="new-btn" type="button" onClick=${() => openNewItem()} disabled=${!project}>
+      <${Icon} name="plus" size=${16} /> <span class="label">New item</span> <kbd>C</kbd>
+    </button>
     <div class="sidebar-foot" role="status">
       ${live
         ? html`<span class="live"><span class="dot" aria-hidden="true"></span>Live</span>

@@ -669,3 +669,48 @@ input.item-title:focus { border-color: var(--border-strong); background: var(--s
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+
+/* ---------- New item ---------- */
+
+.new-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+}
+.new-btn:hover { background: var(--hover); color: var(--text); }
+.new-btn .label { flex: 1; text-align: left; }
+.new-btn kbd {
+  font-size: 11px;
+  padding: 1px 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--muted);
+}
+@media (max-width: 760px) { .new-btn kbd { display: none; } }
+
+.new-dialog {
+  width: min(640px, calc(100vw - 32px));
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 16px 48px rgb(0 0 0 / 0.25);
+}
+.new-dialog::backdrop { background: rgb(0 0 0 / 0.3); }
+.new-dialog form { display: flex; flex-direction: column; gap: 14px; }
+.new-dialog h2 { font-size: 18px; }
+.form-row { display: flex; flex-wrap: wrap; gap: 12px; }
+.form-field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600; color: var(--text-2); }
+.form-field.grow { flex: 1 1 220px; }
+.form-field .input, .form-field .select { font-weight: 400; color: var(--text); }
+.form-field .textarea { font-weight: 400; min-height: 120px; }
+.form-note { justify-content: flex-end; font-weight: 400; padding-bottom: 8px; }
