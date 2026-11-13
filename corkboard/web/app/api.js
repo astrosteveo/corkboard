@@ -1,4 +1,30 @@
 // Talking to corkboard's local server.
+import { useEffect, useState } from "./lib.js";
+
+// GET a JSON path, and again whenever `project` changes, which it does when a file in .project/
+// changes. Returns { data, error }. The last answer stays while the next one loads, so the screen
+// doesn't flash, and a lost connection keeps it too; main.js already says the server is gone.
+export function useJson(path, project) {
+  const [state, setState] = useState({ path: null, data: null, error: null });
+  useEffect(() => {
+    if (!path) return undefined;
+    let current = true;
+    fetch(path, { cache: "no-store" })
+      .then(async (response) => {
+        const data = await response.json().catch(() => null);
+        if (!current) return;
+        if (response.ok) setState({ path, data, error: null });
+        else setState({ path, data: null, error: data?.error ?? `The server answered ${response.status}.` });
+      })
+      .catch((problem) => {
+        if (current) setState((old) => (old.path === path && old.data ? old : { path, data: null, error: problem.message }));
+      });
+    return () => {
+      current = false;
+    };
+  }, [path, project]);
+  return state.path === path ? state : { data: null, error: null };
+}
 
 export async function loadProject() {
   const response = await fetch("/api/project", { cache: "no-store" });

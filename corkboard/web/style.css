@@ -814,3 +814,69 @@ input.item-title:focus { border-color: var(--border-strong); background: var(--s
 .copy-notes { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
 .notes-fallback { width: min(560px, 100%); display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
 .notes-fallback .textarea { min-height: 180px; }
+
+/* ---------- Item chips in Markdown ---------- */
+
+.id-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  max-width: 100%;
+  padding: 0 7px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--text);
+  line-height: 1.6;
+  white-space: nowrap;
+  vertical-align: baseline;
+}
+.id-chip:hover { background: var(--hover); text-decoration: none; }
+.id-chip .id { font-size: 0.85em; }
+.id-chip .chip-title { min-width: 0; max-width: 26em; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+.id-chip .chip-status { font-size: 0.85em; color: var(--muted); }
+.id-chip.status-in-progress .chip-status { color: var(--you-text); font-weight: 600; }
+.id-chip.status-waiting .chip-status { color: var(--warn-text); font-weight: 600; }
+.id-chip.status-done .chip-status { color: var(--ok-text); }
+.id-chip.status-cancelled .chip-title { color: var(--muted); text-decoration: line-through; }
+
+/* ---------- Docs ---------- */
+
+.docs { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 36px; align-items: start; }
+.docs-tree { position: sticky; top: 24px; display: flex; flex-direction: column; gap: 12px; max-height: calc(100vh - 48px); overflow-y: auto; }
+.doc-pages { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1px; }
+.doc-pages .doc-pages { padding-left: 12px; }
+.doc-pages a {
+  display: block;
+  padding: 6px 10px;
+  border-radius: 6px;
+  color: var(--text-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.doc-pages a:hover { background: var(--hover); text-decoration: none; }
+.doc-pages a[aria-current="page"] { background: var(--hover); color: var(--text); font-weight: 600; }
+.doc-pages summary {
+  padding: 8px 10px 4px;
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.doc-pages summary:hover { color: var(--text); }
+.doc { min-width: 0; max-width: 820px; display: flex; flex-direction: column; gap: 24px; }
+.doc-text { line-height: 1.6; }
+.doc-text > h1:first-child { font-size: 26px; letter-spacing: -0.01em; margin-bottom: 16px; }
+.doc-text h2 { margin-top: 28px; }
+.doc-foot { border-top: 1px solid var(--border); padding-top: 12px; display: flex; flex-direction: column; gap: 4px; }
+.doc-foot p { margin: 0; }
+.doc-foot a { white-space: nowrap; }
+
+@media (max-width: 760px) {
+  .docs { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .docs-tree { position: static; max-height: none; }
+}

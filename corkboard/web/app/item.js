@@ -11,10 +11,12 @@ import {
   Progress,
   STATUS_ICON,
   STATUS_LABEL,
+  docUrl,
   itemUrl,
   pageTitle,
   panelHref,
   releaseUrl,
+  shortDate,
   subtaskCount,
 } from "./ui.js";
 
@@ -140,14 +142,14 @@ export function ItemView({ project, item, refresh }) {
           (blocker, index) => html`${index ? ", " : ""}<a href=${panelHref(blocker)}>${blocker}</a>`,
         )}</p>`
       : null}
-    <${Description} key=${item.id} item=${item} refresh=${refresh} />
+    <${Description} key=${item.id} item=${item} items=${project.byId} refresh=${refresh} />
     ${item.type === "epic"
       ? html`<${EpicTasks} project=${project} epic=${item} />`
       : html`<${Subtasks} item=${item} changes=${changes} />`}
     <${Links} project=${project} item=${item} refresh=${refresh} />
     <${Development} development=${extras?.development} />
     <${Activity} item=${item} changes=${changes} />
-    <${Mentions} project=${project} mentions=${extras?.mentions} />
+    <${Mentions} mentions=${extras?.mentions} />
   </div>`;
 }
 
@@ -263,7 +265,7 @@ function Fields({ project, item, changes }) {
 
 // The description, and Edit: a Markdown text box with a preview. Saving sends the description the
 // edit started from; if Claude changed it on disk meanwhile, both versions are shown to choose from.
-function Description({ item, refresh }) {
+function Description({ item, items, refresh }) {
   const [edit, setEdit] = useState(null); // { draft, base, preview, conflict, error, saving }
   const update = (changes) => setEdit((current) => ({ ...current, ...changes }));
 
@@ -289,7 +291,7 @@ function Description({ item, refresh }) {
         </button>
       </div>
       ${item.description
-        ? html`<${Markdown} text=${item.description} />`
+        ? html`<${Markdown} text=${item.description} items=${items} />`
         : html`<p class="empty">No description.</p>`}
     </section>`;
   }
@@ -321,7 +323,7 @@ function Description({ item, refresh }) {
       <button type="button" role="tab" aria-selected=${edit.preview} onClick=${() => update({ preview: true })}>Preview</button>
     </div>
     ${edit.preview
-      ? html`<div class="preview">${edit.draft.trim() ? html`<${Markdown} text=${edit.draft} />` : html`<p class="empty">Nothing to preview.</p>`}</div>`
+      ? html`<div class="preview">${edit.draft.trim() ? html`<${Markdown} text=${edit.draft} items=${items} />` : html`<p class="empty">Nothing to preview.</p>`}</div>`
       : html`<label class="visually-hidden" for="description-edit">Description, in Markdown</label>
         <textarea id="description-edit" class="textarea" value=${edit.draft} disabled=${edit.saving}
           ref=${(element) => element && !element.dataset.focused && ((element.dataset.focused = "1"), element.focus())}
@@ -658,20 +660,14 @@ function Development({ development }) {
   </section>`;
 }
 
-function Mentions({ project, mentions }) {
+// The docs and items that mention this item, each linking to its page or panel.
+function Mentions({ mentions }) {
   if (!mentions?.length) return null;
   return html`<p class="small muted mentions">Mentioned in ${mentions.map(
     (mention, index) => html`${index ? " · " : ""}${
-      project.byId.has(mention)
-        ? html`<a href=${panelHref(mention)}>${mention}</a>`
-        : html`<span>${mention.replace(/^docs\//, "")}</span>`
+      mention.item
+        ? html`<a href=${panelHref(mention.item)}>${mention.item}</a>`
+        : html`<a href=${docUrl(mention.doc)}>${mention.title}</a> (doc)`
     }`,
   )}</p>`;
-}
-
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-export function shortDate(date) {
-  const [, month, day] = date.split("-");
-  return `${MONTHS[Number(month) - 1] ?? month} ${Number(day)}`;
 }
