@@ -25,3 +25,5 @@ jobs:
       - uses: astral-sh/setup-uv@v6
       - run: uvx ruff format --check
       - run: uvx ruff check
+      # The terminal install: build the package from this checkout and run the command.
+      - run: uvx --from . corkboard help
