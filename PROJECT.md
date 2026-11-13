@@ -96,6 +96,7 @@ One developer working with Claude Code on their own repos. Not for teams.
 - 2026-11-12: The repo is private on GitHub (astrosteveo/corkboard). Each item is built on its own branch and merged through a PR, with CI running the tests and ruff. Why: the user's CI runs on GitHub, and the plugin's own workflow expects PRs.
 - 2026-11-12: A release's `date` is optional, and v0.1 to v0.3 have none. Why: it's a hobby project without deadlines.
 - 2026-11-12: Examples in specs and docs use the prefix `EX`, such as `EX-12`, never this repo's own `CB`. Why: any item ID in a doc counts as a mention of that item, so an example with a real ID would link to the wrong item.
+- 2026-11-12: Claude squash-merges each PR itself once CI passes, and moves on to the next item. Why: the user chose not to review every PR first; they can review any of them afterwards on GitHub.
 
 ## Open questions
 
