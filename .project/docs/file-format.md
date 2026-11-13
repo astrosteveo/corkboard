@@ -1,6 +1,6 @@
 # File format
 
-How a repo's project data is stored under `.project/`. Claude, `cpm` and the web app all read and write these files, and they stay readable in git and on GitHub without any of them.
+How a repo's project data is stored under `.project/`. Claude, `corkboard` and the web app all read and write these files, and they stay readable in git and on GitHub without any of them.
 
 ## Layout
 
@@ -8,7 +8,7 @@ How a repo's project data is stored under `.project/`. Claude, `cpm` and the web
 .project/
   config.yml
   releases/v0.1.md            one file per release
-  items/CP-12-drag-cards.md   epics, tasks and bugs, all in one flat folder
+  items/CB-12-drag-cards.md   epics, tasks and bugs, all in one flat folder
   docs/                       plain Markdown pages; subfolders make the tree
   docs/decisions/             decision records
 ```
@@ -18,12 +18,12 @@ The folder is committed to git with the code.
 ## config.yml
 
 ```yaml
-name: Claude Project
-prefix: CP
+name: Corkboard
+prefix: CB
 ```
 
 - `name`: the project's display name in the web app.
-- `prefix`: the ID prefix for this repo's items, like a Jira project key. Uppercase letters and digits, starting with a letter, such as `CP` or `GAME`. `cpm init` suggests one from the repo name. Changing it later means renaming every item, so pick it at setup.
+- `prefix`: the ID prefix for this repo's items, like a Jira project key. Uppercase letters and digits, starting with a letter, such as `CB` or `GAME`. `corkboard init` suggests one from the repo name. Changing it later means renaming every item, so pick it at setup.
 
 Nothing else is configurable. Types and statuses are fixed.
 
@@ -35,23 +35,23 @@ An item is an epic, task or bug. Each one is a Markdown file in `items/` with a 
 
 ```markdown
 ---
-id: CP-12
+id: CB-12
 type: task
 title: Drag cards between columns
 status: in-progress
 priority: high
 owner: claude
 created: 2026-11-12
-parent: CP-3
+parent: CB-3
 labels: [ui, board]
-blocked_by: [CP-9]
-related: [CP-13]
+blocked_by: [CB-9]
+related: [CB-13]
 ---
 What and why, in a few lines. Free Markdown.
 
 ## Subtasks
 - [x] Work out which column a card was dropped on
-- [ ] Save the status change through cpm
+- [ ] Save the status change through corkboard
 - [ ] Put the card back if saving fails
 
 ## Log
@@ -62,11 +62,11 @@ What and why, in a few lines. Free Markdown.
 
 ### Header fields
 
-`cpm` writes them in this order. Optional fields are left out when empty.
+`corkboard` writes them in this order. Optional fields are left out when empty.
 
 | Field | Required | Values |
 |---|---|---|
-| `id` | yes | `PREFIX-N`, such as `CP-12` |
+| `id` | yes | `PREFIX-N`, such as `CB-12` |
 | `type` | yes | `epic`, `task`, `bug` |
 | `title` | yes | short text |
 | `status` | yes | see Statuses |
@@ -84,13 +84,13 @@ There's no `updated` field: the last log line says when the item last changed.
 
 ### Header format
 
-Headers use a strict subset of YAML, so `cpm` can read them with Python's standard library and GitHub still renders them. Release headers follow the same rules.
+Headers use a strict subset of YAML, so `corkboard` can read them with Python's standard library and GitHub still renders them. Release headers follow the same rules.
 
 - One `key: value` per line, in the order above. No nesting, comments or blank lines.
 - A value is plain text, a date, or a list in brackets, such as `[ui, board]`.
 - A value or list item is wrapped in double quotes when it contains `: ` or ` #`, starts with `[`, `"` or a space, or would otherwise read as something else in YAML, such as `yes`, `no`, `null` or a number like `1.0`. For example: `title: "Fix: crash on drop"`. Inside quotes, `\"` is a quote and `\\` is a backslash.
 
-`cpm` always writes headers this way, and `cpm check` reports any header that isn't.
+`corkboard` always writes headers this way, and `corkboard check` reports any header that isn't.
 
 ### Statuses
 
@@ -103,9 +103,9 @@ Headers use a strict subset of YAML, so `cpm` can read them with Python's standa
 | `done` | Finished. |
 | `cancelled` | Decided not to do it. Kept, not deleted, so the decision stays visible. |
 
-When the user answers a `waiting` item in the web app, it moves to `todo` and the reply is logged as `me: moved to todo: <reply>`. Answered items come first in `cpm next`.
+When the user answers a `waiting` item in the web app, it moves to `todo` and the reply is logged as `me: moved to todo: <reply>`. Answered items come first in `corkboard next`.
 
-Blocked isn't a status. An item is blocked while any item in its `blocked_by` isn't `done`. The web app shows it, and `cpm next` skips it.
+Blocked isn't a status. An item is blocked while any item in its `blocked_by` isn't `done`. The web app shows it, and `corkboard next` skips it.
 
 ### Hierarchy and releases
 
@@ -147,26 +147,26 @@ A subtask is only done or not done. It has no owner, labels or log of its own. I
 
 - `who` is `me` or `claude`. Time is local, 24-hour.
 - Lines are only ever added, never edited or removed.
-- `cpm` adds a line for every change it makes: `created`, `moved to <status>`, `set <field>=<value>`, and subtask changes. A status change with a message is logged as `moved to <status>: <message>`. Moving to `waiting` always needs one.
-- Status changes go through `cpm` so they're always logged. Anyone can add other lines, such as notes on what was tried.
+- `corkboard` adds a line for every change it makes: `created`, `moved to <status>`, `set <field>=<value>`, and subtask changes. A status change with a message is logged as `moved to <status>: <message>`. Moving to `waiting` always needs one.
+- Status changes go through `corkboard` so they're always logged. Anyone can add other lines, such as notes on what was tried.
 
 ## IDs and file names
 
 - IDs are `PREFIX-N`, numbered from 1. A new item gets the highest number in `items/` plus 1. There's no counter file, so there's nothing to conflict on a merge.
 - Numbers of deleted items can come back, which is another reason to cancel rather than delete.
-- If two branches create the same number, `cpm check` reports it. `cpm check --fix` renumbers the newer item and lists references to the old number for review, since they could mean either item.
+- If two branches create the same number, `corkboard check` reports it. `corkboard check --fix` renumbers the newer item and lists references to the old number for review, since they could mean either item.
 - File names are `PREFIX-N-short-title.md`. The ID is what identifies the item; the rest only helps people read the name. The short title is the title in lowercase with dashes, cut at a word boundary to about 40 characters.
-- To find an item from its ID, match `items/CP-12-*.md`. The dash after the number keeps it from matching `CP-120`.
-- When a title changes, `cpm` renames the file. A short title that's out of date or missing breaks nothing, and `cpm check` fixes it.
+- To find an item from its ID, match `items/CB-12-*.md`. The dash after the number keeps it from matching `CB-120`.
+- When a title changes, `corkboard` renames the file. A short title that's out of date or missing breaks nothing, and `corkboard check` fixes it.
 - Items refer to each other by ID, never by file path, so renames don't break references.
 
 ## Commits and pull requests
 
 Nothing about commits or pull requests is stored in item files. They're found by the item's ID appearing in them:
 
-- A commit belongs to an item when its message contains the ID, such as `fix(board): keep card order on drop (CP-12)`. Commits are read from `git log`, so this works offline.
-- A pull request belongs to an item when the ID is in its title, its body or its branch name. Branch names use the lowercase ID and short title, such as `cp-12-drag-cards`.
-- IDs match exactly, so `CP-12` doesn't match `CP-120`. Branch names match regardless of case.
+- A commit belongs to an item when its message contains the ID, such as `fix(board): keep card order on drop (CB-12)`. Commits are read from `git log`, so this works offline.
+- A pull request belongs to an item when the ID is in its title, its body or its branch name. Branch names use the lowercase ID and short title, such as `cb-12-drag-cards`.
+- IDs match exactly, so `CB-12` doesn't match `CB-120`. Branch names match regardless of case.
 - Pull requests are read from GitHub with `gh`, only when something shows them, and never written anywhere. Without `gh`, a GitHub remote or a connection, they just aren't shown.
 
 ## Releases
@@ -191,11 +191,11 @@ What this release is for, in a few lines.
 Plain Markdown pages in `docs/`. Subfolders make the page tree in the web app.
 
 - A page's title is its first `#` heading, or else its file name.
-- Writing an item ID such as `CP-12` anywhere in a page links to that item, and the item shows the link back. The same works in item bodies.
+- Writing an item ID such as `CB-12` anywhere in a page links to that item, and the item shows the link back. The same works in item bodies.
 - Link to other pages with normal Markdown links.
 - Decision records go in `docs/decisions/`, named `0001-short-name.md`, numbered in order.
 
-## What cpm check verifies
+## What corkboard check verifies
 
 - Every header follows the header format, required fields are present, and every value is one of the allowed ones.
 - IDs are unique, and every file name starts with its item's ID.

@@ -1,6 +1,6 @@
 # Web app
 
-What each screen of the web app shows and does. `cpm ui` serves it on localhost. It reads and writes the files described in [file-format.md](file-format.md) through the same core library as the CLI ([cli.md](cli.md)). It's plain HTML, CSS and JavaScript with no build step, and Preact, htm and marked are committed as single files, since the app works offline.
+What each screen of the web app shows and does. `corkboard ui` serves it on localhost. It reads and writes the files described in [file-format.md](file-format.md) through the same core library as the CLI ([cli.md](cli.md)). It's plain HTML, CSS and JavaScript with no build step, and Preact, htm and marked are committed as single files, since the app works offline.
 
 ## Everywhere
 
@@ -9,7 +9,7 @@ What each screen of the web app shows and does. `cpm ui` serves it on localhost.
 - **Keys:** `c` opens the new item form, and `Esc` closes a panel or form.
 - **Live updates:** the server checks `.project/` for changed files every second and pushes the changes to the page. When Claude changes a file, the screen updates without a reload, and the item gets a dot (●) until you click Mark seen on the Now page.
 - **Who:** everything you do in the app is logged as `me`.
-- **Writes:** a change in the app makes the same change to the file that the matching `cpm` command would make. Dragging a card to Done is `cpm move <ID> done`, and so on.
+- **Writes:** a change in the app makes the same change to the file that the matching `corkboard` command would make. Dragging a card to Done is `corkboard move <ID> done`, and so on.
 - **Editing conflicts:** if Claude changes an item or doc while you're editing its text, saving shows both versions and lets you choose. Nothing is silently overwritten. Field changes such as status or priority apply to the file as it is on disk, so they never conflict.
 - **GitHub:** pull requests are read with `gh` when a screen shows them, and never stored. Offline or without a GitHub remote, they just aren't shown.
 - **Safety:** Markdown renders with raw HTML turned off, and the server only accepts changes from the app's own page. The app can write files, so a doc in a cloned repo must never be able to run a script in it.
@@ -19,7 +19,7 @@ What each screen of the web app shows and does. `cpm ui` serves it on localhost.
   - `/board`
   - `/releases/v0.1`
   - `/list`
-  - `/items/CP-12`
+  - `/items/CB-12`
   - `/docs/architecture`
 
 ## Now
@@ -30,27 +30,27 @@ The home page: where things stand, what Claude needs from you, and what changed 
 v0.1 · active · due Dec 1          ███████░░░░░░░░  7/15 done
 
 WAITING ON YOU
-  CP-14  Cards flicker on drop                          bug · high
+  CB-14  Cards flicker on drop                          bug · high
          Claude: "Should we debounce, or rebuild the column?"
          [ Reply…                                  ]  [Send]  [Mark done]
 
 IN PROGRESS                           NEXT UP
-  CP-12  Drag cards…   Claude · 1/3     CP-16  Column menu · answered
-  CP-21  Write README  you              CP-13  Column limits · high
-                                        CP-19  Release view
+  CB-12  Drag cards…   Claude · 1/3     CB-16  Column menu · answered
+  CB-21  Write README  you              CB-13  Column limits · high
+                                        CB-19  Release view
 
 SINCE YOU LAST LOOKED  (yesterday 18:40)                   [Mark seen]
-  14:20  Claude  CP-12  moved to in-progress
-  14:55  Claude  CP-12  done subtask: Work out which column…
-  15:02  Claude  CP-14  moved to waiting
-  15:10  Claude  CP-18  created: Board column limits
+  14:20  Claude  CB-12  moved to in-progress
+  14:55  Claude  CB-12  done subtask: Work out which column…
+  15:02  Claude  CB-14  moved to waiting
+  15:10  Claude  CB-18  created: Board column limits
 ```
 
 - **Waiting on you** shows every `waiting` item with the question from its last log line.
   - **Send** moves the item to `todo` and logs your reply as `moved to todo: <reply>`, so it comes first in Claude's Next up.
   - **Mark done** is for approving a review. It moves the item to `done`, with your reply as the message if you wrote one.
-- **Merged, not done** appears when an item's pull request has merged but the item isn't `done` or `cancelled`, for example "PR #15 merged, but CP-21 Write the README is still in progress", with a **Mark CP-21 done** button. Nothing changes an item on its own.
-- **In progress** and **Next up** match `cpm now`.
+- **Merged, not done** appears when an item's pull request has merged but the item isn't `done` or `cancelled`, for example "PR #15 merged, but CB-21 Write the README is still in progress", with a **Mark CB-21 done** button. Nothing changes an item on its own.
+- **In progress** and **Next up** match `corkboard now`.
 - **Since you last looked** lists log lines written by Claude since you last clicked Mark seen, newest last. It only clears when you click Mark seen, not when you open the page. The time of your last Mark seen is kept in the browser, not in the repo.
 
 ## Board
@@ -62,12 +62,12 @@ Board    Release: v0.1 ▾   Epic ▾   Label ▾   Owner ▾   ☐ Group by epi
 
 TODO (4)            IN PROGRESS (2)     WAITING (1)         DONE (7)
 ┌────────────────┐  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐
-│ CP-13        ● │  │ CP-12          │  │ CP-14      bug │  │ CP-10          │
+│ CB-13        ● │  │ CB-12          │  │ CB-14      bug │  │ CB-10          │
 │ Board column   │  │ Drag cards     │  │ Cards flicker  │  │ Board columns  │
 │ limits         │  │ between columns│  │ on drop        │  │                │
 │ Board view     │  │ Board view     │  │ "debounce, or… │  │ Board view     │
 │ high · ui      │  │ Claude · 1/3   │  │ high           │  │                │
-│ blocked: CP-12 │  │                │  │                │  │                │
+│ blocked: CB-12 │  │                │  │                │  │                │
 └────────────────┘  └────────────────┘  └────────────────┘  └────────────────┘
 Backlog (12) and Cancelled (1) hidden · show                ● changed since you looked
 ```
@@ -75,7 +75,7 @@ Backlog (12) and Cancelled (1) hidden · show                ● changed since y
 - Shows tasks and bugs in the active release by default. Epics aren't cards; they appear as the name on each card, and as rows when **Group by epic** is on.
 - A card shows its ID, title, epic, and type when it's a bug. It also shows priority when high, labels, owner, subtask progress, blockers, the question when it's waiting, and its latest pull request with its state, such as `#14 merged`.
 - **Dragging** a card to another column changes its status. Dropping on Waiting asks for a message first.
-- **Order** within a column is priority, then number, the same as `cpm next`. Cards can't be reordered by hand.
+- **Order** within a column is priority, then number, the same as `corkboard next`. Cards can't be reordered by hand.
 - Backlog and Cancelled are hidden until you click **show**.
 - **Clicking a card** opens it in the item side panel.
 
@@ -89,17 +89,17 @@ v0.1 (active) · v0.2 (planned) · v0.0 (released) · No release
 v0.1 · active · due Dec 1                  ███████░░░░░░░░  7/15 done
 A board you can drag cards on, and docs pages.
 
-▾ CP-3  Board view                 epic   in-progress   ████░░  3/6
-    ✓ CP-10  Board columns                done
-    ◐ CP-12  Drag cards between columns   in-progress   1/3
+▾ CB-3  Board view                 epic   in-progress   ████░░  3/6
+    ✓ CB-10  Board columns                done
+    ◐ CB-12  Drag cards between columns   in-progress   1/3
         ☑ Work out which column a card was dropped on
-        ☐ Save the status change through cpm
+        ☐ Save the status change through corkboard
         ☐ Put the card back if saving fails
-    ? CP-14  Cards flicker on drop        waiting       bug
-    ○ CP-13  Board column limits          todo          blocked
-▸ CP-4  Docs pages                 epic   todo          ░░░░░░  0/4
+    ? CB-14  Cards flicker on drop        waiting       bug
+    ○ CB-13  Board column limits          todo          blocked
+▸ CB-4  Docs pages                 epic   todo          ░░░░░░  0/4
   No epic
-    ○ CP-22  Fix typo in README           todo
+    ○ CB-22  Fix typo in README           todo
                                                   [Copy release notes]
 ```
 
@@ -111,7 +111,7 @@ A board you can drag cards on, and docs pages.
   - ? waiting
   - ○ todo or backlog
   - ✕ cancelled
-- The order matches `cpm tree`, and cancelled items stay visible.
+- The order matches `corkboard tree`, and cancelled items stay visible.
 - **Dragging** an epic onto another release's tab moves it to that release. A task with no epic can be dragged the same way.
 - The goal text is the release file's body. Status and date can be changed from the header.
 - **Copy release notes** copies Markdown of the release's done items, grouped by epic. Cancelled items are left out.
@@ -124,12 +124,12 @@ Every item in a table, for sorting through the backlog.
 List   Status: backlog, todo ▾   Type ▾   Label ▾   Release ▾   [+ New]
 
 ID     Type  Status   Priority  Title                   Epic        Labels
-CP-13  task  todo     high      Board column limits     Board view  ui
-CP-19  task  todo     medium    Release view            Board view  ui
-CP-25  bug   backlog  low       Long titles overflow    —           ui
+CB-13  task  todo     high      Board column limits     Board view  ui
+CB-19  task  todo     medium    Release view            Board view  ui
+CB-25  bug   backlog  low       Long titles overflow    —           ui
 ```
 
-- Filters work like `cpm list`. The default shows backlog and todo.
+- Filters work like `corkboard list`. The default shows backlog and todo.
 - Clicking a column header sorts by it.
 - Status and priority can be changed in the row.
 - Clicking a row opens the item side panel.
@@ -139,7 +139,7 @@ CP-25  bug   backlog  low       Long titles overflow    —           ui
 One item, in a side panel over the screen you came from, or as a full page at `/items/<ID>`.
 
 ```
-Board view › CP-12                                     [Full page] [×]
+Board view › CB-12                                     [Full page] [×]
 Drag cards between columns
 In progress ▾   High ▾   Claude ▾   Release v0.1 (from epic)
 Labels: ui  board  +
@@ -148,19 +148,19 @@ Description, rendered as Markdown                              [Edit]
 
 Subtasks 1/3
   ☑ Work out which column a card was dropped on
-  ☐ Save the status change through cpm
+  ☐ Save the status change through corkboard
   ☐ Put the card back if saving fails
   + Add subtask
 
 Links
-  Blocks       CP-18 Keyboard shortcuts for the board · todo
-  Related to   CP-13 Board column limits · todo
+  Blocks       CB-18 Keyboard shortcuts for the board · todo
+  Related to   CB-13 Board column limits · todo
   + Add link
 
 Development
-  cp-12-drag-cards
+  cb-12-drag-cards
   #14 Drag cards between columns · open · checks passing
-  a1b2c3d feat(board): detect drop column (CP-12) · Nov 12
+  a1b2c3d feat(board): detect drop column (CB-12) · Nov 12
 
 Activity
   Nov 12 14:03  you     created
@@ -168,7 +168,7 @@ Activity
   Nov 12 15:02  Claude  moved to waiting: should dropping on Done ask…
   [ Add a note…                                            ]
 
-Mentioned in: Architecture (doc) · CP-14
+Mentioned in: Architecture (doc) · CB-14
 ```
 
 - Every header field can be changed in place. Release shows "(from epic)" when it's inherited, and can't be changed there.
@@ -185,18 +185,18 @@ Mentioned in: Architecture (doc) · CP-14
 Opened with **+ New** or `c`.
 
 - Fields: type, title, epic, priority, owner, labels, and an optional description.
-- It creates the item the way `cpm new` does, then opens it in the side panel.
+- It creates the item the way `corkboard new` does, then opens it in the side panel.
 
 ## Docs
 
 ```
 Search docs…          │ Architecture                                   [Edit]
 ▾ docs                │
-    Architecture      │ The board ( CP-3 Board view · in-progress ) reads
+    Architecture      │ The board ( CB-3 Board view · in-progress ) reads
     File format       │ items through the core library…
     CLI               │
   ▾ decisions         │ ──────────────────────────────
-    0001 Markdown…    │ Mentions: CP-3, CP-12
+    0001 Markdown…    │ Mentions: CB-3, CB-12
 + New page            │ Changed Nov 12 15:40
 ```
 
