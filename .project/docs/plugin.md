@@ -34,10 +34,10 @@ Runs `${CLAUDE_PLUGIN_ROOT}/bin/corkboard now`, by full path, when a session sta
 ```
 This repo tracks its work in .project/ with corkboard. Use the track skill before you start, finish or plan work.
 
-Corkboard · v0.1 active, due 2026-12-01 · 7/15 done
+Example · v0.1 active, due 2026-12-01 · 7/15 done
 
 Waiting on you (1)
-  CB-14 Cards flicker on drop: "debounce, or rebuild the column?"
+  EX-14 Cards flicker on drop: "debounce, or rebuild the column?"
 …
 ```
 
@@ -58,7 +58,7 @@ What it tells Claude to do:
 1. Find the item the work belongs to (`corkboard list`, `corkboard show`), or create one with `corkboard new`, piping in a short description and subtasks.
 2. Every change Claude commits gets an item, except trivial fixes such as a typo or a one-line fix.
 3. `corkboard move <ID> in-progress`. Claude keeps one item in progress at a time, and finishes or parks one (back to `todo`) before starting another.
-4. On the default branch, switch to a branch named after the item's file name: `CB-12-drag-cards.md` → `cb-12-drag-cards`.
+4. On the default branch, switch to a branch named after the item's file name: `EX-12-drag-cards.md` → `ex-12-drag-cards`.
 
 ### While working
 
@@ -69,7 +69,7 @@ What it tells Claude to do:
 
 ### Commits and pull requests
 
-- Every commit for an item has its ID in the message, such as `feat(board): drag cards between columns (CB-12)`. Everything else about commits follows the user's own rules.
+- Every commit for an item has its ID in the message, such as `feat(board): drag cards between columns (EX-12)`. Everything else about commits follows the user's own rules.
 - A pull request has the ID in its title. After opening one: `corkboard move <ID> waiting "PR #14 ready for review"`.
 
 ### Finishing

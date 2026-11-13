@@ -9,7 +9,7 @@
 - **Output:** plain text. Color only when output goes to a terminal. No JSON mode.
 - **GitHub:** only `corkboard show` and `corkboard ui` contact GitHub, through `gh`, to read pull requests. Every other command works offline.
 - **Fields:** always `field=value`. Lists are comma-separated, such as `labels=ui,board`. An empty value clears a field, such as `parent=`. Quote values with spaces: `title="New title"`.
-- **Writes** print one line naming what changed and the file's path, such as `moved CB-12 to done .project/items/CB-12-drag-cards.md`. Files are written whole and swapped in, so the web app never reads half a file.
+- **Writes** print one line naming what changed and the file's path, such as `moved EX-12 to done .project/items/EX-12-drag-cards.md`. Files are written whole and swapped in, so the web app never reads half a file.
 - **Warnings** start with `warning:` and don't stop the command. **Errors** are one line on stderr starting with `error:`, say how to fix the problem, and exit with code 1. For example: `error: "inprogress" isn't a status. Use one of: backlog, todo, in-progress, waiting, done, cancelled`.
 - **Titles** in one-line output are cut to 50 characters with `…`.
 - `corkboard help` lists the commands, and `corkboard <command> --help` explains one.
@@ -45,19 +45,19 @@ next: corkboard new epic "First epic"
 The session-start summary. It's at most 25 lines, and empty sections are left out.
 
 ```
-Corkboard · v0.1 active, due 2026-12-01 · 7/15 done
+Example · v0.1 active, due 2026-12-01 · 7/15 done
 
 Waiting on you (1)
-  CB-14 Cards flicker on drop: "debounce, or rebuild the column?"
+  EX-14 Cards flicker on drop: "debounce, or rebuild the column?"
 
 In progress (2)
-  CB-12 Drag cards between columns · high · 1/3
-  CB-21 Write the README (you)
+  EX-12 Drag cards between columns · high · 1/3
+  EX-21 Write the README (you)
 
 Next up
-  CB-16 Column header menu · answered by you
-  CB-13 Board column limits · high
-  CB-19 Release view
+  EX-16 Column header menu · answered by you
+  EX-13 Board column limits · high
+  EX-19 Release view
 
 Details: corkboard show <ID>
 ```
@@ -84,14 +84,14 @@ With nothing to do, it prints `nothing to do: no unblocked todo items owned by c
 One item with its context. Lines with nothing to show are left out.
 
 ```
-CB-12 task · in-progress · high · claude
+EX-12 task · in-progress · high · claude
 Drag cards between columns
-path: .project/items/CB-12-drag-cards.md
-epic: CB-3 Board view · release: v0.1 · labels: ui, board
-blocked by: CB-9 Card component (todo)
-blocks: CB-18 Keyboard shortcuts for the board (todo)
-related: CB-13 Board column limits (todo)
-mentioned in: docs/ui.md, CB-14
+path: .project/items/EX-12-drag-cards.md
+epic: EX-3 Board view · release: v0.1 · labels: ui, board
+blocked by: EX-9 Card component (todo)
+blocks: EX-18 Keyboard shortcuts for the board (todo)
+related: EX-13 Board column limits (todo)
+mentioned in: docs/ui.md, EX-14
 
 What and why, as written in the file.
 
@@ -101,10 +101,10 @@ Subtasks 1/3
   3 [ ] Put the card back if saving fails
 
 Development
-  branch: cb-12-drag-cards
+  branch: ex-12-drag-cards
   PR #14 Drag cards between columns · open · checks passing
-  a1b2c3d feat(board): detect drop column (CB-12)
-  9f8e7d6 fix(board): keep card order on drop (CB-12)
+  a1b2c3d feat(board): detect drop column (EX-12)
+  9f8e7d6 fix(board): keep card order on drop (EX-12)
 
 Log (last 5 of 9)
   2026-11-12 14:20 claude: moved to in-progress
@@ -123,8 +123,8 @@ Log (last 5 of 9)
 One line per item, sorted by number, then a count.
 
 ```
-CB-12  task  in-progress  high    Drag cards between columns · epic CB-3 · ui, board
-CB-13  task  todo         high    Board column limits · epic CB-3 · blocked
+EX-12  task  in-progress  high    Drag cards between columns · epic EX-3 · ui, board
+EX-13  task  todo         high    Board column limits · epic EX-3 · blocked
 2 items
 ```
 
@@ -138,15 +138,15 @@ A release, its epics, and each epic's tasks and bugs. With no argument it shows 
 
 ```
 v0.1 · active · due 2026-12-01 · 7/15 done
-  CB-3 Board view · epic · in-progress · 3/6
-    done         CB-10 Board columns
-    in-progress  CB-12 Drag cards between columns · 1/3
-    waiting      CB-14 Cards flicker on drop
-    todo         CB-13 Board column limits
-  CB-4 Docs pages · epic · todo · 0/4
+  EX-3 Board view · epic · in-progress · 3/6
+    done         EX-10 Board columns
+    in-progress  EX-12 Drag cards between columns · 1/3
+    waiting      EX-14 Cards flicker on drop
+    todo         EX-13 Board column limits
+  EX-4 Docs pages · epic · todo · 0/4
     …
   No epic
-    todo         CB-22 Fix typo in README
+    todo         EX-22 Fix typo in README
 ```
 
 - Epics are in number order. Under each, items are sorted by status (done, in-progress, waiting, todo, backlog, cancelled) and then by number.
@@ -164,7 +164,7 @@ Creates an item.
 - It checks the new item the way `corkboard check` would and writes nothing if there's a problem.
 
 ```
-corkboard new task "Board column limits" parent=CB-3 priority=high <<'EOF'
+corkboard new task "Board column limits" parent=EX-3 priority=high <<'EOF'
 Cap how many cards a column shows before it scrolls.
 
 ## Subtasks
@@ -174,7 +174,7 @@ EOF
 ```
 
 ```
-created CB-18 .project/items/CB-18-board-column-limits.md
+created EX-18 .project/items/EX-18-board-column-limits.md
 ```
 
 ### `corkboard move <ID> <status> ["message"]`
@@ -183,10 +183,10 @@ Changes an item's status and logs `moved to <status>`, or `moved to <status>: <m
 
 - Moving to `waiting` needs a message: the question or what to review.
 - Moving an epic to `done` while it has open tasks warns and lists them. Moving a blocked item to `in-progress` warns and names the blockers.
-- Moving to the status it already has does nothing and prints `CB-12 is already done`.
+- Moving to the status it already has does nothing and prints `EX-12 is already done`.
 
 ```
-moved CB-12 to done .project/items/CB-12-drag-cards.md
+moved EX-12 to done .project/items/EX-12-drag-cards.md
 ```
 
 ### `corkboard set <ID> field=value…`
@@ -194,12 +194,12 @@ moved CB-12 to done .project/items/CB-12-drag-cards.md
 Changes header fields other than `id`, `created` and `status`. Status goes through `corkboard move`.
 
 - Fields that can be set: `title`, `type`, `priority`, `owner`, `parent`, `release`, `labels`, `blocked_by`, `related`, `duplicate_of`. `type` can only switch between task and bug.
-- Links are set the same way, such as `corkboard set CB-18 related=CB-9`.
+- Links are set the same way, such as `corkboard set EX-18 related=EX-9`.
 - It logs one line, such as `set priority=high labels=ui,board`.
 - Changing the title renames the file, and the printed path is the new one.
 
 ```
-updated CB-12 .project/items/CB-12-drag-cards-between-columns.md
+updated EX-12 .project/items/EX-12-drag-cards-between-columns.md
 ```
 
 ### `corkboard sub <ID> add "text"` · `done <N>` · `undo <N>`
@@ -210,7 +210,7 @@ Adds a subtask, checks one off or unchecks one, by its number in `corkboard show
 - To reword or remove a subtask, edit the file.
 
 ```
-CB-12 subtasks 2/3 .project/items/CB-12-drag-cards.md
+EX-12 subtasks 2/3 .project/items/EX-12-drag-cards.md
 ```
 
 ### `corkboard log <ID> "text"`
@@ -218,7 +218,7 @@ CB-12 subtasks 2/3 .project/items/CB-12-drag-cards.md
 Adds a note to the item's log.
 
 ```
-logged CB-12 .project/items/CB-12-drag-cards.md
+logged EX-12 .project/items/EX-12-drag-cards.md
 ```
 
 ### `corkboard release <NAME> [status=…] [date=YYYY-MM-DD]`
@@ -236,8 +236,8 @@ created release v0.2 .project/releases/v0.2.md
 Runs the checks in [file-format.md](file-format.md) and prints one problem per line, then a summary. Exits 1 if any problems are left.
 
 ```
-CB-12-drag-cards.md: parent CB-99 doesn't exist
-CB-7-old-name.md: file name doesn't match the title
+EX-12-drag-cards.md: parent EX-99 doesn't exist
+EX-7-old-name.md: file name doesn't match the title
 42 items, 3 releases: 2 problems
 ```
 
@@ -247,8 +247,8 @@ CB-7-old-name.md: file name doesn't match the title
 - **Duplicate IDs:** the item with the later `created` date gets the next free number. References to the old number can't be told apart, since they could mean either item, so it lists them for review:
 
 ```
-fixed: CB-12 was used twice. "Ctrl-K search" is now CB-31.
-check these references to CB-12, which may have meant CB-31: CB-14 blocked_by, docs/ui.md
+fixed: EX-12 was used twice. "Ctrl-K search" is now EX-31.
+check these references to EX-12, which may have meant EX-31: EX-14 blocked_by, docs/ui.md
 ```
 
 ### `corkboard ui`

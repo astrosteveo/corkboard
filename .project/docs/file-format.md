@@ -8,7 +8,7 @@ How a repo's project data is stored under `.project/`. Claude, `corkboard` and t
 .project/
   config.yml
   releases/v0.1.md            one file per release
-  items/CB-12-drag-cards.md   epics, tasks and bugs, all in one flat folder
+  items/EX-12-drag-cards.md   epics, tasks and bugs, all in one flat folder
   docs/                       plain Markdown pages; subfolders make the tree
   docs/decisions/             decision records
 ```
@@ -18,12 +18,12 @@ The folder is committed to git with the code.
 ## config.yml
 
 ```yaml
-name: Corkboard
-prefix: CB
+name: Example
+prefix: EX
 ```
 
 - `name`: the project's display name in the web app.
-- `prefix`: the ID prefix for this repo's items, like a Jira project key. Uppercase letters and digits, starting with a letter, such as `CB` or `GAME`. `corkboard init` suggests one from the repo name. Changing it later means renaming every item, so pick it at setup.
+- `prefix`: the ID prefix for this repo's items, like a Jira project key. Uppercase letters and digits, starting with a letter, such as `EX` or `GAME`. `corkboard init` suggests one from the repo name. Changing it later means renaming every item, so pick it at setup.
 
 Nothing else is configurable. Types and statuses are fixed.
 
@@ -35,17 +35,17 @@ An item is an epic, task or bug. Each one is a Markdown file in `items/` with a 
 
 ```markdown
 ---
-id: CB-12
+id: EX-12
 type: task
 title: Drag cards between columns
 status: in-progress
 priority: high
 owner: claude
 created: 2026-11-12
-parent: CB-3
+parent: EX-3
 labels: [ui, board]
-blocked_by: [CB-9]
-related: [CB-13]
+blocked_by: [EX-9]
+related: [EX-13]
 ---
 What and why, in a few lines. Free Markdown.
 
@@ -66,7 +66,7 @@ What and why, in a few lines. Free Markdown.
 
 | Field | Required | Values |
 |---|---|---|
-| `id` | yes | `PREFIX-N`, such as `CB-12` |
+| `id` | yes | `PREFIX-N`, such as `EX-12` |
 | `type` | yes | `epic`, `task`, `bug` |
 | `title` | yes | short text |
 | `status` | yes | see Statuses |
@@ -156,7 +156,7 @@ A subtask is only done or not done. It has no owner, labels or log of its own. I
 - Numbers of deleted items can come back, which is another reason to cancel rather than delete.
 - If two branches create the same number, `corkboard check` reports it. `corkboard check --fix` renumbers the newer item and lists references to the old number for review, since they could mean either item.
 - File names are `PREFIX-N-short-title.md`. The ID is what identifies the item; the rest only helps people read the name. The short title is the title in lowercase with dashes, cut at a word boundary to about 40 characters.
-- To find an item from its ID, match `items/CB-12-*.md`. The dash after the number keeps it from matching `CB-120`.
+- To find an item from its ID, match `items/EX-12-*.md`. The dash after the number keeps it from matching `EX-120`.
 - When a title changes, `corkboard` renames the file. A short title that's out of date or missing breaks nothing, and `corkboard check` fixes it.
 - Items refer to each other by ID, never by file path, so renames don't break references.
 
@@ -164,9 +164,9 @@ A subtask is only done or not done. It has no owner, labels or log of its own. I
 
 Nothing about commits or pull requests is stored in item files. They're found by the item's ID appearing in them:
 
-- A commit belongs to an item when its message contains the ID, such as `fix(board): keep card order on drop (CB-12)`. Commits are read from `git log`, so this works offline.
-- A pull request belongs to an item when the ID is in its title, its body or its branch name. Branch names use the lowercase ID and short title, such as `cb-12-drag-cards`.
-- IDs match exactly, so `CB-12` doesn't match `CB-120`. Branch names match regardless of case.
+- A commit belongs to an item when its message contains the ID, such as `fix(board): keep card order on drop (EX-12)`. Commits are read from `git log`, so this works offline.
+- A pull request belongs to an item when the ID is in its title, its body or its branch name. Branch names use the lowercase ID and short title, such as `ex-12-drag-cards`.
+- IDs match exactly, so `EX-12` doesn't match `EX-120`. Branch names match regardless of case.
 - Pull requests are read from GitHub with `gh`, only when something shows them, and never written anywhere. Without `gh`, a GitHub remote or a connection, they just aren't shown.
 
 ## Releases
@@ -191,7 +191,7 @@ What this release is for, in a few lines.
 Plain Markdown pages in `docs/`. Subfolders make the page tree in the web app.
 
 - A page's title is its first `#` heading, or else its file name.
-- Writing an item ID such as `CB-12` anywhere in a page links to that item, and the item shows the link back. The same works in item bodies.
+- Writing an item ID such as `EX-12` anywhere in a page links to that item, and the item shows the link back. The same works in item bodies.
 - Link to other pages with normal Markdown links.
 - Decision records go in `docs/decisions/`, named `0001-short-name.md`, numbered in order.
 

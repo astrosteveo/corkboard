@@ -64,14 +64,14 @@ One developer working with Claude Code on their own repos. Not for teams.
 - 2026-11-12: Claude makes structured changes (IDs, status moves, links, log lines) through the `corkboard` CLI and edits descriptions and docs directly. Why: the CLI does the bookkeeping so files stay correct, and it answers project-wide questions in one call.
 - 2026-11-12: Turned down SQLite plus an MCP server as the store. Why: a database file doesn't diff or merge in git, Claude can't search the docs with its normal tools, and a server would have to be running.
 - 2026-11-12: The UI is a web app in a browser tab on localhost. Why: simplest to build well, and it allows drag-and-drop and richer layouts than a terminal.
-- 2026-11-12: Readable sequential IDs like `CB-12`. Why: with one user, collisions are rare, and `corkboard check` renumbers duplicates after a merge.
+- 2026-11-12: Readable sequential IDs like `EX-12`. Why: with one user, collisions are rare, and `corkboard check` renumbers duplicates after a merge.
 - 2026-11-12: Build our own instead of adopting or forking Backlog.md. Why: to get the release → epic → task → subtask structure and its views exactly the way the user wants, built around Claude Code.
 - 2026-11-12: Items nest as release → epic → task or bug → subtask, and any item can have labels. Why: the user wants to see a release as the epics it delivered and the work under each.
 - 2026-11-12: No "story" type, only task. Why: for one person and Claude, story and task mean the same thing in practice.
 - 2026-11-12: The file format is specified in `.project/docs/file-format.md`. Why: Claude, `corkboard` and the web app all read and write the same files.
 - 2026-11-12: Subtasks are checklist lines inside their task or bug, not their own files. Why: cheaper for Claude to update and no extra files; a subtask that needs its own owner or log becomes a task.
 - 2026-11-12: Statuses are backlog, todo, in-progress, waiting, done and cancelled. Why: `waiting` covers everything Claude needs from the user, questions and reviews alike, and `cancelled` keeps dropped work visible instead of deleted.
-- 2026-11-12: Item files are named like `CB-12-drag-cards.md`, and the ID prefix is set per repo in `.project/config.yml`. Why: the names stay readable in diffs and search results, and each repo gets its own key, like a Jira project.
+- 2026-11-12: Item files are named like `EX-12-drag-cards.md`, and the ID prefix is set per repo in `.project/config.yml`. Why: the names stay readable in diffs and search results, and each repo gets its own key, like a Jira project.
 - 2026-11-12: The CLI's commands and output are specified in `.project/docs/cli.md`. Output is plain text with no JSON mode. Why: text is cheaper for Claude to read, and the web app uses the shared core library instead of the CLI.
 - 2026-11-12: `corkboard now` is the session-start summary, at most 25 lines, and items the user just answered come first in Next up. Why: keeps each session's starting context under 500 tokens, and Claude picks up the user's answers right away.
 - 2026-11-12: `corkboard` tells Claude and the user apart by the `CLAUDECODE` variable Claude Code sets in Claude's shells. Why: log lines get the right author with nothing to pass in.
@@ -80,7 +80,7 @@ One developer working with Claude Code on their own repos. Not for teams.
 - 2026-11-12: "Since you last looked" clears only when the user clicks Mark seen. Why: glancing at the tab shouldn't lose the list of what Claude did.
 - 2026-11-12: Items link as blocked by, related to or duplicate of. Each link is stored on one item and shown on both. Why: adding a link changes one file, and the two sides can't disagree.
 - 2026-11-12: Commits and pull requests belong to an item when its ID appears in them, and are never stored in item files. Pull requests are read with `gh` only when shown, and `corkboard now` never contacts GitHub. Why: nothing in git goes stale, everything else works offline, and sessions start fast.
-- 2026-11-12: Claude puts the item ID in commit messages and PR titles, names branches like `cb-12-drag-cards`, and moves the item to `waiting` when it opens a PR. Why: that's what matches commits and PRs to items, and it puts PRs in the user's Waiting on you list.
+- 2026-11-12: Claude puts the item ID in commit messages and PR titles, names branches like `ex-12-drag-cards`, and moves the item to `waiting` when it opens a PR. Why: that's what matches commits and PRs to items, and it puts PRs in the user's Waiting on you list.
 - 2026-11-12: A merged PR doesn't close its item automatically; the Now page offers a one-click Mark done. Why: the tool never changes an item unless the user or Claude does it.
 - 2026-11-12: The Claude Code plugin is specified in `.project/docs/plugin.md`: `corkboard` in its `bin/`, a session-start hook that runs `corkboard now`, a `track` skill with the workflow, and `/corkboard:next`, `/corkboard:done`, `/corkboard:plan` and `/corkboard:ui`. Why: the fewest pieces that keep Claude on track, and every session starts knowing where things stand.
 - 2026-11-12: `corkboard` ships inside the plugin, so it must run with no install step. This repo is the plugin, listed in the astro-plugins marketplace by its GitHub repo. Why: one install, and the CLI always matches the plugin's version.
@@ -95,6 +95,7 @@ One developer working with Claude Code on their own repos. Not for teams.
 - 2026-11-12: Until CB-15 adds `new`, `move`, `sub` and `log`, this repo's item files are edited by hand in the strict format; after that, only through `corkboard`. Why: the project tracks itself from the start, and the hand-editing stretch stays short.
 - 2026-11-12: The repo is private on GitHub (astrosteveo/corkboard). Each item is built on its own branch and merged through a PR, with CI running the tests and ruff. Why: the user's CI runs on GitHub, and the plugin's own workflow expects PRs.
 - 2026-11-12: A release's `date` is optional, and v0.1 to v0.3 have none. Why: it's a hobby project without deadlines.
+- 2026-11-12: Examples in specs and docs use the prefix `EX`, such as `EX-12`, never this repo's own `CB`. Why: any item ID in a doc counts as a mention of that item, so an example with a real ID would link to the wrong item.
 
 ## Open questions
 

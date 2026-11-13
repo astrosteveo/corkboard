@@ -19,7 +19,7 @@ What each screen of the web app shows and does. `corkboard ui` serves it on loca
   - `/board`
   - `/releases/v0.1`
   - `/list`
-  - `/items/CB-12`
+  - `/items/EX-12`
   - `/docs/architecture`
 
 ## Now
@@ -30,26 +30,26 @@ The home page: where things stand, what Claude needs from you, and what changed 
 v0.1 · active · due Dec 1          ███████░░░░░░░░  7/15 done
 
 WAITING ON YOU
-  CB-14  Cards flicker on drop                          bug · high
+  EX-14  Cards flicker on drop                          bug · high
          Claude: "Should we debounce, or rebuild the column?"
          [ Reply…                                  ]  [Send]  [Mark done]
 
 IN PROGRESS                           NEXT UP
-  CB-12  Drag cards…   Claude · 1/3     CB-16  Column menu · answered
-  CB-21  Write README  you              CB-13  Column limits · high
-                                        CB-19  Release view
+  EX-12  Drag cards…   Claude · 1/3     EX-16  Column menu · answered
+  EX-21  Write README  you              EX-13  Column limits · high
+                                        EX-19  Release view
 
 SINCE YOU LAST LOOKED  (yesterday 18:40)                   [Mark seen]
-  14:20  Claude  CB-12  moved to in-progress
-  14:55  Claude  CB-12  done subtask: Work out which column…
-  15:02  Claude  CB-14  moved to waiting
-  15:10  Claude  CB-18  created: Board column limits
+  14:20  Claude  EX-12  moved to in-progress
+  14:55  Claude  EX-12  done subtask: Work out which column…
+  15:02  Claude  EX-14  moved to waiting
+  15:10  Claude  EX-18  created: Board column limits
 ```
 
 - **Waiting on you** shows every `waiting` item with the question from its last log line.
   - **Send** moves the item to `todo` and logs your reply as `moved to todo: <reply>`, so it comes first in Claude's Next up.
   - **Mark done** is for approving a review. It moves the item to `done`, with your reply as the message if you wrote one.
-- **Merged, not done** appears when an item's pull request has merged but the item isn't `done` or `cancelled`, for example "PR #15 merged, but CB-21 Write the README is still in progress", with a **Mark CB-21 done** button. Nothing changes an item on its own.
+- **Merged, not done** appears when an item's pull request has merged but the item isn't `done` or `cancelled`, for example "PR #15 merged, but EX-21 Write the README is still in progress", with a **Mark EX-21 done** button. Nothing changes an item on its own.
 - **In progress** and **Next up** match `corkboard now`.
 - **Since you last looked** lists log lines written by Claude since you last clicked Mark seen, newest last. It only clears when you click Mark seen, not when you open the page. The time of your last Mark seen is kept in the browser, not in the repo.
 
@@ -62,12 +62,12 @@ Board    Release: v0.1 ▾   Epic ▾   Label ▾   Owner ▾   ☐ Group by epi
 
 TODO (4)            IN PROGRESS (2)     WAITING (1)         DONE (7)
 ┌────────────────┐  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐
-│ CB-13        ● │  │ CB-12          │  │ CB-14      bug │  │ CB-10          │
+│ EX-13        ● │  │ EX-12          │  │ EX-14      bug │  │ EX-10          │
 │ Board column   │  │ Drag cards     │  │ Cards flicker  │  │ Board columns  │
 │ limits         │  │ between columns│  │ on drop        │  │                │
 │ Board view     │  │ Board view     │  │ "debounce, or… │  │ Board view     │
 │ high · ui      │  │ Claude · 1/3   │  │ high           │  │                │
-│ blocked: CB-12 │  │                │  │                │  │                │
+│ blocked: EX-12 │  │                │  │                │  │                │
 └────────────────┘  └────────────────┘  └────────────────┘  └────────────────┘
 Backlog (12) and Cancelled (1) hidden · show                ● changed since you looked
 ```
@@ -89,17 +89,17 @@ v0.1 (active) · v0.2 (planned) · v0.0 (released) · No release
 v0.1 · active · due Dec 1                  ███████░░░░░░░░  7/15 done
 A board you can drag cards on, and docs pages.
 
-▾ CB-3  Board view                 epic   in-progress   ████░░  3/6
-    ✓ CB-10  Board columns                done
-    ◐ CB-12  Drag cards between columns   in-progress   1/3
+▾ EX-3  Board view                 epic   in-progress   ████░░  3/6
+    ✓ EX-10  Board columns                done
+    ◐ EX-12  Drag cards between columns   in-progress   1/3
         ☑ Work out which column a card was dropped on
         ☐ Save the status change through corkboard
         ☐ Put the card back if saving fails
-    ? CB-14  Cards flicker on drop        waiting       bug
-    ○ CB-13  Board column limits          todo          blocked
-▸ CB-4  Docs pages                 epic   todo          ░░░░░░  0/4
+    ? EX-14  Cards flicker on drop        waiting       bug
+    ○ EX-13  Board column limits          todo          blocked
+▸ EX-4  Docs pages                 epic   todo          ░░░░░░  0/4
   No epic
-    ○ CB-22  Fix typo in README           todo
+    ○ EX-22  Fix typo in README           todo
                                                   [Copy release notes]
 ```
 
@@ -124,9 +124,9 @@ Every item in a table, for sorting through the backlog.
 List   Status: backlog, todo ▾   Type ▾   Label ▾   Release ▾   [+ New]
 
 ID     Type  Status   Priority  Title                   Epic        Labels
-CB-13  task  todo     high      Board column limits     Board view  ui
-CB-19  task  todo     medium    Release view            Board view  ui
-CB-25  bug   backlog  low       Long titles overflow    —           ui
+EX-13  task  todo     high      Board column limits     Board view  ui
+EX-19  task  todo     medium    Release view            Board view  ui
+EX-25  bug   backlog  low       Long titles overflow    —           ui
 ```
 
 - Filters work like `corkboard list`. The default shows backlog and todo.
@@ -139,7 +139,7 @@ CB-25  bug   backlog  low       Long titles overflow    —           ui
 One item, in a side panel over the screen you came from, or as a full page at `/items/<ID>`.
 
 ```
-Board view › CB-12                                     [Full page] [×]
+Board view › EX-12                                     [Full page] [×]
 Drag cards between columns
 In progress ▾   High ▾   Claude ▾   Release v0.1 (from epic)
 Labels: ui  board  +
@@ -153,14 +153,14 @@ Subtasks 1/3
   + Add subtask
 
 Links
-  Blocks       CB-18 Keyboard shortcuts for the board · todo
-  Related to   CB-13 Board column limits · todo
+  Blocks       EX-18 Keyboard shortcuts for the board · todo
+  Related to   EX-13 Board column limits · todo
   + Add link
 
 Development
-  cb-12-drag-cards
+  ex-12-drag-cards
   #14 Drag cards between columns · open · checks passing
-  a1b2c3d feat(board): detect drop column (CB-12) · Nov 12
+  a1b2c3d feat(board): detect drop column (EX-12) · Nov 12
 
 Activity
   Nov 12 14:03  you     created
@@ -168,7 +168,7 @@ Activity
   Nov 12 15:02  Claude  moved to waiting: should dropping on Done ask…
   [ Add a note…                                            ]
 
-Mentioned in: Architecture (doc) · CB-14
+Mentioned in: Architecture (doc) · EX-14
 ```
 
 - Every header field can be changed in place. Release shows "(from epic)" when it's inherited, and can't be changed there.
@@ -192,11 +192,11 @@ Opened with **+ New** or `c`.
 ```
 Search docs…          │ Architecture                                   [Edit]
 ▾ docs                │
-    Architecture      │ The board ( CB-3 Board view · in-progress ) reads
+    Architecture      │ The board ( EX-3 Board view · in-progress ) reads
     File format       │ items through the core library…
     CLI               │
   ▾ decisions         │ ──────────────────────────────
-    0001 Markdown…    │ Mentions: CB-3, CB-12
+    0001 Markdown…    │ Mentions: EX-3, EX-12
 + New page            │ Changed Nov 12 15:40
 ```
 
