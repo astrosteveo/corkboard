@@ -2,7 +2,7 @@
 id: CB-16
 type: task
 title: now and next
-status: todo
+status: in-progress
 priority: high
 owner: claude
 created: 2026-11-12
@@ -21,3 +21,4 @@ Done when output tests built from the `cli.md` examples pass, `now` never goes o
 
 ## Log
 - 2026-11-12 21:21 claude: created
+- 2026-11-12 21:54 claude: moved to in-progress

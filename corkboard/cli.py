@@ -65,7 +65,7 @@ class Context:
             return self.stdin.read()
         return None
 
-    def project(self) -> Project:
+    def project(self, warn: bool = True) -> Project:
         """The project for the current folder, loaded once. Warns if any file couldn't be read."""
         if self._project is None:
             root = project_module.find_root(self.cwd)
@@ -75,7 +75,7 @@ class Context:
                 )
             self._project = project_module.load(root)
             count = len(self._project.problems)
-            if count:
+            if count and warn:
                 files = "file" if count == 1 else "files"
                 self.warn(f"{count} {files} in .project/ couldn't be read. Run corkboard check.")
         return self._project
@@ -205,9 +205,27 @@ def _utf8(stream: TextIO) -> TextIO:
 
 
 def _commands() -> dict[str, Command]:
-    from . import changes, show
+    from . import changes, show, summary
 
     commands = [
+        Command(
+            "now",
+            "now",
+            "Where things stand: waiting on you, in progress, next up",
+            "The session-start summary: the active release, what's waiting on you, what's in\n"
+            "progress and the next 3 items in the order of work. At most 25 lines. Outside a\n"
+            "repo with .project/ it prints nothing.",
+            summary.now,
+        ),
+        Command(
+            "next",
+            "next",
+            "The item to do next, in full",
+            "The first item in the order of work, shown the way corkboard show shows it, with a\n"
+            "line saying why it's next. Only tasks and bugs that are todo, owned by claude and\n"
+            "not blocked count: answered items first, then the active release, priority, number.",
+            summary.next_,
+        ),
         Command(
             "show",
             "show <ID>",
