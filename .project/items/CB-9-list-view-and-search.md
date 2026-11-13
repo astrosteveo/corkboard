@@ -8,7 +8,7 @@ owner: claude
 created: 2026-11-12
 release: v0.3
 ---
-The List table with filters, sorting and changes in the row, and Ctrl-K search. Tasks get planned when v0.2 ships.
+The List table with filters, sorting and changes in the row, and Ctrl-K search.
 
 ## Log
 - 2026-11-12 21:21 claude: created
