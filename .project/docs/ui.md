@@ -1,4 +1,4 @@
-# Web app
+# UI
 
 What each screen of the web app shows and does. `corkboard ui` serves it on localhost. It reads and writes the files described in [file-format.md](file-format.md) through the same core library as the CLI ([cli.md](cli.md)). It's plain HTML, CSS and JavaScript with no build step, and Preact, htm and marked are committed as single files, since the app works offline.
 
@@ -171,7 +171,7 @@ Activity
   Nov 12 15:02  Claude  moved to waiting: should dropping on Done ask…
   [ Add a note…                                            ]
 
-Mentioned in: Architecture (doc) · EX-14
+Mentioned in: architecture.md (doc) · EX-14
 ```
 
 - Every header field can be changed in place. Release shows "(from epic)" when it's inherited, and can't be changed there.
@@ -182,7 +182,7 @@ Mentioned in: Architecture (doc) · EX-14
 - **Development** shows the branch, pull requests and commits that mention the item's ID, as `corkboard show` lists them. Each pull request shows its state, its checks while it's open, and links to GitHub. It's hidden when there are none.
 - **Activity** is the log. Notes you add go in as `me` lines.
 - For an epic, the subtasks section is replaced by its tasks and bugs with their statuses and progress.
-- **Mentioned in** lists docs and items that mention this ID. A doc shows its title and links to its page.
+- **Mentioned in** lists docs and items that mention this ID. A doc shows its file name and links to its page.
 
 ## New item form
 
@@ -196,15 +196,15 @@ Opened with **+ New** or `c`.
 ```
 Search docs…          │ Architecture                                   [Edit]
 ▾ docs                │
-    Architecture      │ The board ( EX-3 Board view · in-progress ) reads
-    File format       │ items through the core library…
-    CLI               │
+    architecture.md   │ The board ( EX-3 Board view · in-progress ) reads
+    cli.md            │ items through the core library…
+    file-format.md    │
   ▾ decisions         │ ──────────────────────────────
-    0001 Markdown…    │ Mentions: EX-3, EX-12
+    0001-markdown.md  │ Mentions: EX-3, EX-12
 + New page            │ Changed Nov 12 15:40
 ```
 
-- The tree on the left is the `docs/` folder: each folder's pages, then its subfolders, which collapse. A page's title is its first `#` heading, or else its file name. Typing in **Search docs** lists the pages whose title or file name has the text.
+- The tree on the left is the `docs/` folder: each folder's pages, then its subfolders, which collapse. Each page is listed by its file name, such as `cli.md`, whatever its `#` heading says, so a page goes by the same name in the app, the repo and `corkboard show`. The browser tab and Mentioned in use the file name too. Typing in **Search docs** lists the pages whose path has the text.
 - A page's URL is its path under `docs/` without `.md`: `docs/decisions/0001-markdown.md` is `/docs/decisions/0001-markdown`. A URL ending in `.md` shows the same page, so a link to another page written for GitHub, such as `[CLI](cli.md)`, works in the app too. `/docs` shows the tree alone.
 - Only `.md` files inside `docs/` are served. A path that leads out of it, through `..` or a symlink, finds no page.
 - Item IDs in a page show as chips with the item's current title and status, and open the item in the side panel. IDs inside links and code, and IDs with no item, stay as text.

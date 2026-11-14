@@ -16,7 +16,7 @@ from pathlib import Path
 
 from . import write
 from .edits import ConflictError, EditError
-from .project import CODE_FENCE, Project, natural_key
+from .project import Project, natural_key
 
 DOCS_DIR = "docs"
 SUFFIX = ".md"
@@ -28,15 +28,13 @@ DECISION_NUMBER = re.compile(r"([0-9]{4})-")
 
 # Any item ID on its own, as project.mention_pattern matches one ID.
 ANY_ID = re.compile(r"(?<![A-Za-z0-9])[A-Z][A-Z0-9]*-[0-9]+(?![0-9])")
-# A level-one heading: "# Title", with optional closing #s.
-TITLE = re.compile(r" {0,3}# +(.*?)(?: +#+)? *")
 
 
 @dataclass(frozen=True)
 class Doc:
     name: str  # path under docs/ without .md
     path: Path
-    title: str
+    title: str  # its file name, such as ui.md, so the app names a page the way the repo does
     text: str
     changed: datetime  # the file's modification time
 
@@ -126,19 +124,6 @@ def mentioned_items(project: Project, text: str) -> list[str]:
     return [item.id for item in project.sorted_items() if item.id in found]
 
 
-def title_of(text: str, fallback: str) -> str:
-    """The first level-one heading outside a code block, or else the fallback."""
-    in_code = False
-    for line in text.splitlines():
-        if CODE_FENCE.match(line):
-            in_code = not in_code
-            continue
-        match = None if in_code else TITLE.fullmatch(line)
-        if match and match.group(1).strip():
-            return match.group(1).strip()
-    return fallback
-
-
 def _read(folder: Path, path: Path) -> Doc | None:
     """The page at path, if it's a .md file inside the folder once symlinks and `..` resolve."""
     try:
@@ -151,4 +136,4 @@ def _read(folder: Path, path: Path) -> Doc | None:
     except (OSError, ValueError):  # ValueError: a name with a null byte
         return None
     name = file.relative_to(base).as_posix().removesuffix(SUFFIX)
-    return Doc(name, file, title_of(text, file.stem), text, changed)
+    return Doc(name, file, file.name, text, changed)

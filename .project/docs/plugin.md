@@ -1,4 +1,4 @@
-# Claude Code plugin
+# Plugin
 
 What the plugin contains, and how Claude works with a repo's project data through it. The CLI is in [cli.md](cli.md) and the files in [file-format.md](file-format.md).
 
