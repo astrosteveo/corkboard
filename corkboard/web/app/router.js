@@ -12,9 +12,10 @@ export function navigate(url, { replace = false } = {}) {
 
 export function parseRoute(pathname, search) {
   const query = new URLSearchParams(search);
-  const parts = pathname.split("/").filter(Boolean).map(decodeURIComponent);
+  const parts = pathname.split("/").filter(Boolean).map(decode);
   let route;
-  if (parts.length === 0) route = { name: "now" };
+  if (parts.includes(null)) route = { name: "notfound" };
+  else if (parts.length === 0) route = { name: "now" };
   else if (parts[0] === "board" && parts.length === 1) route = { name: "board" };
   else if (parts[0] === "list" && parts.length === 1) route = { name: "list" };
   else if (parts[0] === "releases" && parts.length <= 2) route = { name: "releases", release: parts[1] ?? null };
@@ -23,6 +24,15 @@ export function parseRoute(pathname, search) {
   else if (parts[0] === "docs") route = { name: "docs", doc: parts.slice(1).join("/").replace(/\.md$/, "") || null };
   else route = { name: "notfound" };
   return { ...route, path: pathname, query };
+}
+
+// A part such as "50%" isn't valid percent-encoding, and decodeURIComponent throws on it.
+function decode(part) {
+  try {
+    return decodeURIComponent(part);
+  } catch {
+    return null;
+  }
 }
 
 export function useRoute() {
@@ -50,7 +60,10 @@ document.addEventListener("click", (event) => {
   if (url.origin !== location.origin || url.pathname.startsWith("/api/")) return;
   event.preventDefault();
   if (url.pathname + url.search !== location.pathname + location.search) {
+    // A new screen starts at the top. A link that only changes the query, such as one opening
+    // the item panel, keeps the screen behind where it was.
+    const newScreen = url.pathname !== location.pathname;
     navigate(url.pathname + url.search + url.hash);
-    scrollTo(0, 0);
+    if (newScreen) scrollTo(0, 0);
   }
 });
