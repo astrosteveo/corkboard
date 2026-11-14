@@ -228,6 +228,7 @@ logged EX-12 .project/items/EX-12-drag-cards.md
 Creates a release, starting as `planned`, or updates one. Piped input becomes its goal text.
 
 - Only one release can be active. Making a second one active fails: `error: v0.1 is already active. Release it first: corkboard release v0.1 status=released`.
+- It never replaces a file it can't read as that release, such as `releases/v0.2.md` with a header it can't read or another `name`. It fails and says to run `corkboard check`.
 
 ```
 created release v0.2 .project/releases/v0.2.md

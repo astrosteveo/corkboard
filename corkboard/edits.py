@@ -308,6 +308,12 @@ def release(project: Project, name: str, values: Mapping[str, str], goal: str | 
         if given.get("date"):
             fields["date"] = given["date"]
         path = project.root / "releases" / f"{name}.md"
+        if path.exists():
+            # The file is there, but unreadable or holding another release: never replace it.
+            raise EditError(
+                f"{project.relative(path)} already exists, and corkboard can't read it as "
+                f"release {name}. Run corkboard check"
+            )
         write.write_file(path, _text(fields, goal or ""))
         return Result(f"created release {name} {project.relative(path)}")
 
