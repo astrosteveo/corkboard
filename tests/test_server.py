@@ -557,6 +557,21 @@ class UiCommandTest(unittest.TestCase):
         # Running it again finds that server instead of starting another.
         self.assertEqual(self.background(fixture)[2], output)
 
+    def test_background_runs_none_of_the_repos_own_python(self):
+        # The child starts in the repo, so a module there must not shadow corkboard or the stdlib.
+        for module in ("corkboard.py", "json.py"):
+            with self.subTest(module=module):
+                fixture = Fixture(self)
+                fixture.item("EX-1")
+                marker = fixture.repo / "ran.txt"
+                (fixture.repo / module).write_text(
+                    f"open({str(marker)!r}, 'w').close()\nraise SystemExit(3)\n", encoding="utf-8"
+                )
+                url, _, _ = self.background(fixture)
+                self.assertFalse(marker.exists(), f"the server ran the repo's {module}")
+                port = int(url.rsplit(":", 1)[1])
+                self.assertEqual(get(port, "/api/project")[0], 200)
+
     def test_takes_no_arguments(self):
         code, _, err = run_cli(Fixture(self).repo, "ui", "extra")
         self.assertEqual((code, err), (1, "error: usage: corkboard ui [--background]\n"))

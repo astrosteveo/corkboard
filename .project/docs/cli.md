@@ -259,7 +259,7 @@ Starts the web app on localhost, prints its URL, and runs until stopped with Ctr
 
 - It listens on 127.0.0.1, on port 4747, or the next free one up to 4766.
 - If a server for this repo is already running on one of those ports, it prints that server's URL the same way and exits 0, so it's safe to run again.
-- `--background` starts the server as its own process, waits until it answers, prints its URL and how to stop it, and exits. If one is already running for this repo, it prints the same two lines for that one. `/corkboard:ui` uses this.
+- `--background` starts the server as its own process, waits until it answers, prints its URL and how to stop it, and exits. If one is already running for this repo, it prints the same two lines for that one. `/corkboard:ui` uses this. The server it starts never imports Python files from the repo, so a `corkboard.py` or `json.py` there can't run.
 
 ```
 Corkboard: http://localhost:4747
