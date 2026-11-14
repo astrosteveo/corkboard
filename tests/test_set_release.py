@@ -1,6 +1,6 @@
 import unittest
 
-from helpers import Fixture
+from helpers import Fixture, item_file
 
 
 class SetTest(unittest.TestCase):
@@ -64,15 +64,30 @@ class SetTest(unittest.TestCase):
             (("set", "EX-12", "status=done"), "status changes go through corkboard move EX-12"),
             (("set", "EX-12", "id=EX-1"), "id can't be changed"),
             (("set", "EX-12", "title="), "title can't be empty"),
+            (("set", "EX-12", "priority="), "priority can't be empty"),
+            (("set", "EX-12", "owner="), "owner can't be empty"),
+            (("set", "EX-12", "type="), "type can't be empty"),
             (("set", "EX-12", "parent=EX-9"), "EX-9 isn't an epic"),
             (("set", "EX-12", "release=v0.1"), "leave release out"),
             (("set", "EX-12", "colour=red"), "colour isn't a field you can set"),
         ]
+        before = self.fixture.text("EX-12")
         for args, message in cases:
             with self.subTest(args=args):
                 code, _, err = self.fixture.run(*args)
                 self.assertEqual(code, 1)
                 self.assertIn(message, err)
+        self.assertEqual(self.fixture.text("EX-12"), before)
+
+    def test_an_item_with_no_title_line(self):
+        # check reports the missing title; set still changes other fields, and doesn't rename.
+        text = item_file("EX-30").replace("title: Item EX-30\n", "")
+        self.fixture.raw("items", "EX-30-card.md", text)
+        code, _, err = self.fixture.run("set", "EX-30", "priority=high")
+        self.assertEqual((code, err), (0, ""))
+        self.assertIn(
+            "priority: high\n", (self.fixture.root / "items" / "EX-30-card.md").read_text()
+        )
 
 
 class ReleaseTest(unittest.TestCase):
