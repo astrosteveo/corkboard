@@ -91,6 +91,13 @@ function NewItemDialog({ project, defaults, refresh, close }) {
   }
 
   return html`<dialog class="new-dialog" ref=${dialog} aria-labelledby="new-heading"
+    onKeyDown=${(event) => {
+      if (event.key === "Escape") {
+        // Handled here, so the item panel under the form doesn't close too.
+        event.preventDefault();
+        close();
+      }
+    }}
     onCancel=${(event) => {
       event.preventDefault();
       close();

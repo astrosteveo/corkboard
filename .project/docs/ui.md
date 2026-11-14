@@ -8,7 +8,7 @@ What each screen of the web app shows and does. `corkboard ui` serves it on loca
 - **Ctrl-K** opens search, as does Search in the sidebar: jump to an item or doc, or run an action. With nothing typed, it lists the actions: New task, New bug, New epic, Go to each screen and Go to each release, such as "Go to v0.1".
   - Every word typed has to match, in any case. Matching actions come first, then the item whose ID is exactly what was typed, items by ID or title, docs by file name, items by description, and docs by text. A description or text match shows the line it matched. Open items come before done and cancelled ones, newest first. At most 20 items and docs are shown.
   - The arrow keys move through the results, Enter opens one (an item in the side panel), and Esc or Ctrl-K closes the box.
-- **Keys:** `c` opens the new item form, and `Esc` closes a panel or form.
+- **Keys:** `c` opens the new item form, and `Esc` closes a panel or form. A form over the panel closes alone, and the panel stays open while its description has unsaved changes: Cancel throws them away. In the title field, `Esc` puts the old title back.
 - **Live updates:** the server checks `.project/` for changed files every second and pushes the changes to the page. When Claude changes a file, the screen updates without a reload, and the item gets a dot (●) until you click Mark seen on the Now page.
 - **Who:** everything you do in the app is logged as `me`.
 - **Writes:** a change in the app makes the same change to the file that the matching `corkboard` command would make. Dragging a card to Done is `corkboard move <ID> done`, and so on.

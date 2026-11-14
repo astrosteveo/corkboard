@@ -50,7 +50,9 @@ export function ItemPanel({ project, id, refresh }) {
   }, [id]);
   useEffect(() => {
     const onKey = (event) => {
-      if (event.key === "Escape" && !event.defaultPrevented) close();
+      // An editor with unsaved text marks itself; its Cancel is the way to throw the text away.
+      const unsaved = panel.current?.querySelector("[data-unsaved]");
+      if (event.key === "Escape" && !event.defaultPrevented && !unsaved) close();
     };
     addEventListener("keydown", onKey);
     return () => removeEventListener("keydown", onKey);
@@ -157,8 +159,10 @@ export function ItemView({ project, item, refresh }) {
 function Title({ item, changes }) {
   const [text, setText] = useState(item.title);
   useEffect(() => setText(item.title), [item.title]);
-  const save = () => {
-    const title = text.trim().replace(/\s+/g, " ");
+  // Blur saves what the input holds, not `text`: Esc resets the input and blurs in one handler,
+  // before Preact re-renders, so `text` would still be the typed title.
+  const save = (value) => {
+    const title = value.trim().replace(/\s+/g, " ");
     if (!title) setText(item.title);
     else if (title !== item.title) changes.change("set", { fields: { title } });
   };
@@ -167,11 +171,12 @@ function Title({ item, changes }) {
     <span class="visually-hidden">${item.title}</span>
     <input class="item-title" aria-label="Title" value=${text} disabled=${changes.busy}
       onInput=${(event) => setText(event.currentTarget.value)}
-      onBlur=${save}
+      onBlur=${(event) => save(event.currentTarget.value)}
       onKeyDown=${(event) => {
         if (event.key === "Enter") event.currentTarget.blur();
         if (event.key === "Escape") {
           event.preventDefault();
+          event.currentTarget.value = item.title;
           setText(item.title);
           event.currentTarget.blur();
         }
