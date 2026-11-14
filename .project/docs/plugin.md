@@ -13,6 +13,7 @@ corkboard/               the Python code: core library, CLI commands and web ser
 corkboard/web/           the web app: HTML, CSS, JavaScript, and Preact, htm and marked as single files
 tests/                   unittest tests
 hooks/hooks.json         the session-start hook
+hooks/session_start.py   what the hook runs: corkboard now, with a lead line
 skills/track/SKILL.md    the workflow, loaded by Claude
 skills/next/SKILL.md     /corkboard:next
 skills/done/SKILL.md     /corkboard:done
@@ -29,10 +30,10 @@ skills/ui/SKILL.md       /corkboard:ui
 
 ## Session-start hook
 
-Runs `${CLAUDE_PLUGIN_ROOT}/bin/corkboard now`, by full path, when a session starts, resumes, is cleared or compacts, and prints:
+Runs `python3 "${CLAUDE_PLUGIN_ROOT}/hooks/session_start.py"` when a session starts, resumes, is cleared or compacts. That script runs `corkboard now` from the plugin's own package, in the folder Claude Code gives as `CLAUDE_PROJECT_DIR`, and prints:
 
 ```
-This repo tracks its work in .project/ with corkboard. Use the track skill before you start, finish or plan work.
+This repo tracks its work in .project/ with corkboard. Use the corkboard:track skill before you start, finish or plan work.
 
 Example · v0.1 active, due 2026-12-01 · 7/15 done
 
@@ -49,7 +50,7 @@ Waiting on you (1)
 
 Loaded by Claude, not run by the user (`user-invocable: false`), with `allowed-tools: Bash(corkboard *)`. Its description says when to load it:
 
-> Use in a repo with a .project/ folder before you start, finish or plan any work, and before you say where the project stands. Keeps the repo's items, releases and docs true as you work, through corkboard.
+> Use in a repo with a .project/ folder before you start, finish or plan any work, and before you say where the project stands. Keeps the repo's Corkboard items, releases and docs true as you work, through the corkboard command.
 
 What it tells Claude to do:
 

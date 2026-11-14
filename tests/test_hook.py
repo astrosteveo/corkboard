@@ -1,3 +1,4 @@
+import importlib.util
 import json
 import os
 import subprocess
@@ -25,6 +26,19 @@ def run_hook(project_dir: Path) -> subprocess.CompletedProcess:
 
 
 class SessionStartHookTest(unittest.TestCase):
+    def test_plugin_md_describes_the_hook_as_it_is(self):
+        spec = (REPO / ".project" / "docs" / "plugin.md").read_text(encoding="utf-8")
+        loader = importlib.util.spec_from_file_location("session_start", HOOK)
+        module = importlib.util.module_from_spec(loader)
+        loader.loader.exec_module(module)
+        self.assertIn(module.LEAD, spec)
+        command = json.loads((REPO / "hooks" / "hooks.json").read_text(encoding="utf-8"))
+        command = command["hooks"]["SessionStart"][0]["hooks"][0]["command"]
+        self.assertIn(f"`{command}`", spec)
+        skill = (REPO / "skills" / "track" / "SKILL.md").read_text(encoding="utf-8")
+        description = next(line for line in skill.splitlines() if line.startswith("description: "))
+        self.assertIn(f"> {description.removeprefix('description: ')}\n", spec)
+
     def test_puts_the_summary_after_the_lead_line(self):
         result = run_hook(REPO)
         self.assertEqual((result.returncode, result.stderr), (0, ""))
