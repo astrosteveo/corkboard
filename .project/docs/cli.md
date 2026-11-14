@@ -8,7 +8,7 @@
 - **Who:** log lines are written as `claude` when the `CLAUDECODE` environment variable is set (Claude Code sets it in Claude's shells) and as `me` otherwise. Any write command takes `--as me` or `--as claude` to override.
 - **Output:** plain text. Color only when output goes to a terminal. No JSON mode.
 - **GitHub:** only `corkboard show` and `corkboard ui` contact GitHub, through `gh`, to read pull requests. Every other command works offline.
-- **Fields:** always `field=value`. Lists are comma-separated, such as `labels=ui,board`. An empty value clears a field, such as `parent=`. Quote values with spaces: `title="New title"`.
+- **Fields:** always `field=value`. Lists are comma-separated, such as `labels=ui,board`. An empty value clears a field, such as `parent=`, except a required one: `type`, `title`, `priority` and `owner` can't be empty. Quote values with spaces: `title="New title"`.
 - **Writes** print one line naming what changed and the file's path, such as `moved EX-12 to done .project/items/EX-12-drag-cards.md`. Files are written whole and swapped in, so the web app never reads half a file.
 - **Warnings** start with `warning:` and don't stop the command. **Errors** are one line on stderr starting with `error:`, say how to fix the problem, and exit with code 1. For example: `error: "inprogress" isn't a status. Use one of: backlog, todo, in-progress, waiting, done, cancelled`.
 - **Titles** in one-line output are cut to 50 characters with `…`.

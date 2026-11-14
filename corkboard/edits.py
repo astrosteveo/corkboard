@@ -22,6 +22,7 @@ from .project import (
     LOG_HEADING,
     RELEASE_FIELDS,
     RELEASE_STATUSES,
+    REQUIRED_FIELDS,
     STATUSES,
     SUBTASKS_HEADING,
     Item,
@@ -235,8 +236,9 @@ def set_(
     given = parse_fields(values, SET_FIELDS)
     if "title" in given:
         given["title"] = " ".join(str(given["title"]).split())
-        if not given["title"]:
-            raise EditError("title can't be empty")
+    for key in REQUIRED_FIELDS:
+        if given.get(key, "x") == "":
+            raise EditError(f"{key} can't be empty")
     if "type" in given and given["type"] != item.type and "epic" in (given["type"], item.type):
         raise EditError("type can only switch between task and bug; an epic stays an epic")
 
@@ -263,7 +265,8 @@ def set_(
         raise EditError("; ".join(problems))
 
     path = item.path
-    if fields.get("title") != item.title:
+    # Only a new title renames the file, so an item with no title line keeps its file.
+    if "title" in given and fields["title"] != item.title:
         if parse_id(item.id) is None:
             raise EditError(
                 f"{item.id} isn't an item ID, so its file can't be renamed. Run corkboard check"
