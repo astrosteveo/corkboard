@@ -82,6 +82,24 @@ class BodyTest(unittest.TestCase):
         self.assertEqual(len(item.log), 1)
         self.assertFalse(item.has_subtasks_section)
 
+    def test_code_fences_follow_commonmark(self):
+        fence = "`" * 3
+        cases = {
+            # Backticks in a backtick fence's info string make it inline code, not a fence.
+            "inline code": f"{fence}corkboard now{fence} prints the summary.\n",
+            # A fence closes only with its own kind, at least as long, and nothing after it.
+            "tilde inside": f"{fence}\n~~~\n## Log\n{fence}\n",
+            "longer fence": f"{fence}`\n{fence}\n## Log\n{fence}`\n",
+            "info after close": f"{fence}\n{fence}python\n## Log\n{fence}\n",
+        }
+        for name, description in cases.items():
+            with self.subTest(name):
+                fixture = Fixture(self)
+                fixture.item("EX-1", description + "\n## Log\n- 2026-11-12 10:00 me: created\n")
+                item = fixture.load().item("EX-1")
+                self.assertEqual(len(item.log), 1)
+                self.assertEqual(item.unreadable_lines, [])
+
     def test_notes_lines_that_break_the_format(self):
         fixture = Fixture(self)
         fixture.item("EX-1", "## Subtasks\n- [ ] Ok\n- [] broken\n\n## Log\nfree text\n")

@@ -137,6 +137,8 @@ Storing one side means adding a link changes one file, and the two sides can't d
 
 The body is free Markdown. Only two sections are read by the tool, and both are optional.
 
+A `## Subtasks` or `## Log` heading inside a fenced code block doesn't count. Fences follow CommonMark: three or more backticks or tildes open a block, and only a line of the same character, at least as long and with nothing after it, closes it. A line such as ```` ```corkboard now``` prints it ```` is inline code, not a fence. `corkboard` refuses text that leaves a code block open, since everything after it would be code.
+
 **`## Subtasks`**: a checklist of small steps, on tasks and bugs only.
 
 ```markdown

@@ -27,6 +27,7 @@ from .project import (
     SUBTASKS_HEADING,
     Item,
     Project,
+    code_lines,
     find_section,
     parse_id,
     parse_item,
@@ -111,12 +112,20 @@ def new(
 
     if find_section(body.split("\n"), LOG_HEADING) is not None:
         raise EditError("piped text can't have a ## Log section. corkboard writes the log itself")
+    _refuse_open_code(body)
     body = body.strip("\n") + "\n\n" if body.strip() else ""
     body = write.add_log_line(body, write.log_line(now, who, "created"))
 
     path = write.item_path(project, item_id, title)
     if path.exists():
         raise EditError(f"{project.relative(path)} already exists")
+    # The body's own problems, the ones corkboard check would report.
+    item = parse_item(path, fields, body)
+    if item.is_epic and item.has_subtasks_section:
+        raise EditError("an epic has tasks, not a ## Subtasks section")
+    if item.unreadable_lines:
+        line = item.unreadable_lines[0][1].strip()
+        raise EditError(f"{line!r} isn't a subtask or log line. Write a subtask as - [ ] text")
     write.write_file(path, _text(write.ordered_fields(fields), body))
     return Result(f"created {item_id} {project.relative(path)}", item_id=item_id)
 
@@ -212,6 +221,7 @@ def describe(
         text.split("\n"), SUBTASKS_HEADING
     ):
         raise EditError("a description can't have a ## Subtasks or ## Log section of its own")
+    _refuse_open_code(text)
     lines = item.body.split("\n")
     starts = [
         section[0]
@@ -333,6 +343,12 @@ def release(project: Project, name: str, values: Mapping[str, str], goal: str | 
         return Result(f"nothing to change in {name}: give status=, date= or pipe in a goal")
     write.write_file(existing.path, _text(fields, body))
     return Result(f"updated release {name} {project.relative(existing.path)}")
+
+
+def _refuse_open_code(text: str) -> None:
+    """A code block left open would swallow the item's ## Subtasks and ## Log sections."""
+    if code_lines(text.split("\n"))[1]:
+        raise EditError("the text leaves a code block open. Close it with a line of ``` or ~~~")
 
 
 def parse_fields(values: Mapping[str, str], allowed: tuple[str, ...]) -> dict[str, header.Value]:
