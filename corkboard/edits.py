@@ -27,6 +27,7 @@ from .project import (
     Item,
     Project,
     find_section,
+    parse_id,
     parse_item,
 )
 
@@ -89,6 +90,8 @@ def new(
     if not project.prefix:
         raise EditError("config.yml has no prefix. Add a line such as prefix: EX")
     item_id = write.next_id(project)
+    if parse_id(item_id) is None:
+        raise EditError("the prefix in config.yml must be capital letters and digits, such as EX")
     fields: dict[str, header.Value] = {
         "id": item_id,
         "type": item_type,
@@ -261,6 +264,10 @@ def set_(
 
     path = item.path
     if fields.get("title") != item.title:
+        if parse_id(item.id) is None:
+            raise EditError(
+                f"{item.id} isn't an item ID, so its file can't be renamed. Run corkboard check"
+            )
         path = write.item_path(project, item.id, str(fields["title"]))
         if path != item.path and path.exists():
             raise EditError(f"{project.relative(path)} already exists")
