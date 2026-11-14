@@ -2,7 +2,7 @@
 id: CB-47
 type: task
 title: The List view
-status: in-progress
+status: done
 priority: medium
 owner: claude
 created: 2026-11-13
@@ -26,3 +26,4 @@ Done when: the filters and sort order are kept in the URL, status and priority c
 - 2026-11-13 18:35 claude: done subtask: Sort by clicking a column header
 - 2026-11-13 18:35 claude: done subtask: Change status and priority in the row
 - 2026-11-13 18:35 claude: Status filter is six toggle buttons with counts, not a dropdown: one click per status and no popover to close. Sort is sort=<column> in the URL, or sort=-<column> for the other way; no sort= means by number. Reused the board's AskDialog for Waiting.
+- 2026-11-13 18:36 claude: moved to done
