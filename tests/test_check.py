@@ -177,6 +177,20 @@ class FixTest(unittest.TestCase):
         )
         self.assertIn("type: task\n", self.fixture.text("EX-8"))
 
+    def test_rewrites_release_headers(self):
+        self.fixture.raw("releases", "v0.1.md", '---\nstatus: "active"\nname: v0.1\n---\nGoal.\n')
+        code, out, _ = self.fixture.run("check", "--fix")
+        self.assertEqual(
+            (code, out),
+            (
+                0,
+                "fixed: rewrote the header of v0.1.md in corkboard's format\n"
+                "1 item, 1 release: ok\n",
+            ),
+        )
+        text = (self.fixture.root / "releases" / "v0.1.md").read_text(encoding="utf-8")
+        self.assertEqual(text, "---\nname: v0.1\nstatus: active\n---\nGoal.\n")
+
     def test_renumbers_the_later_duplicate_and_lists_references(self):
         self.fixture.raw("items", "EX-12-item-ex-12.md", item_file("EX-12"))
         later = item_file("EX-12", created="2026-11-20", title="Ctrl-K search")
@@ -268,6 +282,15 @@ class InitTest(unittest.TestCase):
             "created CP-1 .project/items/CP-1-first-epic.md\n",
         )
         self.assertEqual(run_cli(folder, "check")[1], "1 item, 0 releases: ok\n")
+
+    def test_sets_up_a_project_folder_that_has_no_config_yet(self):
+        # Every other command says to run init here, so init has to work.
+        folder = self.folder("claude-project")
+        (folder / ".project" / "docs").mkdir(parents=True)
+        self.assertIn("Run corkboard init", run_cli(folder, "list")[2])
+        code, _, err = run_cli(folder, "init")
+        self.assertEqual((code, err), (0, ""))
+        self.assertTrue((folder / ".project" / "config.yml").is_file())
 
     def test_options_and_errors(self):
         folder = self.folder("whatever")

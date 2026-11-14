@@ -33,7 +33,7 @@ Creates `.project/config.yml`. Folders are created when first needed.
 
 - The suggested prefix is the first letter of each word in the repo's folder name, such as `claude-project` → `CP`. A one-word name gives its first three letters, such as `astro` → `AST`.
 - The suggested name is the folder name in title case, such as `Corkboard`.
-- If `.project/` already exists, it fails with `error: already set up: .project/config.yml`.
+- If `.project/config.yml` already exists, it fails with `error: already set up: .project/config.yml`. A `.project/` folder without it, such as one holding only docs, is set up like a new one.
 
 ```
 created .project/config.yml (prefix CP)
@@ -246,6 +246,7 @@ EX-7-old-name.md: file name doesn't match the title
 
 `--fix` repairs only what's safe to repair, and lists the rest:
 
+- **Header formatting:** item and release headers are rewritten the way corkboard writes them.
 - **File names that don't match the title:** renamed, if the item's `id` is an ID such as `EX-12`. A file is never moved out of `items/`.
 - **Duplicate IDs:** the item with the later `created` date gets the next free number, if config.yml has a valid prefix. References to the old number can't be told apart, since they could mean either item, so it lists them for review:
 

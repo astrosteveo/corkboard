@@ -90,8 +90,7 @@ def init(ctx: Context, args: list[str]) -> None:
             f'"{prefix}" can\'t be a prefix. Use capital letters and digits, such as EX'
         )
     name = values.get("name") or suggest_name(folder.name)
-    root = folder / PROJECT_DIR
-    root.mkdir()
+    root = folder / PROJECT_DIR  # it may exist already, without config.yml; write_file makes it
     write.write_file(root / CONFIG_FILE, header.write_fields({"name": name, "prefix": prefix}))
     ctx.print(f"created {PROJECT_DIR}/{CONFIG_FILE} (prefix {prefix})")
     ctx.print('next: corkboard new epic "First epic"')
@@ -152,6 +151,10 @@ def apply_fixes(ctx: Context, project: Project, findings: list[Finding]) -> list
     for path in sorted(fixable, key=lambda p: natural_key(p.name)):
         fixes = fixable[path]
         fields, body = header.read(path.read_text(encoding="utf-8"))
+        if path.parent == project.root / "releases":
+            write.write_file(path, header.write(_release_order(fields), body))
+            lines.append(f"fixed: rewrote the header of {path.name} in corkboard's format")
+            continue
         fields = write.ordered_fields(fields)
         old_id = _text(fields.get("id"))
         if "renumber" in fixes:
@@ -218,10 +221,17 @@ def _release_problems(project: Project, path: Path, findings: list[Finding]) -> 
     for key in fields:
         if key not in RELEASE_FIELDS:
             findings.append(Finding(path, f"{key} isn't a release field"))
+    if header.write(_release_order(fields), body) != text:
+        findings.append(
+            Finding(path, "the header isn't written the way corkboard writes it", {"canonical"})
+        )
+
+
+def _release_order(fields: dict[str, header.Value]) -> dict[str, header.Value]:
+    """A release's fields in corkboard's order. Keys it doesn't know keep their order, last."""
     ordered = {key: fields[key] for key in RELEASE_FIELDS if key in fields}
     ordered.update((key, value) for key, value in fields.items() if key not in ordered)
-    if header.write(ordered, body) != text:
-        findings.append(Finding(path, "the header isn't written the way corkboard writes it"))
+    return ordered
 
 
 def _item_problems(
