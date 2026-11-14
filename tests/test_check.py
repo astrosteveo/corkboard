@@ -84,6 +84,23 @@ class CheckTest(unittest.TestCase):
                 item_file("ZZ-16"),
                 "ZZ-16 isn't an ID with this project's prefix, such as EX-12",
             ),
+            # The loader matches IDs exactly, so a lowercase one would never be followed.
+            ("EX-17-item-ex-17.md", item_file("EX-17", parent="ex-1"), "write it as EX-1"),
+            (
+                "EX-18-item-ex-18.md",
+                item_file("EX-18", blocked_by=["ex-1"]),
+                "blocked_by names ex-1: write it as EX-1",
+            ),
+            (
+                "EX-19-item-ex-19.md",
+                item_file("EX-19", status=["todo"]),
+                "status is one value, not a list: write it without [ ]",
+            ),
+            (
+                "EX-20-item-ex-20.md",
+                item_file("EX-20", duplicate_of=["EX-1", "EX-2"]),
+                "duplicate_of is one value, not a list",
+            ),
         ]
         for name, text, message in cases:
             with self.subTest(name):
@@ -95,6 +112,8 @@ class CheckTest(unittest.TestCase):
                 code, problems, _ = self.problems()
                 self.assertEqual(code, 1)
                 self.assertTrue(any(name + ": " in p and message in p for p in problems), problems)
+                # Never a message that contradicts itself, such as "todo" isn't a status.
+                self.assertFalse(any('"todo" isn\'t' in p for p in problems), problems)
 
     def test_the_exact_lines_from_the_spec(self):
         self.fixture.raw("items", "EX-12-item-ex-12.md", item_file("EX-12", parent="EX-99"))
