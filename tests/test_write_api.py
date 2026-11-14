@@ -126,6 +126,25 @@ class WriteApiTest(ServerTest):
             {"fields": {"title": "Drag cards between columns", "priority": "high", "labels": "ui"}},
         )
 
+    def test_a_json_list_keeps_its_items_as_they_are(self):
+        # labels: ["a, b", ui] is valid, so removing ui must leave the one label "a, b".
+        fixture, running = self.serve_fixture()
+        fixture.run("set", "EX-2", "labels=ui")
+        path = fixture.load().item("EX-2").path
+        path.write_text(path.read_text().replace("labels: [ui]", 'labels: ["a, b", ui]'))
+        status, answer = post(running.port, "/api/items/EX-2/set", {"fields": {"labels": ["a, b"]}})
+        self.assertEqual(status, 200, answer)
+        self.assertEqual(fixture.load().item("EX-2").labels, ["a, b"])
+        for fields, message in (
+            ({"labels": ["a\nb"]}, "labels can't contain a line break"),
+            ({"priority": ["high"]}, "priority is one value, not a list"),
+        ):
+            with self.subTest(fields=fields):
+                status, answer = post(running.port, "/api/items/EX-2/set", {"fields": fields})
+                self.assertEqual((status, answer["error"]), (400, message))
+        status, answer = post(running.port, "/api/releases/v0.1", {"fields": {"date": ["x"]}})
+        self.assertEqual((status, answer["error"]), (400, "date is one value, not a list"))
+
     def test_sub(self):
         for args, data in (
             (

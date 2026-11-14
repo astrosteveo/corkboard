@@ -288,7 +288,9 @@ def set_(
     return Result(f"updated {item.id} {project.relative(path)}")
 
 
-def release(project: Project, name: str, values: Mapping[str, str], goal: str | None) -> Result:
+def release(
+    project: Project, name: str, values: Mapping[str, str | list[str]], goal: str | None
+) -> Result:
     """Create a release, or change its status, date or goal. A goal of None keeps the old one."""
     if not _RELEASE_NAME.fullmatch(name):
         raise EditError(
@@ -297,6 +299,8 @@ def release(project: Project, name: str, values: Mapping[str, str], goal: str | 
         )
     given: dict[str, str] = {}
     for key, raw in values.items():
+        if not isinstance(raw, str):
+            raise EditError(f"{key} is one value, not a list")
         raw = raw.strip()
         if key not in ("status", "date"):
             raise EditError(f"{key} isn't a release field. Fields: status, date")
@@ -351,16 +355,22 @@ def _refuse_open_code(text: str) -> None:
         raise EditError("the text leaves a code block open. Close it with a line of ``` or ~~~")
 
 
-def parse_fields(values: Mapping[str, str], allowed: tuple[str, ...]) -> dict[str, header.Value]:
-    """Field values as typed after field=, as header values. An empty value means clear it."""
+def parse_fields(
+    values: Mapping[str, str | list[str]], allowed: tuple[str, ...]
+) -> dict[str, header.Value]:
+    """Field values as header values: text as typed after field=, where a list is comma-separated,
+    or a list from the web app, kept item by item. An empty value means clear it."""
     parsed: dict[str, header.Value] = {}
     for key, raw in values.items():
         if key not in allowed:
             raise EditError(f"{key} isn't a field you can set here. Fields: {', '.join(allowed)}")
-        if "\n" in raw:
+        if isinstance(raw, list) and key not in LIST_FIELDS:
+            raise EditError(f"{key} is one value, not a list")
+        if any("\n" in part for part in (raw if isinstance(raw, list) else [raw])):
             raise EditError(f"{key} can't contain a line break")
         if key in LIST_FIELDS:
-            items = [part.strip() for part in raw.split(",") if part.strip()]
+            parts = raw if isinstance(raw, list) else raw.split(",")
+            items = [part.strip() for part in parts if part.strip()]
             parsed[key] = [i.upper() for i in items] if key in ID_FIELDS else items
         else:
             value = raw.strip()
