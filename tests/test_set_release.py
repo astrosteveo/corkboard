@@ -118,7 +118,7 @@ class ReleaseTest(unittest.TestCase):
 
     def test_never_overwrites_a_file_that_isnt_that_release(self):
         cases = {
-            "unreadable": "---\nname: v0.2\nstatus: planned\ndate: 2026-12-01 # moved\n---\nGoal.\n",
+            "unreadable": "---\nname: v0.2\ndate: 2026-12-01 # moved\n---\nGoal.\n",
             "another name": "---\nname: beta\nstatus: planned\n---\nThe beta's goal.\n",
         }
         for case, text in cases.items():
