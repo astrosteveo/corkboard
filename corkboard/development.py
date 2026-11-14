@@ -94,7 +94,9 @@ def for_item(root: Path, item_id: str, prs: list[PullRequest]) -> Development:
 def branches(root: Path, item_id: str) -> list[str]:
     """Local branches whose names have the ID, in any case, such as ex-12-drag-cards."""
     pattern = mention_pattern(item_id, ignore_case=True)
-    names = _run(root, "git", "branch", "--format=%(refname:short)").splitlines()
+    # for-each-ref, not git branch, which also lists a detached HEAD as "(HEAD detached at …)".
+    names = _run(root, "git", "for-each-ref", "--format=%(refname:short)", "refs/heads/")
+    names = names.splitlines()
     return [name for name in names if pattern.search(name)]
 
 
@@ -105,6 +107,7 @@ def commits(root: Path, item_id: str, limit: int = COMMITS) -> list[Commit]:
         root,
         "git",
         "log",
+        "--ignore-missing",  # on a branch with no commits yet, HEAD doesn't resolve
         "HEAD",
         "--branches",
         "--no-show-signature",

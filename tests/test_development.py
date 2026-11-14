@@ -363,6 +363,21 @@ class DevelopmentTest(unittest.TestCase):
             development.branches(fixture.root, "EX-12"), ["ex-12-drag-cards", "feature/EX-12"]
         )
 
+    def test_a_detached_head_isnt_a_branch(self):
+        # git branch lists a detached HEAD as "(HEAD detached at origin/ex-12-drag-cards)".
+        fixture = GitFixture(self)
+        fixture.commit("chore: start")
+        fixture.git("update-ref", "refs/remotes/origin/ex-12-drag-cards", "HEAD")
+        fixture.git("switch", "-q", "--detach", "origin/ex-12-drag-cards")
+        self.assertEqual(development.branches(fixture.root, "EX-12"), [])
+
+    def test_commits_on_other_branches_are_found_from_an_orphan_branch(self):
+        fixture = GitFixture(self)
+        commit = fixture.commit("feat(board): detect drop column (EX-12)")
+        fixture.git("switch", "-q", "--orphan", "scratch")
+        found = [c.hash for c in development.commits(fixture.root, "EX-12")]
+        self.assertEqual(found, [commit])
+
     def test_a_repo_with_no_commits_has_nothing(self):
         fixture = GitFixture(self)
         self.assertEqual(development.branches(fixture.root, "EX-1"), [])
