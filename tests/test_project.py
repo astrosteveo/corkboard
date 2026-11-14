@@ -4,7 +4,7 @@ from pathlib import Path
 
 from helpers import REPO, Fixture, item_file
 
-from corkboard import header
+from corkboard import docs, header
 from corkboard.project import find_root, load, natural_key, parse_id
 
 
@@ -204,6 +204,33 @@ class HelpersTest(unittest.TestCase):
         self.assertEqual(
             sorted(["v0.10", "v0.2", "v0.1"], key=natural_key), ["v0.1", "v0.2", "v0.10"]
         )
+
+    def test_natural_order_of_file_names(self):
+        # .md doesn't count, so v0.3 comes before v0.3.1 as it does without it.
+        names = ["v0.3.1.md", "v0.10.md", "v0.3.md"]
+        self.assertEqual(sorted(names, key=natural_key), ["v0.3.md", "v0.3.1.md", "v0.10.md"])
+        # Only ASCII digits are numbers: ² and full-width １ sort as text.
+        self.assertEqual(sorted(["10².md", "１.md", "2.md"], key=natural_key)[0], "2.md")
+
+
+class SortOrderTest(unittest.TestCase):
+    def test_releases_in_name_order(self):
+        fixture = Fixture(self)
+        for name in ("v0.3.1", "v0.10", "v0.3"):
+            fixture.release(name, "planned")
+        self.assertEqual(list(fixture.load().releases), ["v0.3", "v0.3.1", "v0.10"])
+
+    def test_a_file_name_with_a_superscript_digit_doesnt_stop_the_load(self):
+        fixture = Fixture(self)
+        fixture.item("EX-1")
+        fixture.raw("items", "²1.md", "---\nid: EX-2\n---\n")
+        self.assertIn("EX-1", fixture.load().items)
+
+    def test_doc_names_with_digits_that_arent_ascii(self):
+        fixture = Fixture(self)
+        for name in ("ui.md", "１.md", "10².md"):
+            fixture.doc(name, "# Page\n")
+        self.assertEqual(len(docs.list_docs(fixture.root)), 3)
 
     def test_config_round_trips(self):
         text = "name: Example\nprefix: EX\n"
