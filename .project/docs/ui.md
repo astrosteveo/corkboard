@@ -205,6 +205,6 @@ Search docs…          │ Architecture                                   [Edit
 - A page's URL is its path under `docs/` without `.md`: `docs/decisions/0001-markdown.md` is `/docs/decisions/0001-markdown`. A URL ending in `.md` shows the same page, so a link to another page written for GitHub, such as `[CLI](cli.md)`, works in the app too. `/docs` shows the tree alone.
 - Only `.md` files inside `docs/` are served. A path that leads out of it, through `..` or a symlink, finds no page.
 - Item IDs in a page show as chips with the item's current title and status, and open the item in the side panel. IDs inside links and code, and IDs with no item, stay as text.
-- **Edit** opens a Markdown text box with a preview.
-- **+ New page** asks for a title and a folder, and creates the file.
+- **Edit** opens a Markdown text box with a preview. Saving has the same conflict check as item descriptions: if the file changed on disk since you started, both versions are shown to choose from.
+- **+ New page** asks for a title and a folder, and creates `<folder>/<title-slug>.md` with the title as its `#` heading, then opens it in the editor. The folder starts as the current page's. Empty means `docs/` itself, and a name that doesn't exist yet makes the folder. In `decisions/`, the file name starts with the next number, such as `0002-`. A name that's already taken is refused.
 - The footer lists the items the page mentions, when the file last changed (its modification time), and its path.

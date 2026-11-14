@@ -1,29 +1,33 @@
 // Talking to corkboard's local server.
-import { useEffect, useState } from "./lib.js";
+import { useCallback, useEffect, useRef, useState } from "./lib.js";
 
 // GET a JSON path, and again whenever `project` changes, which it does when a file in .project/
-// changes. Returns { data, error }. The last answer stays while the next one loads, so the screen
-// doesn't flash, and a lost connection keeps it too; main.js already says the server is gone.
+// changes. Returns { data, error, reload }, where reload() loads it now and resolves once it has.
+// The last answer stays while the next one loads, so the screen doesn't flash, and a lost
+// connection keeps it too; main.js already says the server is gone. Only the latest request's
+// answer is used, so a slow one can't replace a newer one.
 export function useJson(path, project) {
   const [state, setState] = useState({ path: null, data: null, error: null });
+  const latest = useRef(0);
+  const reload = useCallback(async () => {
+    if (!path) return;
+    const ticket = ++latest.current;
+    try {
+      const response = await fetch(path, { cache: "no-store" });
+      const data = await response.json().catch(() => null);
+      if (ticket !== latest.current) return;
+      if (response.ok) setState({ path, data, error: null });
+      else setState({ path, data: null, error: data?.error ?? `The server answered ${response.status}.` });
+    } catch (problem) {
+      if (ticket !== latest.current) return;
+      setState((old) => (old.path === path && old.data ? old : { path, data: null, error: problem.message }));
+    }
+  }, [path]);
   useEffect(() => {
-    if (!path) return undefined;
-    let current = true;
-    fetch(path, { cache: "no-store" })
-      .then(async (response) => {
-        const data = await response.json().catch(() => null);
-        if (!current) return;
-        if (response.ok) setState({ path, data, error: null });
-        else setState({ path, data: null, error: data?.error ?? `The server answered ${response.status}.` });
-      })
-      .catch((problem) => {
-        if (current) setState((old) => (old.path === path && old.data ? old : { path, data: null, error: problem.message }));
-      });
-    return () => {
-      current = false;
-    };
-  }, [path, project]);
-  return state.path === path ? state : { data: null, error: null };
+    reload();
+  }, [reload, project]);
+  const shown = state.path === path ? state : { data: null, error: null };
+  return { ...shown, reload };
 }
 
 export async function loadProject() {
