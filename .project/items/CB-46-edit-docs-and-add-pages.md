@@ -2,7 +2,7 @@
 id: CB-46
 type: task
 title: Edit docs and add pages
-status: todo
+status: in-progress
 priority: medium
 owner: claude
 created: 2026-11-13
@@ -14,10 +14,12 @@ Edit a doc in a Markdown text box with a preview, with the same conflict check a
 Done when: saving a page Claude changed while you were editing shows both versions, and a new page opens once it's created.
 
 ## Subtasks
-- [ ] Save API with a conflict check
+- [x] Save API with a conflict check
 - [ ] Edit with a preview
 - [ ] + New page: title and folder to a file, refusing a name that's already taken
 - [ ] Tests
 
 ## Log
 - 2026-11-13 16:32 claude: created
+- 2026-11-13 18:09 claude: moved to in-progress
+- 2026-11-13 18:11 claude: done subtask: Save API with a conflict check

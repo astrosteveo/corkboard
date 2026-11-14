@@ -1,8 +1,10 @@
-"""The pages in .project/docs/: listing them, reading one, and the items a page mentions.
+"""The pages in .project/docs/: listing, reading, saving and adding them, and the items a page
+mentions.
 
 A page's name is its path under docs/ without `.md`, such as `ui` or `decisions/0001-markdown`,
-which is also its URL in the web app: /docs/ui. Only .md files inside docs/ are ever read. A name
-that leads anywhere else, through `..`, an absolute path or a symlink, finds nothing.
+which is also its URL in the web app: /docs/ui. Only .md files inside docs/ are ever read or
+written. A name that leads anywhere else, through `..`, an absolute path or a symlink, finds
+nothing.
 """
 
 from __future__ import annotations
@@ -12,10 +14,17 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
+from . import write
+from .edits import ConflictError, EditError
 from .project import CODE_FENCE, Project, natural_key
 
 DOCS_DIR = "docs"
 SUFFIX = ".md"
+DECISIONS = "decisions"
+
+# A folder name in + New page: no `..`, no hidden folders, nothing a shell would trip on.
+FOLDER_PART = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
+DECISION_NUMBER = re.compile(r"([0-9]{4})-")
 
 # Any item ID on its own, as project.mention_pattern matches one ID.
 ANY_ID = re.compile(r"(?<![A-Za-z0-9])[A-Z][A-Z0-9]*-[0-9]+(?![0-9])")
@@ -49,6 +58,66 @@ def find(root: Path, name: str) -> Doc | None:
         return None
     folder = root / DOCS_DIR
     return _read(folder, folder / f"{name}{SUFFIX}")
+
+
+def save(doc: Doc, text: str, base: str) -> str:
+    """Replace the page's text, and return the line to show for it.
+
+    `base` is the text the edit started from. If the file isn't that any more, nothing is written
+    and ConflictError carries the text on disk.
+    """
+    if doc.text != base:
+        raise ConflictError(f"docs/{doc.name}.md changed while you were editing it", doc.text)
+    text = text.replace("\r\n", "\n")
+    if text.strip() and not text.endswith("\n"):
+        text += "\n"
+    if text == doc.text:
+        return f"docs/{doc.name}.md already has that text"
+    write.write_file(doc.path, text)
+    return f"saved docs/{doc.name}.md"
+
+
+def new_page(root: Path, title: str, folder: str) -> str:
+    """Create a page with this title as its heading, in a folder under docs/ ("" for docs/
+    itself), and return its name. The file name is the title's slug. In decisions/, it starts
+    with the next number, as in 0002-short-name.md. A name that's taken is refused."""
+    title = " ".join(title.split())
+    if not title:
+        raise EditError("a page needs a title")
+    parts = [part for part in folder.strip().strip("/").split("/") if part]
+    for part in parts:
+        if not FOLDER_PART.fullmatch(part):
+            raise EditError(
+                f'"{part}" can\'t be a folder name. Use letters, digits, dots, dashes and _'
+            )
+    base = (root / DOCS_DIR).resolve()
+    place = base.joinpath(*parts)
+    stem = write.slug(title)
+    if parts == [DECISIONS]:
+        stem = f"{_next_decision(place):04d}-{stem}"
+    path = place / f"{stem}{SUFFIX}"
+    if not path.resolve().is_relative_to(base):
+        raise EditError(f"{'/'.join(parts)} leads out of docs/")
+    name = path.relative_to(base).as_posix().removesuffix(SUFFIX)
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("x", encoding="utf-8") as stream:
+            stream.write(f"# {title}\n")
+    except FileExistsError:
+        raise EditError(f"docs/{name}.md already exists. Choose another title") from None
+    except OSError as error:
+        raise EditError(f"couldn't create docs/{name}.md: {error.strerror}") from None
+    return name
+
+
+def _next_decision(folder: Path) -> int:
+    """One more than the highest number of a decision record in the folder."""
+    numbers = [
+        int(match.group(1))
+        for path in (folder.glob(f"*{SUFFIX}") if folder.is_dir() else [])
+        if (match := DECISION_NUMBER.match(path.name))
+    ]
+    return max(numbers, default=0) + 1
 
 
 def mentioned_items(project: Project, text: str) -> list[str]:
