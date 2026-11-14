@@ -11,9 +11,12 @@ from collections import deque
 from collections.abc import Iterable, Mapping
 
 from . import header
-from .project import OWNERS, PRIORITIES, STATUSES, TYPES, Project
+from .project import ITEM_FIELDS, OWNERS, PRIORITIES, STATUSES, TYPES, Project
 
 _DATE = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}")
+
+# The fields that hold a list, written [a, b]. Every other field holds one value.
+LIST_FIELDS = ("labels", "blocked_by", "related")
 
 
 def field_problems(
@@ -21,6 +24,24 @@ def field_problems(
 ) -> list[str]:
     """What's wrong with an item's header values, given the rest of the project."""
     problems: list[str] = []
+    # A list where one value belongs gets this problem alone, not a second one that reads it as
+    # text, such as "todo" isn't a status.
+    lists = [
+        key
+        for key, value in fields.items()
+        if isinstance(value, list) and key in ITEM_FIELDS and key not in LIST_FIELDS
+    ]
+    for key in lists:
+        problems.append(f"{key} is one value, not a list: write it without [ ]")
+    fields = {key: value for key, value in fields.items() if key not in lists}
+
+    def exact(key: str, linked: str) -> None:
+        """A problem for an ID that isn't written exactly: the loader would never follow it."""
+        other = project.item(linked)
+        if other is None:
+            problems.append(f"{key} names {linked}, and there's no such item")
+        else:
+            problems.append(f"{key} names {linked}: write it as {other.id}")
 
     def one_of(key: str, noun: str, allowed: tuple[str, ...]) -> None:
         value = fields.get(key)
@@ -43,7 +64,9 @@ def field_problems(
             problems.append("an epic can't have a parent")
         elif project.item(_show(parent)) is None:
             problems.append(f"there's no item {_show(parent)} to be the parent")
-        elif not project.item(_show(parent)).is_epic:
+        elif _show(parent) not in project.items:
+            exact("parent", _show(parent))
+        elif not project.items[_show(parent)].is_epic:
             problems.append(f"{_show(parent)} isn't an epic, so it can't be a parent")
 
     release = fields.get("release")
@@ -60,10 +83,10 @@ def field_problems(
             continue
         ids = [value] if isinstance(value, str) else value
         for linked in ids:
-            if item_id and linked == item_id:
+            if item_id and linked.upper() == item_id:
                 problems.append(f"{key} can't name the item itself")
-            elif project.item(linked) is None:
-                problems.append(f"{key} names {linked}, and there's no such item")
+            elif linked not in project.items:
+                exact(key, linked)
     return problems
 
 

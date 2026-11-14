@@ -208,10 +208,11 @@ Plain Markdown pages in `docs/`. Subfolders make the page tree in the web app.
 
 ## What corkboard check verifies
 
-- Every header follows the header format, required fields are present, and every value is one of the allowed ones.
+- Every header follows the header format, required fields are present, and every value is one of the allowed ones. Only `labels`, `blocked_by` and `related` are lists.
 - IDs are unique, and every file name starts with its item's ID.
 - Every `parent` exists and is an epic. Epics have no parent.
 - Tasks and bugs with a parent don't set `release`. Every `release` named has a file in `releases/`.
 - Every ID in `blocked_by`, `related` and `duplicate_of` exists, no item links to itself, and nothing is blocked by itself through a chain.
+- Every ID in `parent` and the links is written exactly, such as `EX-12`, not `ex-12`, since that's how they're matched.
 - Only tasks and bugs have a `## Subtasks` section.
 - Log lines match the log format.
