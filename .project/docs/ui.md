@@ -121,17 +121,20 @@ A board you can drag cards on, and docs pages.
 Every item in a table, for sorting through the backlog.
 
 ```
-List   Status: backlog, todo ▾   Type ▾   Label ▾   Release ▾   [+ New]
+List · 3 items                                                       [+ New]
+Status: [Backlog 1] [Todo 2] In progress 1  Waiting 0  Done 7  Cancelled 0
+Type ▾   Label ▾   Release ▾
 
-ID     Type  Status   Priority  Title                   Epic        Labels
-EX-13  task  todo     high      Board column limits     Board view  ui
-EX-19  task  todo     medium    Release view            Board view  ui
-EX-25  bug   backlog  low       Long titles overflow    —           ui
+ID ↑   Type  Status     Priority  Title                   Epic        Labels
+EX-13  task  Todo ▾     High ▾    Board column limits     Board view  ui
+EX-19  task  Todo ▾     Medium ▾  Release view            Board view  ui
+EX-25  bug   Backlog ▾  Low ▾     Long titles overflow    —           ui
 ```
 
-- Filters work like `corkboard list`. The default shows backlog and todo.
-- Clicking a column header sorts by it.
-- Status and priority can be changed in the row.
+- Filters work like `corkboard list`: epics, tasks and bugs, and `Release` matches an item's own release or its epic's. Each status is a toggle with its count, and the default shows backlog and todo.
+- Clicking a column header sorts by it, and clicking it again sorts the other way. Ties, and the default order, go by number. Items with no epic or no labels sort last.
+- The filters and sort order are in the URL, such as `/list?status=todo,waiting&label=ui&sort=-priority`, so a reload, a live update or a shared link keeps them.
+- Status and priority can be changed in the row. Choosing Waiting asks for a message first, as on the board. When a change moves an item out of the filters, a note says so.
 - Clicking a row opens the item side panel.
 
 ## Item

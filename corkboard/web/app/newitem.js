@@ -34,10 +34,11 @@ export function NewItem({ project, refresh }) {
   return html`<${NewItemDialog} project=${project} defaults=${defaults} refresh=${refresh} close=${() => setDefaults(null)} />`;
 }
 
-// On the board, a new item starts in the release and epic it's filtered to.
+// On the board, a new item starts in the release and epic it's filtered to; on the list, in its release.
 function defaultsFromUrl() {
-  if (location.pathname !== "/board") return {};
   const query = new URLSearchParams(location.search);
+  if (location.pathname === "/list") return { release: query.get("release") ?? undefined };
+  if (location.pathname !== "/board") return {};
   const epic = query.get("epic");
   return { release: query.get("release") ?? undefined, parent: epic && epic !== "none" ? epic : undefined };
 }

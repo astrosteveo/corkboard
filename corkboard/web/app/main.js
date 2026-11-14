@@ -3,6 +3,7 @@ import { indexProject, loadProject } from "./api.js";
 import { BoardPage } from "./board.js";
 import { DocsPage } from "./docs.js";
 import { ItemPage, ItemPanel } from "./item.js";
+import { ListPage } from "./list.js";
 import { html, render, useCallback, useEffect, useState } from "./lib.js";
 import { NewItem, openNewItem } from "./newitem.js";
 import { NowPage } from "./now.js";
@@ -98,6 +99,8 @@ function Screen({ route, project, refresh, pulls }) {
       return html`<${BoardPage} ...${props} />`;
     case "releases":
       return html`<${ReleasesPage} ...${props} />`;
+    case "list":
+      return html`<${ListPage} ...${props} />`;
     case "item":
       return html`<${ItemPage} ...${props} id=${route.id} />`;
     case "docs":
@@ -113,6 +116,7 @@ const NAV = [
   { name: "now", href: "/", label: "Now", icon: "now" },
   { name: "board", href: "/board", label: "Board", icon: "board" },
   { name: "releases", href: "/releases", label: "Releases", icon: "releases" },
+  { name: "list", href: "/list", label: "List", icon: "list" },
   { name: "docs", href: "/docs", label: "Docs", icon: "docs" },
 ];
 

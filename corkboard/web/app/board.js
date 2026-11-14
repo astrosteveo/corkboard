@@ -247,7 +247,7 @@ function Card({ project, item, seen, grouped, saving, pull }) {
 }
 
 // Asks what an item dropped on Waiting is waiting for, since moving to waiting needs a message.
-function AskDialog({ item, onSubmit, onCancel }) {
+export function AskDialog({ item, onSubmit, onCancel }) {
   const dialog = useRef(null);
   const [message, setMessage] = useState("");
   useEffect(() => {
