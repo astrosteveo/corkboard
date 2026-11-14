@@ -358,8 +358,14 @@ def mention_pattern(item_id: str, ignore_case: bool = False) -> re.Pattern[str]:
 
 
 def natural_key(name: str) -> list[str | int]:
-    """Sort key that puts v0.2 before v0.10 and EX-2 before EX-10."""
-    return [int(part) if part.isdigit() else part for part in re.split(r"([0-9]+)", name)]
+    """Sort key that puts v0.2 before v0.10 and EX-2 before EX-10.
+
+    A name or a file name: .md doesn't count, so v0.3.md comes before v0.3.1.md. Only runs of
+    ASCII digits are numbers, the odd parts of the split, so the key always alternates text and
+    number, and a ² or a full-width digit sorts as text.
+    """
+    parts = re.split(r"([0-9]+)", name.removesuffix(".md"))
+    return [int(part) if index % 2 else part for index, part in enumerate(parts)]
 
 
 def _markdown_files(folder: Path) -> list[Path]:
