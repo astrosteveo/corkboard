@@ -79,6 +79,11 @@ class ReadErrorTest(unittest.TestCase):
         ("odd list item", header_file("labels: [c?1]"), 2, "other than letters"),
         ("bare equals", header_file("title: ="), 2, "on its own"),
         ("missing comma", header_file('labels: ["a" "b"]'), 2, "comma"),
+        ("tab in value", header_file("title: Fix\tcrash"), 2, "control character"),
+        ("tab in quotes", header_file('title: "Fix\tcrash"'), 2, "control character"),
+        ("NUL in list", header_file('labels: ["a\x00b"]'), 2, "control character"),
+        ("C1 control", header_file("title: a\x9bb"), 2, "control character"),
+        ("line separator", header_file("title: a\u2028b"), 2, "control character"),
     ]
 
     def test_rejects_what_yaml_would_read_differently(self):
@@ -161,8 +166,10 @@ class WriteTest(unittest.TestCase):
         self.assertEqual(text, '---\nid: EX-1\ntitle: "Fix: it"\nlabels: [ui]\n---\nBody.\n')
 
     def test_refuses_line_breaks_and_bad_keys(self):
-        with self.assertRaises(ValueError):
-            format_value("title", "two\nlines")
+        # YAML reads \x85, U+2028 and U+2029 as line breaks, and refuses the other C1 controls.
+        for text in ("two\nlines", "a\tb", "a\x85b", "a\u2028b", "a\u2029b", "a\x9bb"):
+            with self.subTest(text=repr(text)), self.assertRaises(ValueError):
+                format_value("title", text)
         with self.assertRaises(ValueError):
             write({"Title": "x"}, "")
 

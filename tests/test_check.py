@@ -110,6 +110,13 @@ class CheckTest(unittest.TestCase):
         )
         self.assertEqual(summary, "3 items, 1 release: 2 problems")
 
+    def test_a_control_character_in_a_header_is_reported(self):
+        text = item_file("EX-2").replace("title: Item EX-2", "title: Fix\tcrash")
+        self.fixture.raw("items", "EX-2-fix-crash.md", text)
+        code, out, err = self.fixture.run("check")
+        self.assertEqual((code, err), (1, ""))
+        self.assertIn("EX-2-fix-crash.md: line 4: a value can't contain a tab", out)
+
     def test_duplicates_and_loops(self):
         self.fixture.raw("items", "EX-2-item-ex-2.md", item_file("EX-2", blocked_by=["EX-3"]))
         self.fixture.raw("items", "EX-3-item-ex-3.md", item_file("EX-3", blocked_by=["EX-2"]))
