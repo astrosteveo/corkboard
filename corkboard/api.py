@@ -290,16 +290,16 @@ def _text(data: Mapping, key: str) -> str:
     return value
 
 
-def _fields(data: Mapping) -> dict[str, str]:
-    """The request's fields as the CLI would get them after field=: lists joined with commas."""
+def _fields(data: Mapping) -> dict[str, str | list[str]]:
+    """The request's fields: text as the CLI would get it after field=, or a list of text.
+
+    A list goes on as a list, so an item such as the label "a, b" isn't split at its comma.
+    """
     fields = data.get("fields", {})
     if not isinstance(fields, dict):
         raise ApiError(400, 'fields must be an object, such as {"priority": "high"}')
-    typed: dict[str, str] = {}
     for key, value in fields.items():
-        if isinstance(value, list) and all(isinstance(part, str) for part in value):
-            value = ",".join(value)
-        if not isinstance(value, str):
+        is_list = isinstance(value, list) and all(isinstance(part, str) for part in value)
+        if not (is_list or isinstance(value, str)):
             raise ApiError(400, f"{key} must be text or a list of text")
-        typed[key] = value
-    return typed
+    return fields
