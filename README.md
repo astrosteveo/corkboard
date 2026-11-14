@@ -4,11 +4,11 @@ A lightweight issue tracker and wiki for one person working with Claude Code, ke
 
 Corkboard keeps a repo's releases, epics, tasks, bugs and docs as Markdown files in a `.project/` folder, next to the code. Claude reads and changes them through the `corkboard` command, which does the bookkeeping: IDs, file names, and log lines with who and when. Every session starts with a short summary of where things stand, so Claude knows what's in progress, what's next and what's waiting on you without being told.
 
-The files are plain Markdown with a small header, so they read fine on GitHub, diff cleanly, and need nothing running. When you want to see it all at once, `/corkboard:ui` opens a web app on localhost with what's waiting on you, a board, the releases and every item.
+The files are plain Markdown with a small header, so they read fine on GitHub, diff cleanly, and need nothing running. When you want to see it all at once, `/corkboard:ui` opens a web app on localhost with what's waiting on you, a board, the releases, a list of every item, the docs and search. Each item shows the commits and pull requests that mention it.
 
 ## Get started
 
-You need Claude Code and Python 3.11 or newer. Nothing else gets installed.
+You need Claude Code and Python 3.11 or newer. Nothing else gets installed. To see pull requests on items, also have the GitHub CLI (`gh`) installed and logged in; without it, everything else works the same.
 
 1. **Install the plugin.** In Claude Code, run:
 
@@ -74,10 +74,15 @@ You don't have to use the commands. Claude loads the `corkboard:track` skill on 
 
 `/corkboard:ui` in Claude Code, or `corkboard ui` in your own terminal, serves the web app on http://localhost:4747 (or the next free port). It reads and writes the same files as Claude, through the same code as the `corkboard` command.
 
-- **Now:** what Claude is asking you, with a box to reply or mark it done, what's in progress, what Claude will do next, and everything Claude logged since you last clicked Mark seen.
-- **Board:** columns by status for a release, with filters for epic, label and owner. Drag a card to change its status.
+- **Now:** what Claude is asking you, with a box to reply or mark it done, what's in progress, what Claude will do next, and everything Claude logged since you last clicked Mark seen. An item whose pull request merged while it's still open gets a Mark done button.
+- **Board:** columns by status for a release, with filters for epic, label and owner. Drag a card to change its status. A card shows its newest pull request, such as `#14 merged`.
 - **Releases:** each release as a tree of epics, tasks and subtasks, with progress. Change a release's status and date, drag an epic to another release, and copy release notes.
-- **Items:** click any item to open it in a side panel and change its fields, labels, subtasks and description, or add a note. Press `c` anywhere for a new item.
+- **List:** every item in a table, starting with the backlog and todo. Filter by status, type, label and release, sort by any column, and change status and priority in the row. The filters stay in the URL, so a view can be bookmarked.
+- **Docs:** the pages in `.project/docs/`, listed by file name. Item IDs in a page show the item's title and status and open it. Edit a page with a preview, or add one with + New page.
+- **Items:** click any item to open it in a side panel and change its fields, labels, subtasks and description, or add a note. Link it to other items as blocked by, related to or duplicate of. Its Development section lists its branch, pull requests with their checks, and commits. Press `c` anywhere for a new item.
+- **Search:** Ctrl-K, or Search in the sidebar, finds items by ID, title or description and docs by name or text, and runs actions such as New bug or Go to v0.3.
+
+Commits and pull requests belong to an item when its ID is in the commit message, the pull request's title or body, or the branch name. They're read from git and `gh` when a screen shows them, and never stored in the item's file.
 
 When Claude changes a file, the page updates within a second, and the cards it touched get a dot. Everything you do in the app is logged as you. The server listens on 127.0.0.1 only and accepts changes only from its own page. `corkboard ui` stops with Ctrl-C; one started in the background prints the `kill` command that stops it.
 
@@ -109,7 +114,7 @@ It's at most 25 lines, about a few hundred tokens, and nothing is added in a rep
 | --- | --- |
 | `corkboard now` | The summary above |
 | `corkboard next` | The item to do next, in full |
-| `corkboard show <ID>` | One item: its epic, release, links, subtasks and recent log |
+| `corkboard show <ID>` | One item: its epic, release, links, subtasks and recent log, and its branch, commits and pull requests |
 | `corkboard list [field=value…]` | One line per item, with filters such as `status=todo labels=ui` |
 | `corkboard tree [release]` | A release's epics and their tasks, with progress |
 | `corkboard new <epic\|task\|bug> "Title" [field=value…]` | Creates an item; text piped in becomes its description and subtasks |

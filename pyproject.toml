@@ -5,7 +5,7 @@
 
 [project]
 name = "corkboard"
-version = "0.2.0"
+version = "0.3.0"
 description = "A local issue tracker and wiki for one person working with Claude Code, kept as Markdown files in the repo."
 readme = "README.md"
 license = "MIT"
