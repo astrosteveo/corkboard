@@ -335,6 +335,19 @@ class WriteApiTest(ServerTest):
                 self.assertEqual(post(port, path, data), (status, {"error": error}))
         self.assertEqual(snapshot(fixture), before)
 
+    def test_docs_are_checked_like_every_change(self):
+        fixture, running = self.serve_fixture()
+        fixture.doc("ui.md", "# Web app\n")
+        before = snapshot(fixture)
+        for path, data in [
+            ("/api/docs/ui", {"text": "Sneaky", "base": "# Web app\n"}),
+            ("/api/docs", {"title": "Sneaky"}),
+        ]:
+            with self.subTest(path=path):
+                status, answer = post(running.port, path, data, origin="http://evil.example")
+                self.assertEqual(status, 403)
+        self.assertEqual(snapshot(fixture), before)
+
     def test_gets_dont_write(self):
         fixture, running = self.serve_fixture()
         connection = http.client.HTTPConnection(server.HOST, running.port, timeout=5)
@@ -343,6 +356,104 @@ class WriteApiTest(ServerTest):
         response.read()
         connection.close()
         self.assertEqual(response.status, 404)
+
+
+class DocsWriteTest(ServerTest):
+    UI = "# Web app\n\nOld text.\n"
+
+    def setUp(self):
+        self.fixture = build(Fixture(self))
+        self.fixture.doc("ui.md", self.UI)
+        self.fixture.doc("my notes.md", "# Notes\n")
+        self.port = self.serve(self.fixture).port
+
+    def doc(self, name: str) -> str:
+        return (self.fixture.root / "docs" / name).read_text(encoding="utf-8")
+
+    def test_save(self):
+        status, answer = post(
+            self.port, "/api/docs/ui", {"text": "# Web app\r\n\r\nNew text.", "base": self.UI}
+        )
+        self.assertEqual((status, answer), (200, {"line": "saved docs/ui.md", "warnings": []}))
+        # Windows line breaks become \n, and the file ends with one.
+        self.assertEqual(self.doc("ui.md"), "# Web app\n\nNew text.\n")
+        status, answer = post(
+            self.port, "/api/docs/my%20notes.md", {"text": "# Notes\n", "base": "# Notes\n"}
+        )
+        self.assertEqual((status, answer["line"]), (200, "docs/my notes.md already has that text"))
+
+    def test_conflict_answers_409_with_the_text_on_disk(self):
+        mine = {"text": "# Mine\n", "base": "# Web app\n\nWhat I started from.\n"}
+        status, answer = post(self.port, "/api/docs/ui", mine)
+        self.assertEqual(
+            (status, answer),
+            (
+                409,
+                {"error": "docs/ui.md changed while you were editing it", "current": self.UI},
+            ),
+        )
+        self.assertEqual(self.doc("ui.md"), self.UI)
+        # Keep mine: save again from the text on disk.
+        status, _ = post(self.port, "/api/docs/ui", {"text": "# Mine\n", "base": self.UI})
+        self.assertEqual((status, self.doc("ui.md")), (200, "# Mine\n"))
+
+    def test_only_saves_md_files_inside_docs(self):
+        secret = self.fixture.repo / "secret.md"
+        secret.write_text("# Secret\n", encoding="utf-8")
+        item = self.fixture.root / "items" / "EX-2-item-ex-2.md"
+        before = snapshot(self.fixture)
+        for name, base in [
+            ("nope", ""),
+            ("..%2F..%2Fsecret", "# Secret\n"),
+            ("../items/EX-2-item-ex-2", item.read_text(encoding="utf-8")),
+        ]:
+            with self.subTest(name=name):
+                status, answer = post(self.port, f"/api/docs/{name}", {"text": "x", "base": base})
+                self.assertEqual(status, 404)
+                self.assertTrue(answer["error"].startswith("there's no doc"))
+        self.assertEqual(snapshot(self.fixture), before)
+        self.assertEqual(secret.read_text(encoding="utf-8"), "# Secret\n")
+
+    def test_new_page(self):
+        status, answer = post(self.port, "/api/docs", {"title": " Board   design ", "folder": ""})
+        self.assertEqual(
+            (status, answer),
+            (200, {"line": "created docs/board-design.md", "warnings": [], "name": "board-design"}),
+        )
+        self.assertEqual(self.doc("board-design.md"), "# Board design\n")
+        status, answer = post(self.port, "/api/docs", {"title": "Setup", "folder": "/guides/new/"})
+        self.assertEqual((status, answer["name"]), (200, "guides/new/setup"))
+        self.assertEqual(self.doc("guides/new/setup.md"), "# Setup\n")
+
+    def test_new_decisions_are_numbered(self):
+        status, answer = post(self.port, "/api/docs", {"title": "Markdown", "folder": "decisions"})
+        self.assertEqual((status, answer["name"]), (200, "decisions/0001-markdown"))
+        self.fixture.doc("decisions/0007-skipped-ahead.md", "# Ahead\n")
+        status, answer = post(self.port, "/api/docs", {"title": "Next", "folder": "decisions"})
+        self.assertEqual(answer["name"], "decisions/0008-next")
+
+    def test_new_page_refusals(self):
+        outside = self.fixture.repo / "elsewhere"
+        outside.mkdir()
+        (self.fixture.root / "docs" / "link").symlink_to(outside)
+        self.fixture.doc("web-app.md", "# Taken\n")
+        cases = [
+            ({"title": "Web app!"}, "docs/web-app.md already exists. Choose another title"),
+            ({"title": "  "}, "a page needs a title"),
+            ({"title": "X", "folder": ".."}, '".." can\'t be a folder name'),
+            ({"title": "X", "folder": "a/../../b"}, '".." can\'t be a folder name'),
+            ({"title": "X", "folder": ".hidden"}, '".hidden" can\'t be a folder name'),
+            ({"title": "X", "folder": "link"}, "link leads out of docs/"),
+            ({"title": 3}, "title must be text"),
+        ]
+        before = snapshot(self.fixture)
+        for data, error in cases:
+            with self.subTest(data=data):
+                status, answer = post(self.port, "/api/docs", data)
+                self.assertEqual(status, 400)
+                self.assertTrue(answer["error"].startswith(error), answer["error"])
+        self.assertEqual(snapshot(self.fixture), before)
+        self.assertEqual(list(outside.iterdir()), [])
 
 
 if __name__ == "__main__":

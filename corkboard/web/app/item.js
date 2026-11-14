@@ -2,6 +2,7 @@
 // Every change goes through the write API, which makes the same file change as the matching
 // corkboard command, logged as you.
 import { write } from "./api.js";
+import { MarkdownEditor } from "./editor.js";
 import { html, useEffect, useRef, useState } from "./lib.js";
 import { Markdown } from "./markdown.js";
 import { navigate } from "./router.js";
@@ -263,89 +264,33 @@ function Fields({ project, item, changes }) {
   </div>`;
 }
 
-// The description, and Edit: a Markdown text box with a preview. Saving sends the description the
-// edit started from; if Claude changed it on disk meanwhile, both versions are shown to choose from.
+// The description, and Edit: a Markdown text box with a preview, with the conflict check that
+// shows both versions if Claude changed the description while you were editing it.
 function Description({ item, items, refresh }) {
-  const [edit, setEdit] = useState(null); // { draft, base, preview, conflict, error, saving }
-  const update = (changes) => setEdit((current) => ({ ...current, ...changes }));
-
-  async function save(draft, base) {
-    update({ saving: true, error: "" });
-    try {
-      await write(`/api/items/${encodeURIComponent(item.id)}/describe`, { description: draft, base });
+  const [editing, setEditing] = useState(false);
+  if (editing) {
+    const save = async (description, base) => {
+      await write(`/api/items/${encodeURIComponent(item.id)}/describe`, { description, base });
       await refresh();
-      setEdit(null);
-    } catch (problem) {
-      if (problem.status === 409) update({ saving: false, conflict: problem.answer.current });
-      else update({ saving: false, error: problem.message });
-    }
+    };
+    // Closing loads the project first, so "Use the one on disk" never shows the old text.
+    const close = async () => {
+      await refresh();
+      setEditing(false);
+    };
+    return html`<${MarkdownEditor} id="description-edit" text=${item.description} noun="description"
+      items=${items} save=${save} close=${close} />`;
   }
-
-  if (!edit) {
-    return html`<section class="item-section description">
-      <div class="section-head">
-        <span class="visually-hidden">Description</span>
-        <button class="btn small-btn edit-btn" type="button"
-          onClick=${() => setEdit({ draft: item.description, base: item.description, preview: false })}>
-          <${Icon} name="edit" size=${14} /> Edit
-        </button>
-      </div>
-      ${item.description
-        ? html`<${Markdown} text=${item.description} items=${items} />`
-        : html`<p class="empty">No description.</p>`}
-    </section>`;
-  }
-
-  if (edit.conflict !== undefined && edit.conflict !== null) {
-    return html`<section class="item-section conflict" aria-labelledby="conflict-h">
-      <p class="notice warn-note" id="conflict-h" role="alert">
-        The description changed on disk while you were editing it. Choose which to keep.
-      </p>
-      <div class="versions">
-        <div><h3 class="field-label">Yours</h3><pre class="version">${edit.draft}</pre></div>
-        <div><h3 class="field-label">On disk now</h3><pre class="version">${edit.conflict}</pre></div>
-      </div>
-      ${edit.error ? html`<p class="notice error" role="alert">${edit.error}</p>` : null}
-      <div class="edit-buttons">
-        <button class="btn primary" type="button" disabled=${edit.saving}
-          onClick=${() => save(edit.draft, edit.conflict)}>Keep mine</button>
-        <button class="btn" type="button" disabled=${edit.saving} onClick=${() => setEdit(null)}>Use the one on disk</button>
-        <button class="btn" type="button" disabled=${edit.saving}
-          onClick=${() => update({ base: edit.conflict, conflict: null })}>Edit mine</button>
-      </div>
-    </section>`;
-  }
-
-  const changed = edit.draft !== edit.base;
-  return html`<section class="item-section editing">
-    <div class="tabs" role="tablist" aria-label="Description">
-      <button type="button" role="tab" aria-selected=${!edit.preview} onClick=${() => update({ preview: false })}>Write</button>
-      <button type="button" role="tab" aria-selected=${edit.preview} onClick=${() => update({ preview: true })}>Preview</button>
+  return html`<section class="item-section description">
+    <div class="section-head">
+      <span class="visually-hidden">Description</span>
+      <button class="btn small-btn edit-btn" type="button" onClick=${() => setEditing(true)}>
+        <${Icon} name="edit" size=${14} /> Edit
+      </button>
     </div>
-    ${edit.preview
-      ? html`<div class="preview">${edit.draft.trim() ? html`<${Markdown} text=${edit.draft} items=${items} />` : html`<p class="empty">Nothing to preview.</p>`}</div>`
-      : html`<label class="visually-hidden" for="description-edit">Description, in Markdown</label>
-        <textarea id="description-edit" class="textarea" value=${edit.draft} disabled=${edit.saving}
-          ref=${(element) => element && !element.dataset.focused && ((element.dataset.focused = "1"), element.focus())}
-          onInput=${(event) => update({ draft: event.currentTarget.value })}
-          onKeyDown=${(event) => {
-            if (event.key === "Escape" && !changed) {
-              event.preventDefault();
-              setEdit(null);
-            } else if (event.key === "Escape") {
-              event.preventDefault(); // keep the panel open; Cancel throws the text away
-            } else if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
-              event.preventDefault();
-              save(edit.draft, edit.base);
-            }
-          }}></textarea>`}
-    ${edit.error ? html`<p class="notice error" role="alert">${edit.error}</p>` : null}
-    <div class="edit-buttons">
-      <button class="btn primary" type="button" disabled=${edit.saving || !changed}
-        onClick=${() => save(edit.draft, edit.base)}>${edit.saving ? "Saving…" : "Save"}</button>
-      <button class="btn" type="button" disabled=${edit.saving} onClick=${() => setEdit(null)}>Cancel</button>
-      <span class="small muted">Markdown. Ctrl+Enter saves.</span>
-    </div>
+    ${item.description
+      ? html`<${Markdown} text=${item.description} items=${items} />`
+      : html`<p class="empty">No description.</p>`}
   </section>`;
 }
 

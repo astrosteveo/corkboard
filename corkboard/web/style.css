@@ -880,3 +880,8 @@ input.item-title:focus { border-color: var(--border-strong); background: var(--s
   .docs { grid-template-columns: minmax(0, 1fr); gap: 20px; }
   .docs-tree { position: static; max-height: none; }
 }
+.doc-bar { display: flex; justify-content: flex-end; margin-bottom: -16px; }
+.new-page-btn { align-self: flex-start; color: var(--muted); }
+.doc-editor .textarea { min-height: 60vh; }
+.doc-editor .preview { min-height: 60vh; }
+.new-page { display: flex; flex-direction: column; gap: 16px; max-width: 560px; }

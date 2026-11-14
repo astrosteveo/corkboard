@@ -23,16 +23,20 @@ the same either way. Changes from the page are always logged as `me`.
     POST /api/items/<ID>/log         {"text"}                                    corkboard log
     POST /api/items/<ID>/describe    {"description", "base"}    (no command: edits the text)
     POST /api/releases/<name>        {"fields": {"status", "date"}, "goal"}      corkboard release
+    POST /api/docs                   {"title", "folder"}        (no command: + New page)
+    POST /api/docs/<name>            {"text", "base"}           (no command: edits the page)
 
 Field values are text as typed after field= in the CLI; a list such as labels can also be a JSON
-list. The answer is {"line", "warnings"}, plus "id" for a new item. A description edit whose
-"base" no longer matches the file answers 409, with the description on disk as "current".
+list. The answer is {"line", "warnings"}, plus "id" for a new item and "name" for a new page. A
+description or page edit whose "base" no longer matches the file answers 409, with the text on
+disk as "current".
 """
 
 from __future__ import annotations
 
 from collections.abc import Mapping
 from datetime import datetime
+from urllib.parse import unquote
 
 from . import development, docs, edits, work
 from .development import PullRequest
@@ -238,12 +242,30 @@ def write(project: Project, path: str, data: Mapping, now: datetime) -> dict:
         if goal is not None and not isinstance(goal, str):
             raise ApiError(400, "goal must be text")
         result = edits.release(project, parts[1], _fields(data), goal)
+    elif parts and parts[0] == "docs":
+        return _write_doc(project, parts[1:], data)
     else:
         raise ApiError(404, f"there's no {path}")
     answer: dict = {"line": result.line, "warnings": result.warnings}
     if result.item_id:
         answer["id"] = result.item_id
     return answer
+
+
+def _write_doc(project: Project, parts: list[str], data: Mapping) -> dict:
+    """+ New page (no name), or saving a page's text (its name, still percent-encoded)."""
+    if not parts:
+        name = docs.new_page(project.root, _text(data, "title"), _text(data, "folder"))
+        return {"line": f"created docs/{name}.md", "warnings": [], "name": name}
+    name = unquote("/".join(parts))
+    doc = docs.find(project.root, name)
+    if doc is None:
+        raise ApiError(404, f"there's no doc {name}")
+    try:
+        line = docs.save(doc, _text(data, "text"), _text(data, "base"))
+    except edits.ConflictError as conflict:
+        raise ApiError(409, str(conflict), {"current": conflict.current}) from None
+    return {"line": line, "warnings": []}
 
 
 def _find_item(project: Project, item_id: str) -> Item:
