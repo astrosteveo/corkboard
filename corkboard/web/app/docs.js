@@ -153,8 +153,8 @@ function DocFooter({ project, doc }) {
   </footer>`;
 }
 
-// The docs/ folder: each folder's pages, then its subfolders. Typing in the box lists the pages
-// whose title or name has the text instead.
+// The docs/ folder: each folder's pages by file name, then its subfolders. Typing in the box lists
+// the pages whose path has the text instead.
 function DocsTree({ docs, current, newPage }) {
   const [query, setQuery] = useState("");
   const words = query.trim().toLowerCase();

@@ -266,8 +266,8 @@ class ReadApiTest(ServerTest):
         self.assertEqual(status, 200)
         nothing = {"branches": [], "pull_requests": [], "commits": []}  # not a git repo
         mentions = [
-            {"doc": "decisions/0001-order", "title": "0001-order"},
-            {"doc": "plan", "title": "The plan"},
+            {"doc": "decisions/0001-order", "title": "0001-order.md"},
+            {"doc": "plan", "title": "plan.md"},
             {"item": "EX-9"},
         ]
         self.assertEqual(
@@ -289,7 +289,7 @@ class DocsApiTest(ServerTest):
         fixture.item("EX-1", title="Board view", type="epic")
         fixture.item("EX-12", title="Drag cards")
         fixture.doc("ui.md", "# Web app\n\nThe board (EX-12, EX-1) and EX-12 again, not EX-120.\n")
-        fixture.doc("cli.md", "```\n# not a title\n```\n\nNo heading.\n## Not level one\n")
+        fixture.doc("cli.md", "No heading.\n")
         fixture.doc("decisions/0002-later.md", "# Later\n")
         fixture.doc("decisions/0010-latest.md", "# Latest #\n")
         fixture.doc("my notes.md", "# Spaced\n")
@@ -314,11 +314,12 @@ class DocsApiTest(ServerTest):
         self.assertEqual(
             names,
             [
-                ("cli", "cli"),  # no level-one heading outside a code block: the file name
-                ("decisions/0002-later", "Later"),
-                ("decisions/0010-latest", "Latest"),
-                ("my notes", "Spaced"),
-                ("ui", "Web app"),
+                # A page's title is its file name, whatever its heading says.
+                ("cli", "cli.md"),
+                ("decisions/0002-later", "0002-later.md"),
+                ("decisions/0010-latest", "0010-latest.md"),
+                ("my notes", "my notes.md"),
+                ("ui", "ui.md"),
             ],
         )
         self.assertEqual(data["docs"][-1]["changed"], "2026-11-12 15:40")
@@ -336,7 +337,7 @@ class DocsApiTest(ServerTest):
             data,
             {
                 "name": "ui",
-                "title": "Web app",
+                "title": "ui.md",
                 "path": ".project/docs/ui.md",
                 "text": "# Web app\n\nThe board (EX-12, EX-1) and EX-12 again, not EX-120.\n",
                 "changed": "2026-11-12 15:40",
@@ -346,8 +347,10 @@ class DocsApiTest(ServerTest):
 
     def test_names_with_md_folders_and_spaces(self):
         self.assertEqual(self.get_json("/api/docs/ui.md")[1]["name"], "ui")
-        self.assertEqual(self.get_json("/api/docs/decisions/0002-later")[1]["title"], "Later")
-        self.assertEqual(self.get_json("/api/docs/my%20notes")[1]["title"], "Spaced")
+        self.assertEqual(
+            self.get_json("/api/docs/decisions/0002-later")[1]["title"], "0002-later.md"
+        )
+        self.assertEqual(self.get_json("/api/docs/my%20notes")[1]["title"], "my notes.md")
 
     def test_only_md_files_inside_docs(self):
         for path in [
