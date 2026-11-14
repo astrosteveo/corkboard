@@ -96,7 +96,7 @@ Headers use a strict subset of YAML, so `corkboard` can read them with Python's 
 
   For example: `title: "Fix: crash on drop"`.
 - A list item is left unquoted only when it's letters, digits, spaces and `.`, `/`, `-` or `_`, starts with a letter or digit, and doesn't read as something else in YAML. Anything else is quoted, such as `labels: ["a, b", ui]`.
-- Inside quotes, `\"` is a quote and `\\` is a backslash. Values can't contain line breaks.
+- Inside quotes, `\"` is a quote and `\\` is a backslash. Values can't contain line breaks, tabs or other control characters, including U+2028 and U+2029, which YAML reads as line breaks.
 
 `corkboard` always writes headers this way, and `corkboard check` reports any header that isn't, including quotes a value doesn't need.
 

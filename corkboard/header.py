@@ -26,6 +26,10 @@ _KEY = re.compile(r"[a-z][a-z0-9_]*")
 _KEY_LINE = re.compile(r"([a-z][a-z0-9_]*):(.*)")
 _DATE = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}")
 
+# Characters no value may hold: C0 and C1 controls, tab included, and DEL. YAML reads \x85,
+# U+2028 and U+2029 as line breaks and refuses the other C1 controls even inside quotes.
+_CONTROL = re.compile("[\x00-\x1f\x7f-\x9f\u2028\u2029]")
+
 # A plain value can't start with one of these: YAML gives each a meaning of its own.
 _INDICATORS = frozenset("-?:,[]{}#&*!|>'\"%@`")
 
@@ -123,7 +127,7 @@ def needs_quotes(text: str, in_list: bool = False) -> bool:
 
 
 def _format_scalar(text: str, in_list: bool) -> str:
-    if any(ord(char) < 0x20 or char == "\x7f" for char in text):
+    if _CONTROL.search(text):
         raise ValueError(f"a value can't contain line breaks or control characters: {text!r}")
     if not needs_quotes(text, in_list):
         return text
@@ -159,6 +163,11 @@ def _read_line(line: str, number: int) -> tuple[str, Value]:
     text = rest.strip()
     if text == "":
         raise HeaderError(number, f"{key} has no value; leave the field out instead")
+    if _CONTROL.search(text):
+        # write refuses these, so a file holding one could never be changed through corkboard.
+        raise HeaderError(
+            number, "a value can't contain a tab, a line break or another control character"
+        )
     if text.startswith("["):
         return key, _read_list(text, number)
     value, end = _read_scalar(text, 0, number, in_list=False)
