@@ -314,6 +314,8 @@ class Handler(BaseHTTPRequestHandler):
                 self._json(error.status, {"error": str(error), **error.extra})
             except EditError as error:
                 self._json(400, {"error": str(error)})
+            except OSError as error:  # a read-only folder or a full disk: say so, don't hang up
+                self._json(500, {"error": f"couldn't save the change: {error.strerror or error}"})
             else:
                 self._json(200, answer)
 
@@ -372,7 +374,8 @@ class Handler(BaseHTTPRequestHandler):
         return None
 
     def _json(self, status: int, data: object) -> None:
-        body = json.dumps(data, ensure_ascii=False).encode("utf-8")
+        # A file name that isn't UTF-8 holds surrogates; they go out as ? rather than fail.
+        body = json.dumps(data, ensure_ascii=False).encode("utf-8", "replace")
         self._send(status, "application/json", body)
 
     def _send(self, status: int, content_type: str, body: bytes) -> None:
