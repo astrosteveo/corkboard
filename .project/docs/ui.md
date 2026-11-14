@@ -141,7 +141,7 @@ EX-25  bug   Backlog ▾  Low ▾     Long titles overflow    —           ui
 
 ## Item
 
-One item, in a side panel over the screen you came from, or as a full page at `/items/<ID>`.
+One item, in a side panel over the screen you came from, which keeps its scroll position, or as a full page at `/items/<ID>`.
 
 ```
 Board view › EX-12                                     [Full page] [×]
