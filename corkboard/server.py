@@ -195,14 +195,15 @@ def start_detached(root: Path) -> tuple[str, int | None]:
 
     The child runs this same package with this same Python, found from this file rather than the
     command line, so it works from the plugin's bin/corkboard and from an installed copy alike.
-    Its output goes nowhere, so nothing waits on it, and its own session keeps it running after
-    the shell that started it is gone.
+    It starts in the repo, so `-P` keeps the repo's folder off sys.path: a corkboard.py or json.py
+    there must never run. Its output goes nowhere, so nothing waits on it, and its own session
+    keeps it running after the shell that started it is gone.
     """
     package_parent = str(Path(__file__).resolve().parent.parent)
     env = dict(os.environ)
     env["PYTHONPATH"] = os.pathsep.join(filter(None, [package_parent, env.get("PYTHONPATH")]))
     child = subprocess.Popen(
-        [sys.executable, "-m", "corkboard", "ui"],
+        [sys.executable, "-P", "-m", "corkboard", "ui"],
         cwd=root.parent,
         env=env,
         stdin=subprocess.DEVNULL,

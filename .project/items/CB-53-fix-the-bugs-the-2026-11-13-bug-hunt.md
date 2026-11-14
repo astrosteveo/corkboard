@@ -2,7 +2,7 @@
 id: CB-53
 type: epic
 title: Fix the bugs the 2026-11-13 bug hunt confirmed
-status: todo
+status: in-progress
 priority: high
 owner: claude
 created: 2026-11-13
@@ -12,3 +12,4 @@ A bug hunt over the whole codebase confirmed 35 bugs, each with a failing test o
 
 ## Log
 - 2026-11-13 20:04 claude: created
+- 2026-11-13 20:05 claude: moved to in-progress
