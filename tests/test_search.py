@@ -22,6 +22,11 @@ class SearchTest(unittest.TestCase):
         results = search(self.fixture.load(), query)
         return [result.get("id") or result["name"] for result in results]
 
+    def test_a_doc_by_its_file_name_with_md(self):
+        # The app shows a doc as ui.md, so that's what people type.
+        self.fixture.doc("cli.md", "See [ui.md](ui.md).\n")
+        self.assertEqual(self.found("ui.md"), ["ui", "cli"])
+
     def test_every_word_has_to_match_in_any_case(self):
         self.assertEqual(self.found("DRAG cards"), ["EX-3", "EX-2", "EX-4"])
         self.assertEqual(self.found("drag nothing"), [])
