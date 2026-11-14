@@ -22,7 +22,7 @@ export function MarkdownEditor({ id, text, noun, items, save, close, className =
   }
 
   if (edit.conflict !== null) {
-    return html`<section class=${`item-section conflict ${className}`} aria-labelledby=${`${id}-conflict`}>
+    return html`<section class=${`item-section conflict ${className}`} aria-labelledby=${`${id}-conflict`} data-unsaved>
       <p class="notice warn-note" id=${`${id}-conflict`} role="alert">
         The ${noun} changed on disk while you were editing it. Choose which to keep.
       </p>
@@ -42,7 +42,7 @@ export function MarkdownEditor({ id, text, noun, items, save, close, className =
   }
 
   const changed = edit.draft !== edit.base;
-  return html`<section class=${`item-section editing ${className}`}>
+  return html`<section class=${`item-section editing ${className}`} data-unsaved=${changed || undefined}>
     <div class="tabs" role="tablist" aria-label=${noun}>
       <button type="button" role="tab" aria-selected=${!edit.preview} onClick=${() => update({ preview: false })}>Write</button>
       <button type="button" role="tab" aria-selected=${edit.preview} onClick=${() => update({ preview: true })}>Preview</button>
