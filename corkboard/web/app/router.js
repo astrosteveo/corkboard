@@ -1,4 +1,4 @@
-// Every screen has its own URL: /, /board, /releases/<name>, /items/<ID>, /docs/<name>.
+// Every screen has its own URL: /, /board, /releases/<name>, /list, /items/<ID>, /docs/<name>.
 // Links inside the app change the URL with the History API instead of loading a new page.
 import { useEffect, useState } from "./lib.js";
 
@@ -16,6 +16,7 @@ export function parseRoute(pathname, search) {
   let route;
   if (parts.length === 0) route = { name: "now" };
   else if (parts[0] === "board" && parts.length === 1) route = { name: "board" };
+  else if (parts[0] === "list" && parts.length === 1) route = { name: "list" };
   else if (parts[0] === "releases" && parts.length <= 2) route = { name: "releases", release: parts[1] ?? null };
   else if (parts[0] === "items" && parts.length === 2) route = { name: "item", id: parts[1].toUpperCase() };
   // A doc's name is its path under docs/, and a link to ui.md from another page works too.

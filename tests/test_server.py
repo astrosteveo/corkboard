@@ -80,7 +80,7 @@ class StaticTest(ServerTest):
         )
 
     def test_app_routes_get_index_html(self):
-        for path in ("/", "/board", "/releases/v0.1", "/items/EX-12", "/docs/a/b?x=1"):
+        for path in ("/", "/board", "/releases/v0.1", "/list", "/items/EX-12", "/docs/a/b?x=1"):
             with self.subTest(path=path):
                 status, content_type, body = get(self.running.port, path)
                 self.assertEqual((status, body), (200, b"<p>index</p>"))

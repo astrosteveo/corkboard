@@ -5,6 +5,7 @@ const ICONS = {
   now: html`<circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="2.5"></circle>`,
   board: html`<rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M9 4v16M15 4v16"></path>`,
   releases: html`<path d="M5 21V4"></path><path d="M5 4h12l-2.5 4.5L17 13H5"></path>`,
+  list: html`<path d="M9 6h11M9 12h11M9 18h11"></path><path d="M4.5 6h.01M4.5 12h.01M4.5 18h.01" stroke-width="3"></path>`,
   docs: html`<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5M9 13h6M9 17h4"></path>`,
   up: html`<path d="M12 19V5M5 12l7-7 7 7"></path>`,
   close: html`<path d="M6 6l12 12M18 6 6 18"></path>`,
