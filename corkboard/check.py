@@ -241,7 +241,9 @@ def _item_problems(
     if parsed is None or (project.prefix and parsed[0] != project.prefix):
         add(f"{item_id} isn't an ID with this project's prefix, such as {project.prefix}-12")
     if first_use.get(item_id) is not item_file:
-        add(f"{item_id} is also used by {first_use[item_id].path.name}", "renumber")
+        # Renumbering needs a prefix that makes valid IDs; config.yml's problem is reported too.
+        fixes = ["renumber"] if _PREFIX.fullmatch(project.prefix) else []
+        add(f"{item_id} is also used by {first_use[item_id].path.name}", *fixes)
 
     missing = [key for key in REQUIRED_FIELDS if key not in fields]
     if missing:
@@ -254,7 +256,8 @@ def _item_problems(
     if item.is_epic and item.has_subtasks_section:
         add("an epic has tasks, not a ## Subtasks section")
 
-    if item.title:
+    # Only a real ID can name a file: renaming to ../../EX-1 would write outside items/.
+    if item.title and parsed is not None:
         expected = write.item_path(project, item_id, item.title).name
         if not path.name.startswith(f"{item_id}-"):
             add(f"the file name doesn't start with {item_id}", "rename")

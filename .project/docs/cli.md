@@ -245,8 +245,8 @@ EX-7-old-name.md: file name doesn't match the title
 
 `--fix` repairs only what's safe to repair, and lists the rest:
 
-- **File names that don't match the title:** renamed.
-- **Duplicate IDs:** the item with the later `created` date gets the next free number. References to the old number can't be told apart, since they could mean either item, so it lists them for review:
+- **File names that don't match the title:** renamed, if the item's `id` is an ID such as `EX-12`. A file is never moved out of `items/`.
+- **Duplicate IDs:** the item with the later `created` date gets the next free number, if config.yml has a valid prefix. References to the old number can't be told apart, since they could mean either item, so it lists them for review:
 
 ```
 fixed: EX-12 was used twice. "Ctrl-K search" is now EX-31.

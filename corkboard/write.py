@@ -24,6 +24,7 @@ from .project import (
     SUBTASKS_HEADING,
     Project,
     find_section,
+    parse_id,
 )
 
 SLUG_WIDTH = 40
@@ -144,6 +145,9 @@ def slug(title: str) -> str:
 
 
 def item_path(project: Project, item_id: str, title: str) -> Path:
+    """The file for an item. The ID must be one, such as EX-12, so the path stays in items/."""
+    if parse_id(item_id) is None:
+        raise ValueError(f"{item_id!r} isn't an item ID")
     return project.root / "items" / f"{item_id}-{slug(title)}.md"
 
 

@@ -176,6 +176,31 @@ class FixTest(unittest.TestCase):
         self.assertTrue(project.item("EX-15").path.name.startswith("EX-15-"))
         self.assertEqual(project.item("EX-12").title, "Item EX-12")
 
+    def test_never_moves_an_item_out_of_items(self):
+        # An ID that isn't one can't name a file: ../../EX-6 would write outside items/.
+        text = item_file("EX-6", title="x").replace("id: EX-6\n", "id: ../../EX-6\n")
+        self.fixture.raw("items", "EX-6-x.md", text)
+        code, out, _ = self.fixture.run("check", "--fix")
+        self.assertEqual(code, 1, out)
+        self.assertFalse((self.fixture.repo / "EX-6-x.md").exists(), out)
+        self.assertTrue((self.fixture.root / "items" / "EX-6-x.md").exists(), out)
+        self.assertNotIn("fixed:", out)
+
+    def test_doesnt_renumber_without_a_valid_prefix(self):
+        for config in ("name: Example\n", "name: Example\nprefix: ../x\n"):
+            with self.subTest(config=config):
+                fixture = Fixture(self)
+                (fixture.root / "config.yml").write_text(config, encoding="utf-8")
+                fixture.raw("items", "EX-1-item-ex-1.md", item_file("EX-1"))
+                fixture.raw(
+                    "items", "EX-1-other.md", item_file("EX-1", created="2026-11-20", title="Other")
+                )
+                code, out, _ = fixture.run("check", "--fix")
+                self.assertEqual(code, 1, out)
+                self.assertNotIn("fixed:", out)
+                names = sorted(path.name for path in fixture.root.rglob("*.md"))
+                self.assertEqual(names, ["EX-1-item-ex-1.md", "EX-1-other.md"])
+
     def test_lists_what_it_cant_fix(self):
         self.fixture.raw("items", "EX-5-item-ex-5.md", item_file("EX-5", parent="EX-9"))
         code, out, _ = self.fixture.run("check", "--fix")

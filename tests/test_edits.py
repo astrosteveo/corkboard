@@ -44,6 +44,14 @@ class NewTest(EditTest):
         edits.new(self.fixture.load(), "task", "Piped", {}, "\nWhat and why.\n\n", "me", NOW)
         self.assertEqual(self.fixture.load().item("EX-13").description, "What and why.")
 
+    def test_refuses_a_prefix_that_cant_make_an_id(self):
+        (self.fixture.root / "config.yml").write_text(
+            "name: Example\nprefix: ../x\n", encoding="utf-8"
+        )
+        with self.assertRaisesRegex(EditError, "capital letters and digits"):
+            edits.new(self.fixture.load(), "task", "Escape", {}, "", "me", NOW)
+        self.assertEqual(list(self.fixture.root.glob("*.md")), [])
+
     def test_refuses_bad_values_and_writes_nothing(self):
         cases = [
             ("story", "X", {}, "", '"story" isn\'t a type'),
@@ -240,6 +248,14 @@ class SetTest(EditTest):
         self.assertEqual(
             (entry.who, entry.text), ("me", 'set title="Card face" priority=high parent=')
         )
+
+    def test_an_id_that_isnt_one_never_names_a_file(self):
+        text = self.fixture.text("EX-9").replace("id: EX-9\n", "id: ../../EX-9\n")
+        (self.fixture.root / "items" / "EX-9-card-component.md").write_text(text, encoding="utf-8")
+        project = self.fixture.load()
+        with self.assertRaisesRegex(EditError, "isn't an item ID"):
+            edits.set_(project, project.items["../../EX-9"], {"title": "Moved"}, "me", NOW)
+        self.assertEqual(list(self.fixture.repo.glob("*.md")), [])
 
     def test_the_same_values_change_nothing(self):
         project, item = self.item("EX-9")
