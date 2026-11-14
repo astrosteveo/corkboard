@@ -74,6 +74,9 @@ class ListTest(unittest.TestCase):
             self.ids("status=todo,in-progress", "type=task"), ["EX-12", "EX-13", "EX-17", "EX-22"]
         )
         self.assertEqual(self.ids("labels=ui"), ["EX-12", "EX-14"])
+        # A field filtered twice must match both, as any two filters must.
+        self.assertEqual(self.ids("labels=ui", "labels=board"), ["EX-12"])
+        self.assertEqual(self.ids("status=todo", "status=done"), [])
         self.assertEqual(self.ids("release=v0.2"), ["EX-5", "EX-30"])
         self.assertEqual(self.ids("parent=ex-4"), ["EX-17"])
         self.assertEqual(self.ids("blocked_by=EX-12"), ["EX-13"])
