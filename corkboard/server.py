@@ -42,7 +42,7 @@ from collections.abc import Callable, Iterable
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import unquote, urlsplit
+from urllib.parse import parse_qs, unquote, urlsplit
 
 from . import api, development
 from .cli import CommandError, Context, usage_error
@@ -267,6 +267,9 @@ class Handler(BaseHTTPRequestHandler):
                 self._json(200, api.doc_view(load(self.server.root), name))
             except api.ApiError as error:
                 self._json(error.status, {"error": str(error)})
+        elif path == "/api/search":
+            query = parse_qs(urlsplit(self.path).query).get("q", [""])[0]
+            self._json(200, api.search_view(load(self.server.root), query))
         elif path == "/api/events":
             self._events()
         elif path == "/api/server":

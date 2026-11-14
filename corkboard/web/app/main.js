@@ -9,6 +9,7 @@ import { NewItem, openNewItem } from "./newitem.js";
 import { NowPage } from "./now.js";
 import { ReleasesPage } from "./releases.js";
 import { useRoute } from "./router.js";
+import { Search, openSearch } from "./search.js";
 import { Icon } from "./ui.js";
 
 function App() {
@@ -64,6 +65,7 @@ function App() {
       ? html`<${ItemPanel} project=${project} id=${route.query.get("item").toUpperCase()} refresh=${refresh} />`
       : null}
     <${NewItem} project=${project} refresh=${refresh} />
+    <${Search} project=${project} />
   </div>`;
 }
 
@@ -141,6 +143,9 @@ function Sidebar({ project, route, live }) {
         </a>`,
       )}
     </div>
+    <button class="new-btn search-btn" type="button" onClick=${openSearch} disabled=${!project}>
+      <${Icon} name="search" size=${16} /> <span class="label">Search</span> <kbd>Ctrl K</kbd>
+    </button>
     <button class="new-btn" type="button" onClick=${() => openNewItem()} disabled=${!project}>
       <${Icon} name="plus" size=${16} /> <span class="label">New item</span> <kbd>C</kbd>
     </button>

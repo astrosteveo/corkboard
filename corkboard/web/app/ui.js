@@ -10,6 +10,7 @@ const ICONS = {
   up: html`<path d="M12 19V5M5 12l7-7 7 7"></path>`,
   close: html`<path d="M6 6l12 12M18 6 6 18"></path>`,
   expand: html`<path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"></path>`,
+  search: html`<circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path>`,
   plus: html`<path d="M12 5v14M5 12h14"></path>`,
   check: html`<path d="M5 12.5 10 17 19 7"></path>`,
   chevron: html`<path d="m9 6 6 6-6 6"></path>`,
