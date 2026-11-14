@@ -116,6 +116,19 @@ class ReleaseTest(unittest.TestCase):
         self.assertFalse((self.fixture.root / "releases" / "v0.2.md").exists())
         self.assertEqual(self.fixture.run("release", "v0.1", "status=active")[0], 0)
 
+    def test_never_overwrites_a_file_that_isnt_that_release(self):
+        cases = {
+            "unreadable": "---\nname: v0.2\nstatus: planned\ndate: 2026-12-01 # moved\n---\nGoal.\n",
+            "another name": "---\nname: beta\nstatus: planned\n---\nThe beta's goal.\n",
+        }
+        for case, text in cases.items():
+            with self.subTest(case=case):
+                self.fixture.raw("releases", "v0.2.md", text)
+                code, _, err = self.fixture.run("release", "v0.2", "status=active")
+                self.assertEqual(code, 1)
+                self.assertIn("error: .project/releases/v0.2.md already exists", err)
+                self.assertEqual(self.text("v0.2"), text)
+
     def test_errors(self):
         cases = [
             (("release",), "usage: corkboard release"),
