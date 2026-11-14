@@ -7,6 +7,7 @@ from helpers import LOG, NOW, Fixture
 from corkboard import edits
 from corkboard.edits import EditError, Result
 
+FENCE = "`" * 3
 SUBTASKS = "\n## Subtasks\n- [ ] Draw the column\n- [x] Add the header\n" + LOG
 
 
@@ -60,6 +61,9 @@ class NewTest(EditTest):
             ("task", "X", {"parent": "EX-12"}, "", "EX-12 isn't an epic"),
             ("task", "X", {"labels": "a\nb"}, "", "labels can't contain a line break"),
             ("task", "X", {}, "## Log\n- x\n", "can't have a ## Log section"),
+            ("epic", "X", {}, "## Subtasks\n- [ ] Draw\n", "an epic has tasks, not a ## Subtasks"),
+            ("task", "X", {}, "## Subtasks\n- Add a limit\n", "'- Add a limit' isn't a subtask"),
+            ("task", "X", {}, f"Run:\n{FENCE}\ncorkboard now\n", "leaves a code block open"),
         ]
         for item_type, title, values, body, message in cases:
             with self.subTest(message=message):
@@ -233,6 +237,11 @@ class DescribeTest(EditTest):
         self.assertEqual(self.describe("EX-9", "").line, "EX-9 already has that description")
         with self.assertRaises(EditError):
             self.describe("EX-9", "Text\n\n## Log\n- 2026-11-12 10:00 me: sneaky\n")
+        # A code block left open would swallow the subtasks and log after it.
+        before = self.fixture.text("EX-20")
+        with self.assertRaisesRegex(EditError, "leaves a code block open"):
+            self.describe("EX-20", f"Run:\n{FENCE}\ncorkboard now")
+        self.assertEqual(self.fixture.text("EX-20"), before)
 
 
 class SetTest(EditTest):

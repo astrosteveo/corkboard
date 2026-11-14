@@ -52,7 +52,8 @@ SUBTASKS_HEADING = "## Subtasks"
 LOG_HEADING = "## Log"
 
 _ID = re.compile(r"([A-Z][A-Z0-9]*)-([0-9]+)")
-CODE_FENCE = re.compile(r"\s*(```|~~~)")
+# A code fence, as CommonMark has it: three or more backticks or tildes, then an info string.
+CODE_FENCE = re.compile(r"\s*(`{3,}|~{3,})(.*)")
 HEADING = re.compile(r"#{1,2} \S.*")
 SUBTASK_LINE = re.compile(r"- \[([ xX])\] (.+)")
 LOG_LINE = re.compile(r"- ([0-9]{4}-[0-9]{2}-[0-9]{2}) ([0-9]{2}:[0-9]{2}) (me|claude): (.+)")
@@ -387,11 +388,10 @@ def parse_item(path: Path, fields: dict[str, header.Value], body: str) -> Item:
     item = Item(path, fields, body)
     description: list[str] = []
     section = "description"
-    in_code = False
-    for number, line in enumerate(body.split("\n"), start=1):
-        if CODE_FENCE.match(line):
-            in_code = not in_code
-        if not in_code and HEADING.fullmatch(line):
+    lines = body.split("\n")
+    in_code, _ = code_lines(lines)
+    for number, line in enumerate(lines, start=1):
+        if not in_code[number - 1] and HEADING.fullmatch(line):
             if line.strip() == SUBTASKS_HEADING:
                 section = "subtasks"
                 item.has_subtasks_section = True
@@ -419,6 +419,30 @@ def parse_item(path: Path, fields: dict[str, header.Value], body: str) -> Item:
     return item
 
 
+def code_lines(lines: list[str]) -> tuple[list[bool], bool]:
+    """Which lines are in a fenced code block, fences included, and whether one is left open.
+
+    As in CommonMark: a backtick fence's info string can't hold a backtick (that's inline code),
+    and a block closes only with a line of the same character, at least as long, and nothing
+    else. A block left open runs to the end of the text.
+    """
+    fence = ""
+    inside: list[bool] = []
+    for line in lines:
+        match = CODE_FENCE.fullmatch(line)
+        if fence:
+            inside.append(True)
+            if match and match.group(1)[0] == fence[0] and len(match.group(1)) >= len(fence):
+                if not match.group(2).strip():
+                    fence = ""
+        elif match and not (match.group(1)[0] == "`" and "`" in match.group(2)):
+            fence = match.group(1)
+            inside.append(True)
+        else:
+            inside.append(False)
+    return inside, bool(fence)
+
+
 def find_section(lines: list[str], heading: str) -> tuple[int, int] | None:
     """Where a top-level section is in a body's lines: (heading index, index after its end).
 
@@ -426,12 +450,9 @@ def find_section(lines: list[str], heading: str) -> tuple[int, int] | None:
     the end of the body.
     """
     start = None
-    in_code = False
+    in_code, _ = code_lines(lines)
     for index, line in enumerate(lines):
-        if CODE_FENCE.match(line):
-            in_code = not in_code
-            continue
-        if in_code or not HEADING.fullmatch(line):
+        if in_code[index] or not HEADING.fullmatch(line):
             continue
         if start is not None:
             return start, index
