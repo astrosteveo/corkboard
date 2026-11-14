@@ -281,13 +281,20 @@ class Project:
         found: list[str] = []
         docs = self.root / "docs"
         if docs.is_dir():
+            # As in docs.py: only pages inside docs/ once symlinks resolve, each once by its name.
+            inside = docs.resolve()
+            seen: set[Path] = set()
             for path in sorted(docs.rglob("*.md"), key=lambda p: natural_key(p.as_posix())):
                 try:
-                    text = path.read_text(encoding="utf-8")
+                    real = path.resolve()
+                    if not real.is_relative_to(inside) or real in seen:
+                        continue
+                    seen.add(real)
+                    text = real.read_text(encoding="utf-8")
                 except (OSError, UnicodeDecodeError):
                     continue
                 if pattern.search(text):
-                    found.append(path.relative_to(self.root).as_posix())
+                    found.append(f"docs/{real.relative_to(inside).as_posix()}")
         found += [
             other.id
             for other in self.sorted_items()

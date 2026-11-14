@@ -44,7 +44,7 @@ def search(project: Project, query: str) -> list[dict]:
             descriptions.append({**result, "snippet": _snippet(item.description, words)})
     for doc in docs.list_docs(project.root):
         result = {"kind": "doc", "name": doc.name, "title": doc.title, "snippet": None}
-        if _has_all(words, doc.name):
+        if _has_all(words, f"{doc.name}{docs.SUFFIX}"):  # the file name, as the app shows it
             names.append(result)
         elif _has_all(words, f"{doc.name}\n{doc.text}"):
             texts.append({**result, "snippet": _snippet(doc.text, words)})

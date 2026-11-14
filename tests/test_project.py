@@ -231,6 +231,17 @@ class HelpersTest(unittest.TestCase):
         self.assertEqual(sorted(["10².md", "１.md", "2.md"], key=natural_key)[0], "2.md")
 
 
+class MentionsTest(unittest.TestCase):
+    def test_only_pages_inside_docs_once_each(self):
+        fixture = Fixture(self)
+        fixture.item("EX-1")
+        fixture.doc("ui.md", "EX-1 is named here.\n")
+        (fixture.repo / "secret.md").write_text("EX-1 is named here too.\n", encoding="utf-8")
+        (fixture.root / "docs" / "outside.md").symlink_to(fixture.repo / "secret.md")
+        (fixture.root / "docs" / "alias.md").symlink_to(fixture.root / "docs" / "ui.md")
+        self.assertEqual(fixture.load().mentions("EX-1"), ["docs/ui.md"])
+
+
 class SortOrderTest(unittest.TestCase):
     def test_releases_in_name_order(self):
         fixture = Fixture(self)
