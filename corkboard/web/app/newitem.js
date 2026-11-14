@@ -47,7 +47,7 @@ function NewItemDialog({ project, defaults, refresh, close }) {
   const dialog = useRef(null);
   const epics = project.items.filter((item) => item.type === "epic");
   const [form, setForm] = useState({
-    type: "task",
+    type: defaults.type ?? "task",
     title: "",
     parent: defaults.parent ?? "",
     release: defaults.release === "none" ? "" : (defaults.release ?? project.active_release ?? ""),
