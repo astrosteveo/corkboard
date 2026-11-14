@@ -31,7 +31,7 @@ export function ItemPage({ project, id, refresh }) {
   }
   pageTitle(`${item.id} ${item.title}`, project);
   return html`<article class="item-page">
-    <${ItemView} project=${project} item=${item} refresh=${refresh} />
+    <${ItemView} key=${item.id} project=${project} item=${item} refresh=${refresh} />
   </article>`;
 }
 
@@ -65,7 +65,7 @@ export function ItemPanel({ project, id, refresh }) {
         <button class="icon-btn" type="button" aria-label="Close" onClick=${close}><${Icon} name="close" /></button>
       </div>
       ${item
-        ? html`<${ItemView} project=${project} item=${item} refresh=${refresh} />`
+        ? html`<${ItemView} key=${item.id} project=${project} item=${item} refresh=${refresh} />`
         : html`<p class="empty">There's no item ${id} in this project.</p>`}
     </aside>
   </div>`;
@@ -79,10 +79,6 @@ function useChanges(item, refresh) {
   const [error, setError] = useState("");
   const [warnings, setWarnings] = useState([]);
   const [pending, setPending] = useState({});
-  useEffect(() => {
-    setError("");
-    setWarnings([]);
-  }, [item.id]);
   async function change(action, data, preview = {}) {
     setPending(preview);
     setBusy(true);
@@ -122,6 +118,7 @@ function useExtras(item, project) {
   return extras?.id === item.id ? extras : null;
 }
 
+// Rendered with key=${item.id}, so moving to another item starts fresh: no unsent text carries over.
 export function ItemView({ project, item, refresh }) {
   const changes = useChanges(item, refresh);
   const extras = useExtras(item, project);
@@ -145,7 +142,7 @@ export function ItemView({ project, item, refresh }) {
           (blocker, index) => html`${index ? ", " : ""}<a href=${panelHref(blocker)}>${blocker}</a>`,
         )}</p>`
       : null}
-    <${Description} key=${item.id} item=${item} items=${project.byId} refresh=${refresh} />
+    <${Description} item=${item} items=${project.byId} refresh=${refresh} />
     ${item.type === "epic"
       ? html`<${EpicTasks} project=${project} epic=${item} />`
       : html`<${Subtasks} item=${item} changes=${changes} />`}
@@ -261,7 +258,7 @@ function Fields({ project, item, changes }) {
                 event.preventDefault();
                 setAsking(false);
               }
-            }} ref=${(element) => element?.focus()} />
+            }} ref=${(element) => element && !element.dataset.focused && ((element.dataset.focused = "1"), element.focus())} />
           <button class="btn primary" type="submit" disabled=${!question.trim() || changes.busy}>Move to waiting</button>
           <button class="btn" type="button" onClick=${() => setAsking(false)}>Cancel</button>
         </form>`
@@ -430,10 +427,6 @@ function Links({ project, item, refresh }) {
   const [text, setText] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
-  useEffect(() => {
-    setText("");
-    setError("");
-  }, [item.id]);
   // An item is a duplicate of one item at most, so that type is offered only while it has none.
   const types = LINK_TYPES.filter(([field]) => field !== "duplicate_of" || !item.duplicate_of);
   const chosen = types.some(([field]) => field === type) ? type : "blocked_by";
