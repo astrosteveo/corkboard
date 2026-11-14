@@ -143,10 +143,11 @@ class ShowTest(unittest.TestCase):
         )
 
     def test_missing_links_say_so(self):
-        self.fixture.item("EX-30", parent="EX-99", blocked_by=["EX-98"])
+        self.fixture.item("EX-30", parent="EX-99", blocked_by=["EX-98"], related=["EX-97"])
         _, out, _ = self.fixture.run("show", "EX-30")
         self.assertIn("epic: EX-99 (no such epic)\n", out)
         self.assertIn("blocked by: EX-98 (no such item)\n", out)
+        self.assertIn("related: EX-97 (no such item)\n", out)
 
     def test_long_titles_of_other_items_are_cut(self):
         self.fixture.item("EX-31", title="A" * 60)

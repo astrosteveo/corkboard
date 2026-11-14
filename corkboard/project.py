@@ -239,10 +239,15 @@ class Project:
 
     def related_to(self, item: Item) -> list[Item]:
         """Related items from both sides: the ones this item lists and the ones that list it."""
+        ids = set(self.related_ids(item))
+        return sorted((self.items[i] for i in ids if i in self.items), key=lambda i: i.number)
+
+    def related_ids(self, item: Item) -> list[str]:
+        """Like related_to, as IDs in number order, keeping IDs this item lists that don't exist."""
         ids = set(item.related)
         ids.update(other.id for other in self.items.values() if item.id in other.related)
         ids.discard(item.id)
-        return sorted((self.items[i] for i in ids if i in self.items), key=lambda i: i.number)
+        return sorted(ids, key=natural_key)
 
     def duplicated_by(self, item: Item) -> list[Item]:
         return [other for other in self.sorted_items() if other.duplicate_of == item.id]

@@ -55,7 +55,7 @@ def _summary(ctx: Context, project: Project, item: Item) -> list[str]:
     links = [
         ("blocked by", item.blocked_by),
         ("blocks", [other.id for other in project.blocks(item)]),
-        ("related", [other.id for other in project.related_to(item)]),
+        ("related", project.related_ids(item)),  # with missing ones, which say (no such item)
         ("duplicate of", [item.duplicate_of] if item.duplicate_of else []),
         ("duplicated by", [other.id for other in project.duplicated_by(item)]),
     ]

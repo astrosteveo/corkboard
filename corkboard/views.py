@@ -32,7 +32,8 @@ _FILTER = re.compile(r"([a-z_]+)=(.*)", re.DOTALL)
 
 def list_(ctx: Context, args: list[str]) -> None:
     show_all = "--all" in args
-    filters: dict[str, list[str]] = {}
+    # Every filter must match, a field filtered twice too, so they're kept as a list.
+    filters: list[tuple[str, list[str]]] = []
     for arg in (a for a in args if a != "--all"):
         match = _FILTER.fullmatch(arg)
         if match is None:
@@ -45,11 +46,11 @@ def list_(ctx: Context, args: list[str]) -> None:
             if key in _CHOICES and value not in _CHOICES[key]:
                 allowed = ", ".join(_CHOICES[key])
                 raise CommandError(f'"{value}" isn\'t a {key}. Use one of: {allowed}')
-        filters[key] = values
+        filters.append((key, values))
 
     project = ctx.project()
     items = [item for item in project.sorted_items() if _matches(project, item, filters)]
-    if not show_all and "status" not in filters:
+    if not show_all and all(key != "status" for key, _ in filters):
         items = [item for item in items if item.status not in HIDDEN]
     width = max((len(item.id) for item in items), default=0)
     for item in items:
@@ -111,8 +112,8 @@ def render_tree(project: Project, name: str | None) -> list[str]:
     return lines
 
 
-def _matches(project: Project, item: Item, filters: dict[str, list[str]]) -> bool:
-    for key, wanted in filters.items():
+def _matches(project: Project, item: Item, filters: list[tuple[str, list[str]]]) -> bool:
+    for key, wanted in filters:
         if key == "release":
             have = [project.release_of(item) or ""]
         elif key in ("labels", "blocked_by", "related"):
