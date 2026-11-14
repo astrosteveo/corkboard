@@ -15,6 +15,9 @@ the same either way. Changes from the page are always logged as `me`.
     GET  /api/docs                   {"docs": [{"name", "title", "changed"}]}: every page
     GET  /api/docs/<name>            {"name", "title", "path", "text", "changed", "mentions"}:
                                      one page, with the IDs of the items it mentions
+    GET  /api/search?q=<text>        {"results": [{"kind": "item", "id", "title", "type",
+                                     "status", "snippet"} or {"kind": "doc", "name", "title",
+                                     "snippet"}]}: the Ctrl-K search, as search.py ranks it
 
     POST /api/items                  {"type", "title", "fields": {…}, "body"}     corkboard new
     POST /api/items/<ID>/move        {"status", "message"}                       corkboard move
@@ -38,7 +41,7 @@ from collections.abc import Mapping
 from datetime import datetime
 from urllib.parse import unquote
 
-from . import development, docs, edits, work
+from . import development, docs, edits, search, work
 from .development import PullRequest
 from .project import TYPES, Item, Project, Release
 
@@ -107,6 +110,11 @@ def docs_view(project: Project) -> dict:
             for doc in docs.list_docs(project.root)
         ]
     }
+
+
+def search_view(project: Project, query: str) -> dict:
+    """The Ctrl-K search's results for what was typed."""
+    return {"results": search.search(project, query)}
 
 
 def doc_view(project: Project, name: str) -> dict:

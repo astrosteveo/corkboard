@@ -324,6 +324,19 @@ class DocsApiTest(ServerTest):
         )
         self.assertEqual(data["docs"][-1]["changed"], "2026-11-12 15:40")
 
+    def test_search(self):
+        status, data = self.get_json("/api/search?q=BOARD%20the")
+        self.assertEqual(status, 200)
+        snippet = "The board (EX-12, EX-1) and EX-12 again, not EX-120."
+        self.assertEqual(
+            data["results"],
+            [{"kind": "doc", "name": "ui", "title": "ui.md", "snippet": snippet}],
+        )
+        self.assertEqual(
+            [r["id"] for r in self.get_json("/api/search?q=board")[1]["results"][:1]], ["EX-1"]
+        )
+        self.assertEqual(self.get_json("/api/search")[1], {"results": []})
+
     def test_no_docs_folder(self):
         fixture = Fixture(self)
         running = self.serve(fixture)
