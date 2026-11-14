@@ -122,3 +122,11 @@ export function shortDate(date) {
 export function pageTitle(text, project) {
   document.title = project ? `${text} · ${project.name}` : text;
 }
+
+// The release the board shows: the one in the URL, else the active one, else the first. The
+// new item form starts with it too, so a task made from the board lands on that board.
+export function boardRelease(project, wanted) {
+  if (wanted === "none") return "";
+  if (wanted && project.releaseByName.has(wanted)) return wanted;
+  return project.active_release ?? project.releases[0]?.name ?? "";
+}

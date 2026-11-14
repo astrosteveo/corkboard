@@ -3,6 +3,7 @@
 import { write } from "./api.js";
 import { html, useEffect, useRef, useState } from "./lib.js";
 import { navigate } from "./router.js";
+import { boardRelease } from "./ui.js";
 
 const OPEN = "corkboard:new-item";
 
@@ -11,17 +12,18 @@ export function openNewItem(defaults = {}) {
   dispatchEvent(new CustomEvent(OPEN, { detail: defaults }));
 }
 
-// Listens for openNewItem and the c key, and shows the form.
+// Listens for openNewItem and the c key, and shows the form. However it opens, it starts from
+// what the screen shows, and the defaults it was opened with go on top.
 export function NewItem({ project, refresh }) {
-  const [defaults, setDefaults] = useState(null);
+  const [opened, setOpened] = useState(null);
   useEffect(() => {
-    const onOpen = (event) => setDefaults(event.detail ?? {});
+    const onOpen = (event) => setOpened(event.detail ?? {});
     const onKey = (event) => {
       if (event.key !== "c" || event.ctrlKey || event.metaKey || event.altKey || event.defaultPrevented) return;
       const target = event.target;
       if (target instanceof HTMLElement && (target.isContentEditable || target.closest("input, textarea, select, dialog"))) return;
       event.preventDefault();
-      setDefaults(defaultsFromUrl());
+      setOpened({});
     };
     addEventListener(OPEN, onOpen);
     addEventListener("keydown", onKey);
@@ -30,17 +32,20 @@ export function NewItem({ project, refresh }) {
       removeEventListener("keydown", onKey);
     };
   }, []);
-  if (!defaults || !project) return null;
-  return html`<${NewItemDialog} project=${project} defaults=${defaults} refresh=${refresh} close=${() => setDefaults(null)} />`;
+  if (!opened || !project) return null;
+  const defaults = { ...defaultsFromUrl(project), ...opened };
+  return html`<${NewItemDialog} project=${project} defaults=${defaults} refresh=${refresh} close=${() => setOpened(null)} />`;
 }
 
-// On the board, a new item starts in the release and epic it's filtered to; on the list, in its release.
-function defaultsFromUrl() {
+// On the board, a new item starts in the release the board shows and the epic it's filtered to;
+// on the list, in its release.
+function defaultsFromUrl(project) {
   const query = new URLSearchParams(location.search);
   if (location.pathname === "/list") return { release: query.get("release") ?? undefined };
   if (location.pathname !== "/board") return {};
   const epic = query.get("epic");
-  return { release: query.get("release") ?? undefined, parent: epic && epic !== "none" ? epic : undefined };
+  const release = boardRelease(project, query.get("release")) || "none";
+  return { release, parent: epic && epic !== "none" ? epic : undefined };
 }
 
 function NewItemDialog({ project, defaults, refresh, close }) {

@@ -190,7 +190,7 @@ Mentioned in: architecture.md (doc) · EX-14
 
 Opened with **+ New** or `c`.
 
-- Fields: type, title, epic, priority, owner, labels, and an optional description. Without an epic it also asks for a release, so a task made from the board lands on that board. On the board, the form starts with the release and epic it's filtered to.
+- Fields: type, title, epic, priority, owner, labels, and an optional description. Without an epic it also asks for a release, so a task made from the board lands on that board. On the board, the form starts with the release the board shows and the epic it's filtered to, whether it's opened with the board's button, the sidebar, `c` or Ctrl-K.
 - It creates the item the way `corkboard new` does, then opens it in the side panel.
 
 ## Docs

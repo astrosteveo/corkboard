@@ -7,7 +7,7 @@ import { html, useEffect, useRef, useState } from "./lib.js";
 import { openNewItem } from "./newitem.js";
 import { navigate } from "./router.js";
 import { changedSince, useSeen } from "./seen.js";
-import { Avatar, DRAG_TYPE, High, Icon, PrBadge, STATUS_LABEL, pageTitle, panelHref, subtaskCount } from "./ui.js";
+import { Avatar, DRAG_TYPE, High, Icon, PrBadge, STATUS_LABEL, boardRelease, pageTitle, panelHref, subtaskCount } from "./ui.js";
 
 const SHOWN = ["todo", "in-progress", "waiting", "done"];
 const ALL = ["backlog", "todo", "in-progress", "waiting", "done", "cancelled"];
@@ -272,13 +272,6 @@ export function AskDialog({ item, onSubmit, onCancel }) {
       </div>
     </form>
   </dialog>`;
-}
-
-// The release the board shows: the one in the URL, else the active one, else the first.
-function boardRelease(project, wanted) {
-  if (wanted === "none") return "";
-  if (wanted && project.releaseByName.has(wanted)) return wanted;
-  return project.active_release ?? project.releases[0]?.name ?? "";
 }
 
 function releaseSummary(project, name, items) {
