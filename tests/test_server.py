@@ -15,7 +15,7 @@ from pathlib import Path
 from unittest import mock
 from urllib.parse import quote
 
-from helpers import LOG, REPO, Fixture, run_cli
+from helpers import LOG, REPO, Fixture, item_file, run_cli
 
 from corkboard import server
 from corkboard.cli import CommandError
@@ -336,6 +336,19 @@ class DocsApiTest(ServerTest):
             [r["id"] for r in self.get_json("/api/search?q=board")[1]["results"][:1]], ["EX-1"]
         )
         self.assertEqual(self.get_json("/api/search")[1], {"results": []})
+
+    def test_file_names_that_arent_utf8(self):
+        # Linux allows any bytes in a name; one such file must not stop the app from loading.
+        fixture = Fixture(self)
+        (fixture.root / "items" / os.fsdecode(b"EX-1-caf\xe9.md")).write_text(
+            item_file("EX-1"), encoding="utf-8"
+        )
+        fixture.doc(os.fsdecode(b"caf\xe9.md"), "# Cafe\n")
+        running = self.serve(fixture)
+        project = self.api(running)
+        self.assertEqual(project["items"][0]["path"], ".project/items/EX-1-caf?.md")
+        status, _, body = get(running.port, "/api/docs")
+        self.assertEqual((status, json.loads(body)["docs"][0]["title"]), (200, "caf?.md"))
 
     def test_no_docs_folder(self):
         fixture = Fixture(self)

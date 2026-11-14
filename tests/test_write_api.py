@@ -1,5 +1,6 @@
 import http.client
 import json
+import os
 import unittest
 
 from helpers import LOG, NOW, Fixture, run_cli
@@ -71,6 +72,16 @@ class WriteApiTest(ServerTest):
         self.assertEqual(snapshot(fixture), snapshot(by_cli))
         self.assertEqual(answer["line"], out.strip().splitlines()[-1])
         return answer
+
+    @unittest.skipIf(os.geteuid() == 0, "root can write into a read-only folder")
+    def test_a_write_the_disk_refuses_answers_with_the_reason(self):
+        fixture, running = self.serve_fixture()
+        items = fixture.root / "items"
+        items.chmod(0o555)
+        self.addCleanup(items.chmod, 0o755)
+        status, answer = post(running.port, "/api/items/EX-2/log", {"text": "A note"})
+        self.assertEqual(status, 500)
+        self.assertEqual(answer["error"], "couldn't save the change: Permission denied")
 
     def test_new(self):
         body = "Cap columns.\n\n## Subtasks\n- [ ] Add a limit\n"
